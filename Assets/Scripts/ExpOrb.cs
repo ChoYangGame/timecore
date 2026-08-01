@@ -14,11 +14,15 @@ public class ExpOrb : MonoBehaviour
 
     private Transform _player;
     private bool _absorbing;
+    private float _effectiveAbsorbRadius;
 
     private void Start()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) _player = player.transform;
+
+        float multiplier = GameManager.Instance != null ? GameManager.Instance.ExpAbsorbRadiusMultiplier : 1f;
+        _effectiveAbsorbRadius = absorbRadius * multiplier;
     }
 
     private void Update()
@@ -28,7 +32,7 @@ public class ExpOrb : MonoBehaviour
         Vector3 toPlayer = _player.position - transform.position;
         float sqrDist = toPlayer.sqrMagnitude;
 
-        if (!_absorbing && sqrDist <= absorbRadius * absorbRadius) _absorbing = true;
+        if (!_absorbing && sqrDist <= _effectiveAbsorbRadius * _effectiveAbsorbRadius) _absorbing = true;
         if (!_absorbing || sqrDist < 0.0001f) return;
 
         Vector3 dir = toPlayer / Mathf.Sqrt(sqrDist);

@@ -17,6 +17,9 @@ public class GameManager : MonoBehaviour
     public int CurrentExp { get; private set; }
     public int ExpToNextLevel { get; private set; }
 
+    /// <summary>'시간 왜곡' 증강이 누적시키는 경험치 흡수 반경 배율. ExpOrb가 스폰 시 읽어간다.</summary>
+    public float ExpAbsorbRadiusMultiplier { get; private set; } = 1f;
+
     public event Action<int> OnKillCountChanged;
     public event Action<int, float> OnExpChanged;
 
@@ -66,6 +69,12 @@ public class GameManager : MonoBehaviour
         }
 
         SetExp(Level, ExpToNextLevel > 0 ? (float)CurrentExp / ExpToNextLevel : 0f);
+    }
+
+    public void MultiplyExpAbsorbRadius(float factor)
+    {
+        if (factor <= 0f) return;
+        ExpAbsorbRadiusMultiplier *= factor;
     }
 
     private static int ComputeExpToNextLevel(int level) => 5 + (level - 1) * 3;

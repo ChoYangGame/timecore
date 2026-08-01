@@ -45,7 +45,8 @@
 
 | 항목 | 출처 URL | 라이선스 | 용도 |
 |---|---|---|---|
-| | | | |
+| Malgun Gothic (맑은 고딕) | Windows 10/11 번들 폰트 (C:\Windows\Fonts\malgun.ttf) | Microsoft 번들 폰트 EULA — 임베딩 허용 범위 미확인, 재배포용 아님 | ~~TMP 한글 서브셋(KoreanSubset SDF) 생성 소스~~ — 2026-08-02 라이선스 문제로 Pretendard로 교체, 프로젝트에서 제거됨 |
+| Pretendard | https://github.com/orioncactus/pretendard | SIL OFL 1.1 | UI 폰트 |
 
 ---
 
@@ -130,4 +131,44 @@
 - **작업**: 기본 TMP 폰트(LiberationSans SDF)가 한글을 지원하지 않아 카드 텍스트가 전부 tofu box로 깨짐. 사용자 확인 후 Windows 맑은 고딕에서 실제 사용 글자(약 47자)만 뽑아 Static SDF 서브셋 폰트를 생성(원본 13MB TTF는 굽고 나서 참조 해제·삭제, 빌드 용량 영향 최소화)해 카드 텍스트에 적용. 추가로 카드 배경색이 오버레이와 같은 색이라 카드 자체가 안 보이고 Outline 컴포넌트가 단색 사각형엔 테두리로 작동하지 않는 것도 발견해 프레임+Fill 2단 구조로 교체. 스크린샷으로 최종 확인.
 - **프롬프트 원문**: (사용자 지시 없음 — Play 모드 콘솔 경고 확인 중 AI가 자체 발견, 폰트 서브셋 추가 여부만 AskUserQuestion으로 확인받음: "한글 서브셋 폰트 에셋 추가 (권장)" 선택됨)
 - **AI 산출물 vs 수정**: 진단·폰트 생성·카드 구조 수정 전량 AI 수행. Font Asset Creator API를 Static 모드로 바로 호출하면 글리프 추가가 거부돼 Dynamic으로 생성 후 굽고 Static으로 전환하는 우회가 필요했음.
+- **담당**: 개발
+
+### 2026-08-02 (D-7) | 웨이브 시스템 + 원시시대 보스 "고대의 포식자"
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: WaveManager(25초/웨이브, 스폰간격×0.9 최소0.4, 적체력+15%/웨이브, 6웨이브 보스) + Boss(추적/돌진(3초 대기→1초)/충격파(8발) 패턴, HP4000, 사망 시 오브10개) + BossProjectile + 보스 HP바·이름표·등장 배너.
+- **프롬프트 원문**: "오늘 핵심은 보스야. 웨이브는 보스 등장을 위한 최소 구조만 만들면 돼." (이하 1~5번 섹션 스펙 전체, "각 단계 끝나면 컴파일 에러 확인하고, 막히면 바로 알려줘"까지 포함)
+- **설계 판단과 근거**: 체력 스케일링은 Enemy 프리팹을 안 건드리고 EnemySpawner.OnEnemySpawned(신규 이벤트)로 스폰 직후 Health.SetMaxHp(신규 메서드)를 호출하는 방식 채택 — 프리팹 기본값·인스펙터 조정력 유지. 보스는 Enemy와 같은 "Enemy" 태그를 재사용해 AutoAimShooter/Bullet의 기존 타게팅에 자동으로 걸리게 함(새 분기 불필요).
+- **검증 방법**: ForceSpawnBoss()(B키와 동일 경로) 호출 후 4초 대기해 돌진(위치 17→5.38)·충격파(투사체 7~8개) 둘 다 발동 실측. HP 4000에 1000 데미지 시 fillAmount 0.9475→0.6975 확인. 처치 시 오브 10개 생성 → 플레이어를 오브 클러스터로 이동시켜 흡수 → Lv.1→2 레벨업과 증강 카드 자동 표시까지 실측.
+- **AI 산출물 vs 사용자 개입**: 스크립트 5종(WaveManager/Boss/BossProjectile/BossHpUI/BossBannerUI) + 프리팹 2종(Boss/BossProjectile) + 기존 스크립트 2종(Health/EnemySpawner) 확장 전량 AI가 생성·배선·검증. "고대의 포식자" 한글 6자가 기존 서브셋 폰트에 없어 사전 확인 후 재굽기 처리.
+- **담당**: 개발
+
+### 2026-08-02 (D-7) | 폰트 교체: 맑은 고딕 → Pretendard (라이선스 문제)
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: 한글 서브셋 폰트의 소스를 맑은 고딕(Windows 번들)에서 Pretendard(SIL OFL 1.1)로 전면 교체. 기존 53자 + Timer/Kills/Level/WAVE 배너용 라틴·기호 15자를 합쳐 68자 Static SDF로 재생성. 씬의 TMP 텍스트 11개(HUD 3종·증강 카드 6종·보스 이름표·WAVE 배너) 전부 새 폰트로 교체하고, 맑은 고딕 기반 KoreanSubset SDF 에셋은 삭제. docs/licenses/Pretendard-OFL.txt에 라이선스 전문 동봉.
+- **프롬프트 원문**: "맑은 고딕은 Windows 번들 폰트라 임베딩·재배포 권한이 없어서 교체한다. Pretendard는 SIL OFL 1.1이라 상용·임베딩·재배포 모두 허용된다." + 1~7번 작업 지시 전체
+- **설계 판단과 근거**: 맑은 고딕을 폰트 소스로 쓴 시점에 AI가 출처 표에 "임베딩 허용 범위 미확인"이라고 선제적으로 플래그했었음 — 제출물 4번은 라이선스 명시가 의무라 그냥 넘어갈 수 없는 사안이었고, 확인 결과 실제 재배포 권한이 없어 교체 결정. TMP_FontAsset.CreateFontAsset은 Font 오브젝트만 받고 Assets/ 밖 경로를 직접 구울 공개 API가 없어, 맑은 고딕 때와 동일하게 임시 복사→굽기→즉시 삭제 방식을 사용함(사용자가 요청한 "Assets 복사 금지"와는 다른 처리라 진행 전 별도로 알림).
+- **검증 방법**: Play 모드에서 "고대의 포식자" 보스 이름표와 증강 카드 3장 전부 콘솔 경고(tofu box) 없이 표시되는지 확인.
+- **AI 산출물 vs 사용자 개입**: 폰트 생성·전체 텍스트 교체·구 에셋 삭제·라이선스 문서화 전량 AI 수행. 폰트 파일(Pretendard-Regular.ttf)과 라이선스 원문(LICENSE.txt)은 사용자가 다운로드해 제공.
+- **담당**: 개발
+
+### 2026-08-02 (D-7) | 보스 배너 · 증강 카드 표시 우선순위 정리
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: 증강 카드(우선) vs 보스 등장 배너가 동시에 뜨는 문제 해결. 카드 표시 중 보스가 등장하면 배너 요청을 WaveManager에 보류했다가 카드 선택 후 재개 시점에 띄움. 반대로 배너 표시 중 레벨업이 발생하면 AugmentManager가 배너를 즉시 종료(BossBannerUI.CancelImmediate)하고 카드를 띄움. BossBannerUI의 표시/페이드 타이머를 WaitForSeconds→WaitForSecondsRealtime, Time.deltaTime→Time.unscaledDeltaTime으로 교체.
+- **프롬프트 원문**: "우선순위: 증강 카드 > 보스 배너 / 증강 카드가 표시 중이면 보스 배너를 대기시켰다가 카드 선택 후 재개될 때 배너를 띄운다 / 반대로 배너 표시 중에 레벨업이 발생하면 배너를 즉시 종료하고 카드를 띄운다 / 증강 카드는 Time.timeScale=0으로 게임을 멈추니까 그 상태에서 배너 타이머가 unscaledDeltaTime으로 도는지도 확인해줘."
+- **설계 판단과 근거**: AugmentManager에 IsShowing/OnPanelClosed를 추가해 WaveManager가 "카드가 떠 있는가"를 물어보고 배너를 보류(pending text 캐싱)하는 방향을 택함 — WaveManager가 보스·배너 오케스트레이션을 이미 갖고 있어 새 이벤트 흐름 대신 기존 구조에 얹었다. 역방향(배너→카드 인터럽트)은 우선순위가 높은 AugmentManager가 낮은 쪽(BossBannerUI)을 직접 제어하는 게 자연스러워 AugmentManager.HandleLevelUp에서 bossBanner.CancelImmediate()를 먼저 호출하도록 함.
+- **검증 방법**: Play 모드에서 (1) 카드 표시 중 ForceSpawnBoss() 호출 → 배너 비활성 유지 확인 → 카드 선택 후 배너 자동 표시 확인. (2) 배너 표시 중(active=True) 같은 프레임에 레벨업 발생 → 배너 즉시 비활성, 카드 즉시 활성 확인. (3) 배너를 띄운 뒤 Time.timeScale=0으로 강제 고정 후 2.6초 대기 → 배너가 정상적으로 페이드 완료·비활성화됨을 실측(unscaledDeltaTime 동작 증명).
+- **AI 산출물 vs 사용자 개입**: 스크립트 3종(AugmentManager/BossBannerUI/WaveManager) 수정 및 씬 참조 배선(WaveManager↔AugmentManager↔BossBanner), 3가지 시나리오 실측 전량 AI 수행.
+- **담당**: 개발
+
+### 2026-08-02 (D-7) | 증강 5종 추가 (총 8종) — 관통·다중사출·무적 구조 확장
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: 시간 왜곡(경험치 흡수 반경+50%)·균열 복구(최대HP+20%, 즉시 그만큼 회복)·관통 코어(관통 누적)·다중 사출(발사수 누적, 최대 5발 상한)·위상 이동(이동속도+10%, 피격 시 0.5초 무적+스프라이트 점멸) 추가. AugmentType enum 8종 체제로 확장. 새 증강 5개 에셋 생성 및 AugmentManager 풀(3→8) 배선.
+- **프롬프트 원문**: "증강 5개를 추가해줘. 기존 3종과 같은 방식으로: [5종 스펙] / 관통과 다중 사출은 Bullet/AutoAimShooter 구조 변경이 필요할 수 있어. 기존 3종처럼 단순 배율이 아니니까 구현 방식 먼저 알려주고 진행해줘. / 다중 사출이 누적되면 총알 수가 급증하니 상한을 두자 (최대 5발). / 무적 시간은 Health에 무적 플래그를 추가하는 방식으로. 피격 시 스프라이트 깜빡임도. / 새 한글이 추가되니 Pretendard SDF 서브셋 갱신 필요."
+- **설계 판단과 근거**: 관통은 Bullet에 PierceRemaining(발사 시 AutoAimShooter가 채움)을 둬서 히트마다 감소만 시키고 0일 때만 Destroy — 기존 즉시파괴 동작과 하위호환. 다중사출은 ExtraShots를 무제한 누적시키되 발사 "시점"에 `Mathf.Clamp(1+ExtraShots,1,5)`로 상한을 걸어 카운터 자체는 안 건드리고 실제 총알 수만 절대 못 넘게 함(저사양 보호). 무적은 Health가 Player/Enemy/Boss 공용이라 hitInvincibilityDuration을 0(비활성) 기본값으로 둬 다른 유닛엔 영향 없게 opt-in 처리. 균열 복구는 기존 SetMaxHp(풀회복)와 요구사항이 달라(증가분만큼만 회복) IncreaseMaxHp를 신규로 분리.
+- **검증 방법**: Play 모드에서 8개 증강을 전부 소진할 때까지 레벨업을 반복해 각각 뽑아 적용 — 8/8 커버리지, 수치 전부 공식과 정확히 일치(예: 균열복구 CurrentHp가 풀피가 아니라 델타(+20)만큼만 증가). 관통·다중사출은 별도로 적 HP를 100000으로 올려 죽지 않게 한 뒤 관찰: 총알 645발=129볼리×5발로 상한 정확히 확인, PierceRemaining=0인데 파괴 안 되고 생존한 총알 440발로 관통 확인. 무적은 연속 데미지 2회 중 2번째가 막히는 것 실측.
+- **AI 산출물 vs 사용자 개입**: 스크립트 7종 수정(Health/Bullet/AutoAimShooter/GameManager/ExpOrb/AugmentData/AugmentManager) + 에셋 5종 생성 + Pretendard SDF 재굽기(68→100자) 전량 AI 수행. 구현 방식은 사전 설명 후 그대로 승인받아 진행.
 - **담당**: 개발

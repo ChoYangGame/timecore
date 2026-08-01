@@ -17,6 +17,12 @@ public class AutoAimShooter : MonoBehaviour
     [Tooltip("총알이 플레이어 콜라이더 안에서 생기지 않도록 밀어내는 거리")]
     [SerializeField] private float muzzleOffset = 0.45f;
 
+    [Tooltip("다중 사출 증강이 아무리 누적돼도 한 번에 나가는 총알 수는 이 값을 못 넘는다 (저사양 보호)")]
+    [SerializeField] private int maxBulletCount = 5;
+
+    [Tooltip("총알 2발 이상일 때 사이 각도(도)")]
+    [SerializeField] private float multiShotSpreadAngle = 10f;
+
     public float FireInterval
     {
         get => fireInterval;
@@ -25,6 +31,12 @@ public class AutoAimShooter : MonoBehaviour
 
     /// <summary>증강으로 누적되는 데미지 배율. 총알 프리팹의 기본 데미지에 곱해서 적용한다.</summary>
     public float DamageMultiplier { get; set; } = 1f;
+
+    /// <summary>증강으로 누적되는 관통 횟수. 발사되는 총알마다 그대로 복사된다.</summary>
+    public int PierceCount { get; set; }
+
+    /// <summary>증강으로 누적되는 추가 발사 수. 실제 발사 수는 maxBulletCount로 상한이 걸린다.</summary>
+    public int ExtraShots { get; set; }
 
     private float _timer;
     private Health _health;
@@ -50,10 +62,27 @@ public class AutoAimShooter : MonoBehaviour
         if (dir.sqrMagnitude < 0.0001f) return;
         dir = dir.normalized;
 
-        Vector3 spawnPos = transform.position + (Vector3)(dir * muzzleOffset);
-        Bullet bullet = Instantiate(bulletPrefab, spawnPos, Quaternion.identity);
-        bullet.Damage = bulletPrefab.Damage * DamageMultiplier;
-        bullet.Launch(dir);
+        int shotCount = Mathf.Clamp(1 + ExtraShots, 1, maxBulletCount);
+        float startAngle = -(shotCount - 1) * multiShotSpreadAngle * 0.5f;
+
+        for (int i = 0; i < shotCount; i++)
+        {
+            Vector2 shotDir = shotCount == 1 ? dir : Rotate(dir, startAngle + i * multiShotSpreadAngle);
+
+            Vector3 spawnPos = transform.position + (Vector3)(shotDir * muzzleOffset);
+            Bullet bullet = Instantiate(bulletPrefab, spawnPos, Quaternion.identity);
+            bullet.Damage = bulletPrefab.Damage * DamageMultiplier;
+            bullet.PierceRemaining = PierceCount;
+            bullet.Launch(shotDir);
+        }
+    }
+
+    private static Vector2 Rotate(Vector2 v, float degrees)
+    {
+        float rad = degrees * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad);
+        float sin = Mathf.Sin(rad);
+        return new Vector2(v.x * cos - v.y * sin, v.x * sin + v.y * cos);
     }
 
     /// <summary>

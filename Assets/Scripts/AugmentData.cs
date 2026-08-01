@@ -7,7 +7,12 @@ public enum AugmentType
 {
     MoveSpeed,
     FireRate,
-    Damage
+    Damage,
+    ExpRadius,
+    MaxHp,
+    Pierce,
+    MultiShot,
+    PhaseShift
 }
 
 [CreateAssetMenu(fileName = "Augment_", menuName = "TimeCore/Augment Data")]
@@ -18,7 +23,7 @@ public class AugmentData : ScriptableObject
     [TextArea][SerializeField] private string description;
     [SerializeField] private AugmentType type;
 
-    [Tooltip("비율 값. 예: 0.15 = 15%")]
+    [Tooltip("타입별로 다르게 해석되는 값. 대부분 비율(0.15=15%), Pierce/MultiShot은 정수 개수, PhaseShift 무적시간은 별도 상수(Health.EnableHitInvincibility)로 처리")]
     [SerializeField] private float value;
 
     public string Id => id;

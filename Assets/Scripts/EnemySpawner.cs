@@ -30,6 +30,12 @@ public class EnemySpawner : MonoBehaviour
 
     public int AliveCount => _alive.Count;
 
+    /// <summary>보스 등장 시 WaveManager 가 false 로 꺼서 일반 스폰을 중단시킨다.</summary>
+    public bool SpawningEnabled { get; set; } = true;
+
+    /// <summary>스폰 직후(Awake 완료 후) 호출된다. 웨이브 난이도 스케일링을 붙이는 지점.</summary>
+    public event System.Action<Enemy> OnEnemySpawned;
+
     private readonly List<Enemy> _alive = new List<Enemy>();
     private Camera _cam;
     private float _timer;
@@ -41,6 +47,7 @@ public class EnemySpawner : MonoBehaviour
 
     private void Update()
     {
+        if (!SpawningEnabled) return;
         if (enemyPrefab == null) return;
         if (_cam == null)
         {
@@ -57,6 +64,7 @@ public class EnemySpawner : MonoBehaviour
 
         Enemy spawned = Instantiate(enemyPrefab, RandomPointOutsideView(), Quaternion.identity);
         _alive.Add(spawned);
+        OnEnemySpawned?.Invoke(spawned);
     }
 
     /// <summary>카메라를 감싸는 외접원 위의 랜덤한 점. 항상 화면 밖이 보장된다.</summary>

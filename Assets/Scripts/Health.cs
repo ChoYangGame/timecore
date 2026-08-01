@@ -24,6 +24,7 @@ public class Health : MonoBehaviour
     public float MaxHp => maxHp;
     public float CurrentHp { get; private set; }
     public bool IsDead { get; private set; }
+    public bool IsInvincible { get; private set; }
 
     /// <summary>사망 시 1회만 호출된다.</summary>
     public event Action<Health> OnDeath;
@@ -34,6 +35,10 @@ public class Health : MonoBehaviour
     private Color _baseColor = Color.white;
     private Coroutine _flashRoutine;
 
+    [Tooltip("피격 시 무적 지속시간(초). 0이면 비활성 — '위상 이동' 같은 증강이 켠다.")]
+    [SerializeField] private float hitInvincibilityDuration = 0f;
+    private Coroutine _invincibilityRoutine;
+
     private void Awake()
     {
         CurrentHp = maxHp;
@@ -43,7 +48,7 @@ public class Health : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        if (IsDead || amount <= 0f) return;
+        if (IsDead || IsInvincible || amount <= 0f) return;
 
         CurrentHp = Mathf.Max(0f, CurrentHp - amount);
         OnDamaged?.Invoke(CurrentHp, maxHp);
@@ -54,11 +59,42 @@ public class Health : MonoBehaviour
             _flashRoutine = StartCoroutine(FlashRoutine());
         }
 
-        if (CurrentHp > 0f) return;
+        if (CurrentHp <= 0f)
+        {
+            IsDead = true;
+            OnDeath?.Invoke(this);
+            onDeathEvent?.Invoke();
+            return;
+        }
 
-        IsDead = true;
-        OnDeath?.Invoke(this);
-        onDeathEvent?.Invoke();
+        if (hitInvincibilityDuration > 0f && isActiveAndEnabled)
+        {
+            if (_invincibilityRoutine != null) StopCoroutine(_invincibilityRoutine);
+            _invincibilityRoutine = StartCoroutine(InvincibilityRoutine());
+        }
+    }
+
+    /// <summary>스폰 시점에 최대 체력을 재조정할 때 쓴다 (예: 웨이브 난이도 스케일링).</summary>
+    public void SetMaxHp(float newMaxHp, bool healToFull = true)
+    {
+        maxHp = Mathf.Max(1f, newMaxHp);
+        CurrentHp = healToFull ? maxHp : Mathf.Min(CurrentHp, maxHp);
+    }
+
+    /// <summary>최대 체력을 늘리고 늘어난 만큼만 즉시 회복한다 (풀피 회복이 아님).</summary>
+    public void IncreaseMaxHp(float amount)
+    {
+        if (amount <= 0f) return;
+
+        maxHp += amount;
+        CurrentHp = Mathf.Min(maxHp, CurrentHp + amount);
+        OnDamaged?.Invoke(CurrentHp, maxHp);
+    }
+
+    /// <summary>'위상 이동' 같은 증강이 호출한다. 이후 피격마다 지정한 시간만큼 무적이 걸린다.</summary>
+    public void EnableHitInvincibility(float duration)
+    {
+        hitInvincibilityDuration = Mathf.Max(hitInvincibilityDuration, duration);
     }
 
     private IEnumerator FlashRoutine()
@@ -67,5 +103,23 @@ public class Health : MonoBehaviour
         yield return new WaitForSeconds(flashDuration);
         flashRenderer.color = _baseColor;
         _flashRoutine = null;
+    }
+
+    private IEnumerator InvincibilityRoutine()
+    {
+        IsInvincible = true;
+
+        const float blinkInterval = 0.08f;
+        float elapsed = 0f;
+        while (elapsed < hitInvincibilityDuration)
+        {
+            if (flashRenderer != null) flashRenderer.enabled = !flashRenderer.enabled;
+            yield return new WaitForSeconds(blinkInterval);
+            elapsed += blinkInterval;
+        }
+
+        if (flashRenderer != null) flashRenderer.enabled = true;
+        IsInvincible = false;
+        _invincibilityRoutine = null;
     }
 }
