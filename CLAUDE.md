@@ -18,6 +18,9 @@ NHN 게임 AI 해커톤 예선 출품작. 2인 팀(개발 1, 디자인 1). 마�
 - DLL 타임스탬프 폴링 절대 금지.
 - 컴파일 결과는 Unity_GetConsoleLogs로만 확인한다.
 - 스크립트가 인식되지 않으면 사용자에게 "Unity 종료 → Library/ScriptAssemblies 삭제 → 재시작"을 요청한다.
+- Unity_RunCommand의 빌드 결과가 "failed"여도 Unity_GetConsoleLogs의 에러가 0건이면,
+  Build/ 폴더 타임스탬프와 용량으로 실제 성공 여부를 판단한다.
+  Sentis 패키지(com.unity.ai.inference)의 셰이더 경고는 무시한다.
 
 ## 작업 방식
 

@@ -91,3 +91,43 @@
 - **프롬프트 원문**: "EnemySpawner를 MCP 5개 경로로 붙이려다 전부 실패 / 원인은 Library/ScriptAssemblies의 stale DLL 캐시 / Ctrl+R과 타임스탬프 갱신으로는 해결 안 됨 / Unity 종료 후 ScriptAssemblies 삭제 → 재시작으로 해결"
 - **AI 산출물 vs 수정**: 진단과 5회 우회 시도는 AI가 수행했으나 전부 실패. 근본 원인 파악, 에디터 재시작을 통한 해결, Spawner 컴포넌트 최종 부착은 사용자가 직접 수행.
 - **담당**: 개발
+
+### 2026-08-01 | Web 빌드 및 Vercel 프로덕션 배포 (코어 루프 반영)
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: Unity_GetConsoleLogs로 에러 0건 확인 후 BuildPipeline.BuildPlayer(WebGL)로 Build/ 재생성, dist/index.html에 `{{{ }}}` 매크로 잔존 없음 확인, deploy.bat 실행해 프로덕션 배포 완료(https://timecore-chi.vercel.app).
+- **프롬프트 원문**: "첫 작업: Web 빌드 → deploy.bat 실행 → 배포 / 빌드 전에 Unity 콘솔에 에러 없는지 Unity_GetConsoleLogs로 확인 / 빌드 완료 후 dist/index.html에 {{{ }}} 매크로가 남아있지 않은지 확인 / 배포 후 URL 알려주면 내가 브라우저에서 직접 확인할게 / DLL 타임스탬프 폴링은 하지 마."
+- **AI 산출물 vs 수정**: 빌드·검증·배포 전량 AI가 직접 수행. Unity MCP RunCommand가 Sentis 패키지 셰이더 경고 30건을 이유로 빌드를 "failed"로 오보고했으나, 에러 0건과 Build/ 산출물 타임스탬프·용량 변화로 실제 빌드 성공을 확인.
+- **담당**: 개발
+
+### 2026-08-01 | HUD 구성 (HP/EXP바·레벨·타이머·킬수) + GameManager
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: TMP Essential Resources 임포트 후 HUD_Canvas(ScaleWithScreenSize, 1920x1080, Match 0.5) 생성. HP바(좌하단)/EXP바(상단 전체)/레벨(EXP바 좌측)/타이머(상단 중앙)/킬수(우상단) 배치. GameManager 싱글톤이 생존시간·킬수 관리, HealthBarUI가 Health.OnDamaged/OnDeath 구독해 HP바 실시간 갱신, Enemy.HandleDeath에 킬 등록 1줄 추가.
+- **프롬프트 원문**: "Canvas 하나에 아래를 전부 만들어줘 (TextMeshPro 사용): HP 바 — 화면 좌하단 / 경험치 바 — 화면 상단 가로 전체 / 레벨 표시 — 경험치 바 좌측 / 생존 시간 타이머 — 화면 상단 중앙 / 킬 수 — 화면 우상단 / Canvas Scaler는 Scale With Screen Size, 1920x1080 기준, Match 0.5. / 색상: 배경 #1B2436, 텍스트 #F2EFE9, 강조·경험치 #6FD8E0, HP #A8322D. / Health.cs와 연동해서 HP 바가 실시간으로 줄어들게 해줘. / 타이머와 킬 수를 관리할 GameManager.cs도 같이 만들어줘 (싱글톤, 씬에 빈 오브젝트로 배치). / 스크립트가 타입으로 인식 안 되면 바로 나에게 알려줘."
+- **AI 산출물 vs 수정**: 스크립트 3종(GameManager/HealthBarUI/HudController) 및 씬 하이어라키 전량 AI가 RunCommand로 생성. 레벨/경험치 증가 로직은 아직 없어 GameManager.SetExp()만 열어두고 기본값(Lv.1, 0%)으로 둠 — 성장 시스템은 별도 요청 필요.
+- **담당**: 개발
+
+### 2026-08-01 | 버그: HP바가 시작부터 빈 상태로 보임 (Awake 순서 경합)
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: 사용자가 "HP/EXP바 변화 없음" 보고 → RunCommand로 Play 모드 진입 후 실측: 풀피 상태인데 fillAmount=0으로 초기화됨. 원인은 HealthBarUI.Awake()가 Health.Awake()(CurrentHp 설정)보다 먼저 실행되는 순서 경합. Awake→Start로 옮겨 해결(Unity가 모든 Awake 종료 후 Start를 호출하는 걸 보장). Play 모드 재진입해 풀피=1.0, 데미지 30 적용 시 0.7로 정상 반응 확인.
+- **프롬프트 원문**: "exp바랑 hp바가 변화가 없는것 같은데"
+- **AI 산출물 vs 수정**: 진단(Play 모드 강제 진입, TakeDamage 강제 호출로 실측)과 수정 전량 AI가 수행. EXP바는 별도 버그가 아니라 레벨업 시스템 자체가 아직 없어 0%로 고정된 정상 상태임을 사용자에게 별도 안내.
+- **담당**: 개발
+
+### 2026-08-02 | 경험치·레벨업·증강 시스템 구현
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: ExpOrb(흡수 반경 1.5, 속도 8, sqrMagnitude 거리계산) + 프리팹, Enemy 사망 시 드롭 연결. GameManager에 currentExp/level/expToNextLevel(5+(lv-1)*3), AddExp/OnLevelUp 추가. AugmentData(SO) 3종 + AugmentManager(레벨업 시 timeScale=0, 카드 3장 표시, 선택 시 PlayerMove/AutoAimShooter 배율 누적 적용 후 재개) + AugmentCardUI + 카드 3장 UI(InputSystemUIInputModule 기반 EventSystem 포함) 구성.
+- **프롬프트 원문**: "좋아. 이제 경험치·레벨업·증강 시스템을 붙이자. 오늘의 핵심 작업이야." (이하 1~4번 섹션 스펙 원문 전체 — ExpOrb/GameManager 확장/증강 시스템/증강 선택 UI 상세 스펙, "각 단계 끝나면 컴파일 에러 확인하고, 타입 인식 안 되면 바로 알려줘"까지 포함)
+- **AI 산출물 vs 수정**: 스크립트 6종(ExpOrb/AugmentData/AugmentManager/AugmentCardUI + GameManager·Enemy·AutoAimShooter 확장) 전량 AI 작성. Play 모드에서 적 처치→오브 흡수→레벨업→카드 표시→선택→재개 전체 흐름과 배율 누적(1.25×1.25=1.5625)을 실측 검증.
+- **담당**: 개발
+
+### 2026-08-02 | 버그: 증강 카드 한글 텍스트가 □로 깨짐 + 카드 테두리 미표시
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: 기본 TMP 폰트(LiberationSans SDF)가 한글을 지원하지 않아 카드 텍스트가 전부 tofu box로 깨짐. 사용자 확인 후 Windows 맑은 고딕에서 실제 사용 글자(약 47자)만 뽑아 Static SDF 서브셋 폰트를 생성(원본 13MB TTF는 굽고 나서 참조 해제·삭제, 빌드 용량 영향 최소화)해 카드 텍스트에 적용. 추가로 카드 배경색이 오버레이와 같은 색이라 카드 자체가 안 보이고 Outline 컴포넌트가 단색 사각형엔 테두리로 작동하지 않는 것도 발견해 프레임+Fill 2단 구조로 교체. 스크린샷으로 최종 확인.
+- **프롬프트 원문**: (사용자 지시 없음 — Play 모드 콘솔 경고 확인 중 AI가 자체 발견, 폰트 서브셋 추가 여부만 AskUserQuestion으로 확인받음: "한글 서브셋 폰트 에셋 추가 (권장)" 선택됨)
+- **AI 산출물 vs 수정**: 진단·폰트 생성·카드 구조 수정 전량 AI 수행. Font Asset Creator API를 Static 모드로 바로 호출하면 글리프 추가가 거부돼 Dynamic으로 생성 후 굽고 Static으로 전환하는 우회가 필요했음.
+- **담당**: 개발

@@ -10,6 +10,7 @@ public class Enemy : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 2.2f;
     [SerializeField] private float contactDamage = 8f;
+    [SerializeField] private ExpOrb expOrbPrefab;
 
     [Tooltip("접촉 데미지 재적용까지의 간격(초)")]
     [SerializeField] private float contactCooldown = 0.7f;
@@ -62,6 +63,8 @@ public class Enemy : MonoBehaviour
 
     private void HandleDeath(Health _)
     {
+        if (GameManager.Instance != null) GameManager.Instance.RegisterKill();
+        if (expOrbPrefab != null) Instantiate(expOrbPrefab, transform.position, Quaternion.identity);
         Destroy(gameObject);
     }
 }

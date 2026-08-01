@@ -23,6 +23,9 @@ public class AutoAimShooter : MonoBehaviour
         set => fireInterval = value;
     }
 
+    /// <summary>증강으로 누적되는 데미지 배율. 총알 프리팹의 기본 데미지에 곱해서 적용한다.</summary>
+    public float DamageMultiplier { get; set; } = 1f;
+
     private float _timer;
     private Health _health;
 
@@ -49,6 +52,7 @@ public class AutoAimShooter : MonoBehaviour
 
         Vector3 spawnPos = transform.position + (Vector3)(dir * muzzleOffset);
         Bullet bullet = Instantiate(bulletPrefab, spawnPos, Quaternion.identity);
+        bullet.Damage = bulletPrefab.Damage * DamageMultiplier;
         bullet.Launch(dir);
     }
 
