@@ -172,3 +172,13 @@
 - **검증 방법**: Play 모드에서 8개 증강을 전부 소진할 때까지 레벨업을 반복해 각각 뽑아 적용 — 8/8 커버리지, 수치 전부 공식과 정확히 일치(예: 균열복구 CurrentHp가 풀피가 아니라 델타(+20)만큼만 증가). 관통·다중사출은 별도로 적 HP를 100000으로 올려 죽지 않게 한 뒤 관찰: 총알 645발=129볼리×5발로 상한 정확히 확인, PierceRemaining=0인데 파괴 안 되고 생존한 총알 440발로 관통 확인. 무적은 연속 데미지 2회 중 2번째가 막히는 것 실측.
 - **AI 산출물 vs 사용자 개입**: 스크립트 7종 수정(Health/Bullet/AutoAimShooter/GameManager/ExpOrb/AugmentData/AugmentManager) + 에셋 5종 생성 + Pretendard SDF 재굽기(68→100자) 전량 AI 수행. 구현 방식은 사전 설명 후 그대로 승인받아 진행.
 - **담당**: 개발
+
+### 2026-08-02 (D-7) | 버그: HP·EXP·보스 HP바가 배포본에서 안 바뀜 — 진짜 원인은 Source Image 누락
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP / Claude in Chrome
+- **작업**: 배포된 빌드에서 HP/EXP/보스 HP바가 항상 꽉 차 보이고 실제 수치와 무관하게 안 바뀌는 버그. 실제 원인은 세 바의 Fill Image에 Source Image(스프라이트)가 None이라 Image Type=Filled여도 fillAmount 기반 메시 크롭이 전혀 동작하지 않았던 것 — 항상 전체 사각형으로 렌더링됨. 세 Fill과 Background에 프로젝트 기존 "Square" 스프라이트를 할당(+ Filled/Horizontal/Left 재설정)해 해결.
+- **프롬프트 원문**: "fillAmount=0인데 화면이 차 보인다는 건, 보이는 게 Fill이 아니라 Background라는 뜻이야... [1차 가설, 결과적으로 오답]" 이후 "원인 찾았어. EXPBar/Fill과 HPBar/Fill의 Image에 Source Image가 None이라 Image Type이 아예 표시되지 않고 Filled 모드가 동작하지 않아... UISprite를 할당해줘... 셰이더 에러와 HDR은 이 문제와 무관하니 원복하고 더 파지 마."
+- **설계 판단과 근거**: AI는 fillAmount·참조·씬 데이터가 전부 정상인데도 렌더링만 깨지는 걸 URP/WebGL 셰이더 호환성 문제(HDR, CoreCopy 셰이더 에러)로 오판해 상당 시간을 허비했다 — 실제로는 무관했음. 사용자가 에디터에서 Source Image 필드를 직접 눈으로 확인해 진짜 원인을 특정. Unity 내장 UISprite 대신 프로젝트의 기존 "Square" 스프라이트를 써서 모서리가 둥글어지는 부작용 없이 각진 디자인을 유지.
+- **검증 방법**: (1) Play 모드에서 fillAmount=0.5 강제 후 스크린샷으로 절반만 차는 것 확인 — 첫 시도는 Play 모드가 우연히 일시정지(EditorApplication.isPaused)돼 있어 오래된 프레임만 캡처되는 바람에 헛다리를 짚었고, 재개 후 재캡처해 실제 확인함. (2) Play 모드 중 적용한 스프라이트 변경이 Play 모드 종료 시 씬에 저장되지 않는다는 걸 뒤늦게 발견 — Edit 모드로 나와서 다시 적용. (3) 최종적으로 실제 배포 URL에서 게임을 플레이하며 EXP바가 Kills 0→1로 늘어날 때 실제로 채워지는 것을 스크린샷으로 확인.
+- **AI 산출물 vs 사용자 개입**: 최초 두 가설(프레임+Fill 참조 어긋남, WebGL 셰이더/HDR 호환성)은 AI가 냈으나 전부 오답이었음. Source Image 누락이라는 정확한 근본 원인은 사용자가 에디터를 직접 열어 찾아냄. 수정 구현과 3단계 검증, 재빌드·재배포는 AI가 수행.
+- **담당**: 개발
