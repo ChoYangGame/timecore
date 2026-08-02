@@ -40,6 +40,10 @@ NHN 게임 AI 해커톤 예선 출품작. 2인 팀(개발 1, 디자인 1). 마�
 - 폰트 참조가 깨졌을 때: 파일을 git으로 되돌린 뒤
   `AssetDatabase.ImportAsset(ForceUpdate)` + 씬 재로드로 복구된다.
   Play 모드 종료나 Library 삭제로는 안 풀린다.
+- **굽기 직후에도 같은 조치가 필요하다.** 새로 추가한 글자가 LiberationSans로 폴백되는데
+  애셋의 characterTable/glyphTable은 멀쩡해서 오진하기 쉽다 (`HasCharacter()`도 true를 반환한다).
+  `ImportAsset(ForceUpdate)` → `ReadFontAssetDefinition()` → 씬 재로드로 해결된다.
+  검증은 `TMP_Text.textInfo.characterInfo[i].fontAsset` 이름으로 확인하는 게 확실하다.
 
 ## 작업 방식
 
