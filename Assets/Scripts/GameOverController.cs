@@ -4,9 +4,11 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// 플레이어 사망을 받아 게임을 멈추고 결과 패널을 띄운다. "재파견" 버튼은 씬을 다시 로드한다.
-/// 증강 카드와 timeScale이 충돌하지 않도록 GameManager.IsGameOver 플래그로 조율한다.
-/// 부착 대상: GameOverPanel (HUD_Canvas의 자식)
+/// 판이 끝났을 때(사망 / 클리어) 게임을 멈추고 결과 패널을 띄운다. "재파견" 버튼은 씬을 다시 로드한다.
+/// 두 결말이 정지 조건·정리 절차·재시작이 완전히 같아서 하나의 컨트롤러·하나의 패널로 처리하고,
+/// 제목과 마지막 행 라벨만 바꿔 끼운다. GameManager.IsGameOver("판이 끝남") 하나로
+/// 증강 카드·시대 전환 코루틴과의 timeScale 충돌을 양쪽 결말에서 동일하게 막는다.
+/// 부착 대상: HUD_Canvas (GameOverPanel을 panelRoot로 연결)
 /// </summary>
 [DisallowMultipleComponent]
 public class GameOverController : MonoBehaviour
@@ -20,12 +22,21 @@ public class GameOverController : MonoBehaviour
     [SerializeField] private BossBannerUI bossBanner;
 
     [Header("결과 텍스트")]
-    [Tooltip("생존 시간 / 처치 / 레벨 / 도달 웨이브 값을 줄바꿈으로 넣는다")]
+    [SerializeField] private TMP_Text titleText;
+    [Tooltip("생존 시간 / 처치 / 레벨 / 웨이브 라벨 4줄")]
+    [SerializeField] private TMP_Text labelsText;
+    [Tooltip("위 라벨에 대응하는 값 4줄")]
     [SerializeField] private TMP_Text valuesText;
-    [Tooltip("도달한 시대 이름만 표시 (원시 / 중세)")]
+    [Tooltip("도달한 시대 이름. 클리어 시에는 숨긴다 (중세 도달이 자명하므로)")]
     [SerializeField] private TMP_Text eraText;
 
     [SerializeField] private Button restartButton;
+
+    [Header("결말별 문구")]
+    [SerializeField] private string deathTitle = "시간선 붕괴";
+    [SerializeField] private string clearTitle = "역사 복구 완료";
+    [SerializeField] private string deathLabels = "생존 시간\n처치\n레벨\n도달 웨이브";
+    [SerializeField] private string clearLabels = "생존 시간\n처치\n레벨\n최종 웨이브";
 
     private void Start()
     {
@@ -36,6 +47,7 @@ public class GameOverController : MonoBehaviour
         }
 
         if (playerHealth != null) playerHealth.OnDeath += HandlePlayerDeath;
+        if (eraManager != null) eraManager.OnGameClear += HandleGameClear;
         if (restartButton != null) restartButton.onClick.AddListener(Restart);
         if (panelRoot != null) panelRoot.SetActive(false);
     }
@@ -43,13 +55,22 @@ public class GameOverController : MonoBehaviour
     private void OnDestroy()
     {
         if (playerHealth != null) playerHealth.OnDeath -= HandlePlayerDeath;
+        if (eraManager != null) eraManager.OnGameClear -= HandleGameClear;
         if (restartButton != null) restartButton.onClick.RemoveListener(Restart);
     }
 
-    private void HandlePlayerDeath(Health _)
+    private void HandlePlayerDeath(Health _) => ShowResult(deathTitle, deathLabels, showEra: true);
+
+    private void HandleGameClear() => ShowResult(clearTitle, clearLabels, showEra: false);
+
+    private void ShowResult(string title, string labels, bool showEra)
     {
+        // 사망과 클리어가 같은 프레임에 겹칠 수 있다(보스를 잡으면서 죽는 경우).
+        // 먼저 도착한 쪽이 결과를 확정하고, 나중 것은 여기서 막힌다.
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
+
         // GameManager가 먼저 알아야 한다 — AugmentManager가 이 플래그를 보고
-        // 카드 표시와 timeScale 복구를 건너뛴다 (사망과 레벨업이 같은 프레임에 겹치는 경우 방어).
+        // 카드 표시와 timeScale 복구를 건너뛴다 (레벨업이 같은 프레임에 겹치는 경우 방어).
         if (GameManager.Instance != null) GameManager.Instance.MarkGameOver();
 
         // 스폰을 끄기 전에 시대 전환을 먼저 중단해야 한다.
@@ -58,20 +79,23 @@ public class GameOverController : MonoBehaviour
 
         if (enemySpawner != null) enemySpawner.SpawningEnabled = false;
 
-        // 게임오버보다 우선순위가 낮은 UI는 즉시 정리한다.
+        // 결과 패널보다 우선순위가 낮은 UI는 즉시 정리한다.
         if (augmentManager != null) augmentManager.ForceClose();
         if (bossBanner != null) bossBanner.CancelImmediate();
 
-        Populate();
+        Populate(title, labels, showEra);
 
         if (panelRoot != null) panelRoot.SetActive(true);
         Time.timeScale = 0f;
     }
 
-    private void Populate()
+    private void Populate(string title, string labels, bool showEra)
     {
         GameManager gm = GameManager.Instance;
         if (gm == null) return;
+
+        if (titleText != null) titleText.text = title;
+        if (labelsText != null) labelsText.text = labels;
 
         if (valuesText != null)
         {
@@ -85,8 +109,12 @@ public class GameOverController : MonoBehaviour
 
         if (eraText != null)
         {
-            bool medieval = eraManager != null && eraManager.CurrentEra == EraManager.Era.Medieval;
-            eraText.text = medieval ? "중세" : "원시";
+            eraText.gameObject.SetActive(showEra);
+            if (showEra)
+            {
+                bool medieval = eraManager != null && eraManager.CurrentEra == EraManager.Era.Medieval;
+                eraText.text = medieval ? "중세" : "원시";
+            }
         }
     }
 

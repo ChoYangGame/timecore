@@ -55,10 +55,19 @@ public class GameManager : MonoBehaviour
         SurvivalTime += Time.deltaTime;
     }
 
-    /// <summary>GameOverController가 플레이어 사망 시 호출한다.</summary>
+    /// <summary>GameOverController가 판이 끝났을 때(사망/클리어) 호출한다.</summary>
     public void MarkGameOver()
     {
         IsGameOver = true;
+    }
+
+    /// <summary>
+    /// 타이틀에서 "파견 시작"을 누른 시점에 호출한다.
+    /// timeScale=0이라도 첫 프레임의 deltaTime이 한 번 새어 들어오므로, 여기서 확실히 0으로 맞춘다.
+    /// </summary>
+    public void ResetRunTimer()
+    {
+        SurvivalTime = 0f;
     }
 
     public void RegisterKill()
