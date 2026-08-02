@@ -53,8 +53,10 @@ public class EraManager : MonoBehaviour
     [SerializeField] private float delayBeforeFade = 1f;
     [SerializeField] private float fadeDuration = 0.8f;
 
-    [Tooltip("테스트용: 이 키를 누르면 즉시 다음 시대로 전환한다 (대기 없이)")]
+#if UNITY_EDITOR
+    [Tooltip("테스트용: 이 키를 누르면 즉시 다음 시대로 전환한다 (대기 없이). 빌드에서는 컴파일되지 않는다.")]
     [SerializeField] private Key debugEraSwitchKey = Key.N;
+#endif
 
     public Era CurrentEra { get; private set; } = Era.Primitive;
 
@@ -88,6 +90,8 @@ public class EraManager : MonoBehaviour
         if (waveManager != null) waveManager.OnBossDefeated -= HandleBossDefeated;
     }
 
+#if UNITY_EDITOR
+    // 디버그 전용. 빌드에서는 Update 콜백 자체가 사라진다.
     private void Update()
     {
         if (Keyboard.current != null && Keyboard.current[debugEraSwitchKey].wasPressedThisFrame)
@@ -95,6 +99,7 @@ public class EraManager : MonoBehaviour
             ForceEraTransition();
         }
     }
+#endif
 
     [ContextMenu("즉시 시대 전환")]
     public void ForceEraTransition()
@@ -103,9 +108,31 @@ public class EraManager : MonoBehaviour
         StartCoroutine(TransitionRoutine(skipInitialWait: true));
     }
 
+    /// <summary>
+    /// 게임오버 등으로 전환을 중단해야 할 때 호출한다. 진행 중인 코루틴을 멈추고 페이드를 걷어낸다.
+    /// 중단하지 않으면 페이드가 unscaledDeltaTime으로 도는 탓에 timeScale=0에서도 계속 진행돼
+    /// ApplyEra()가 스폰을 다시 켜고 웨이브를 리셋해버린다.
+    /// </summary>
+    public void AbortTransition()
+    {
+        if (!_isTransitioning) return;
+
+        StopAllCoroutines();
+        _isTransitioning = false;
+
+        if (fadeImage != null)
+        {
+            Color c = fadeImage.color;
+            c.a = 0f;
+            fadeImage.color = c;
+            fadeImage.gameObject.SetActive(false);
+        }
+    }
+
     private void HandleBossDefeated()
     {
         if (_isTransitioning) return;
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
 
         if (CurrentEra == Era.Medieval)
         {

@@ -23,8 +23,10 @@ public class WaveManager : MonoBehaviour
     [Tooltip("웨이브 1당 적 최대체력 가산 비율. 예: 0.15 = +15%")]
     [SerializeField] private float enemyHealthStepBonus = 0.15f;
 
-    [Tooltip("테스트용: 이 키를 누르면 웨이브 진행과 무관하게 즉시 보스를 소환한다")]
+#if UNITY_EDITOR
+    [Tooltip("테스트용: 이 키를 누르면 웨이브 진행과 무관하게 즉시 보스를 소환한다. 빌드에서는 컴파일되지 않는다.")]
     [SerializeField] private Key debugBossSpawnKey = Key.B;
+#endif
 
     [Tooltip("보스 이름표 텍스트. EraManager.ConfigureBoss()가 시대 전환 시 갱신한다.")]
     [SerializeField] private string bossName = "고대의 포식자";
@@ -68,10 +70,12 @@ public class WaveManager : MonoBehaviour
             }
         }
 
+#if UNITY_EDITOR
         if (Keyboard.current != null && Keyboard.current[debugBossSpawnKey].wasPressedThisFrame)
         {
             ForceSpawnBoss();
         }
+#endif
     }
 
     private void AdvanceWave()

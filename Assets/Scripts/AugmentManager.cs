@@ -52,6 +52,9 @@ public class AugmentManager : MonoBehaviour
     {
         if (allAugments == null || allAugments.Length == 0 || cards == null || cards.Length == 0) return;
 
+        // 게임오버가 카드보다 우선순위가 높다. 사망과 레벨업이 같은 프레임에 겹쳐도 카드를 띄우지 않는다.
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
+
         // 카드가 배너보다 우선순위가 높다: 배너가 떠 있으면 바로 끊는다.
         if (bossBanner != null) bossBanner.CancelImmediate();
 
@@ -87,10 +90,22 @@ public class AugmentManager : MonoBehaviour
         Apply(data);
 
         if (panelRoot != null) panelRoot.SetActive(false);
-        Time.timeScale = 1f;
         IsShowing = false;
 
-        OnPanelClosed?.Invoke();
+        // 게임오버 중이라면 게임을 재개시키면 안 된다 (죽었는데 시간이 다시 흐르는 상황 방지).
+        bool gameOver = GameManager.Instance != null && GameManager.Instance.IsGameOver;
+        Time.timeScale = gameOver ? 0f : 1f;
+
+        if (!gameOver) OnPanelClosed?.Invoke();
+    }
+
+    /// <summary>게임오버 등 더 우선순위가 높은 UI가 끼어들 때 카드를 즉시 닫는다. timeScale은 건드리지 않는다.</summary>
+    public void ForceClose()
+    {
+        if (!IsShowing) return;
+
+        if (panelRoot != null) panelRoot.SetActive(false);
+        IsShowing = false;
     }
 
     private void Apply(AugmentData data)

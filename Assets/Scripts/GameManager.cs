@@ -20,6 +20,12 @@ public class GameManager : MonoBehaviour
     /// <summary>'시간 왜곡' 증강이 누적시키는 경험치 흡수 반경 배율. ExpOrb가 스폰 시 읽어간다.</summary>
     public float ExpAbsorbRadiusMultiplier { get; private set; } = 1f;
 
+    /// <summary>
+    /// 플레이어 사망 후 true. 생존 시간 누적을 멈추고, AugmentManager가 카드 표시와
+    /// timeScale 복구를 건너뛰는 기준이 된다 (사망과 레벨업이 겹칠 때의 방어).
+    /// </summary>
+    public bool IsGameOver { get; private set; }
+
     public event Action<int> OnKillCountChanged;
     public event Action<int, float> OnExpChanged;
 
@@ -45,7 +51,14 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        if (IsGameOver) return;
         SurvivalTime += Time.deltaTime;
+    }
+
+    /// <summary>GameOverController가 플레이어 사망 시 호출한다.</summary>
+    public void MarkGameOver()
+    {
+        IsGameOver = true;
     }
 
     public void RegisterKill()
