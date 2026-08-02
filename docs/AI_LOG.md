@@ -222,3 +222,33 @@
 - **검증 방법**: git status/diff(Fonts 변경 0건), 애셋 내 `m_Script` GUID(`71c1514a…`=TMP_FontAsset)와 `m_EditorClassIdentifier` 대조, .meta GUID와 씬의 `m_fontAsset` 참조 22건 일치 확인. 1차 시도(Play 모드 종료)는 실패 — Unity가 "이 GUID→유효하지 않음" 해석을 AssetDatabase에 캐싱해 재해석을 안 했기 때문. `ImportAsset(ForceUpdate)` + `OpenScene` 재로드 후 11/11 전부 Pretendard SDF 복귀, EraManager 배선·한글 라벨 전부 보존 확인.
 - **AI 산출물 vs 사용자 개입**: 폰트 재굽기와 git checkout은 사용자가 수행. 원인 분리(디스크 정상/인메모리 파손), Play 모드 종료로는 안 되는 이유 규명, 재임포트+재로드 복구, 보존 검증은 AI가 수행. 폰트는 100자 상태로 되돌아가 "세"/"원"은 여전히 없음 — 재굽기는 반드시 기존 애셋의 Update Atlas Texture → Save 경로로 해야 함을 CLAUDE.md에 규칙으로 추가.
 - **담당**: 개발
+
+### 2026-08-02 (D-6) | ProjectSettings 원복 — preloadedAssets 누락으로 빌드 UI 입력이 깨질 뻔함
+
+- **도구**: Claude Code (Opus 5) / Unity MCP
+- **작업**: 커밋 직전 스테이징 내용을 훑다가 `ProjectSettings.asset`의 `preloadedAssets`에서 `InputSystem_Actions.inputactions`(guid `2bcd2660…`)가 통째로 빠져 있는 것을 발견. 세션 시작 전부터 있던 미커밋 변경이었고, 전날 HDR/셰이더 오진단 작업 중 딸려 들어간 것으로 확인됨. 시대 전환 기능과 무관해 커밋에서 제외하고 사용자에게 보고 → `git checkout`으로 원복.
+- **프롬프트 원문**: "preloadedAssets에서 InputSystem_Actions가 빠진 건 의도한 변경이 아니야. 어제 HDR 진단하다가 딸려 들어간 것 같아. 원복 후 InputSystem_Actions가 preloadedAssets에 다시 있는지, HDR 설정도 원래 값인지 확인해줘."
+- **설계 판단과 근거**: 씬을 grep해 `InputSystem_Actions`를 직접 참조하는 오브젝트가 **한 곳도 없음**을 확인한 것이 판단 근거였다 — 직접 참조가 없으면 `preloadedAssets`가 유일한 빌드 포함 경로이므로, 그대로 배포했으면 WebGL 빌드에서 `InputSystemUIInputModule`이 액션 애셋을 못 찾아 **증강 카드 클릭이 죽을 수 있었다**. 이동은 `Keyboard.current` 직접 조회라 무관해서 로컬 Play 테스트로는 안 잡혔을 버그.
+- **검증 방법**: 원복 후 `preloadedAssets`에 guid `2bcd2660…` 복원 확인. HDR은 `m_SupportsHDR: 1`이고 `git log`로 URP 애셋 3종(UniversalRP/Renderer2D/GlobalSettings)이 **초기 커밋 `a586f96` 이후 한 번도 수정된 적 없음** + 작업트리 변경 0건을 확인해, 전날 HDR 실험이 완전히 원복돼 있었음을 입증.
+- **AI 산출물 vs 사용자 개입**: 커밋 전 스테이징 검토 중 AI가 발견하고 영향 범위(씬 직접 참조 없음 → 빌드 입력 위험)를 규명해 보고. 의도한 변경이 아니라는 판단과 원복 지시는 사용자가 내림.
+- **담당**: 개발
+
+### 2026-08-02 (D-6) | 폰트 재굽기 성공 (103자) — Update Atlas Texture 경로로 타입 보존
+
+- **도구**: Claude Code (Opus 5) / Unity MCP
+- **작업**: 앞선 사고를 되풀이하지 않는 경로로 "세"/"원"을 추가해 100자 → 103자 재생성. **Window 메뉴에서 Font Asset Creator를 새로 열어 굽지 않고**, 기존 `Assets/Fonts/Pretendard SDF` 인스펙터의 **Update Atlas Texture** → Generate → **Save**(Save as 아님)로 제자리 갱신. AI는 임시 TTF를 Assets에 배치하고 붙여넣을 문자열·설정값(Padding 5 / Atlas 1024 / SDFAA)만 준비한 뒤 멈췄고, 굽기는 사용자가 수행.
+- **프롬프트 원문**: "3번에서 반드시 멈춰. 폰트 굽기는 내가 직접 한다. / 폰트가 또 깨지면 Library 삭제 전에 AssetDatabase.ImportAsset(ForceUpdate) + 씬 재로드를 먼저 시도해. / 4번 검증에서 문제 있으면 5번으로 넘어가지 말고 알려줘."
+- **설계 판단과 근거**: 사고의 근본 원인은 "새 애셋 생성"이었다 — Unity 6에서 Font Asset Creator로 새로 만들면 `TMP_FontAsset`이 아닌 `UnityEngine.TextCore.Text.FontAsset`이 나오고, 같은 GUID 자리에 다른 타입이 앉으면 씬의 TMP 참조가 전멸한다. 기존 애셋에 Save로 덮어쓰면 타입이 보존된다. 이 두 경로의 차이를 CLAUDE.md에 규칙으로 못박아 재발을 막았다.
+- **검증 방법**: 타입 `TMPro.TMP_FontAsset` 확인, 103자/Static/1024×1024/Padding 5/SDFAA 확인, `세`·`원`·em dash(U+2014) 개별 포함 확인, 씬 TMP **11/11** Pretendard SDF 참조 확인. Play 모드에서 "원시 시대"/"중세 시대"/"WAVE 6 — BOSS"/"고대의 포식자" 4개 문자열을 실제 렌더해 `characterInfo[i].fontAsset` 전수 검사 — **누락 글리프 0건**, TMP 글리프 경고 0건. em dash가 정상이라 하이픈 교체는 불필요했음. 임시 TTF·.meta 삭제 후 재검사에서도 103자 유지 확인.
+- **AI 산출물 vs 사용자 개입**: 굽기는 사용자가 직접 수행(MCP는 인터랙티브 다이얼로그로 불가). 경로 설계, 문자열·설정값 준비, 굽기 후 7단계 검증, 임시 파일 정리는 AI가 수행. 에디터 전용 메타데이터 `sourceFontFileGUID`에 삭제된 TTF의 GUID가 남았으나 런타임 참조(`m_SourceFontFile`)는 비어 있어 빌드 무영향 — API 경로가 불확실해 무리하게 건드리지 않고 남겨둠.
+- **담당**: 개발
+
+### 2026-08-02 (D-6) | Web 빌드 및 배포 (시대 전환 + 폰트 반영, dist 13MB)
+
+- **도구**: Claude Code (Opus 5) / Unity MCP
+- **작업**: 콘솔 에러 0건 확인 후 `BuildPipeline.BuildPlayer(WebGL)`로 재빌드, `deploy.bat`으로 프로덕션 배포(https://timecore-chi.vercel.app). 커밋 3건(시대 전환 / 폰트 원본 / 폰트 서브셋)을 push.
+- **프롬프트 원문**: "빌드 전 Unity_GetConsoleLogs로 에러 0건 확인 / \"failed\"로 나와도 에러 0건이면 Build/ 타임스탬프와 용량으로 판단 / deploy.bat 실행 / dist/ 총 용량 알려줘"
+- **설계 판단과 근거**: `fonts/Pretendard-Regular.ttf`(2.7MB)를 저장소 루트에 커밋했다 — Assets 밖이라 **WebGL 빌드 용량에 영향이 없으면서** 재굽기 소스로 계속 필요하다(D-4에 UI 텍스트가 늘면 또 굽는다). SIL OFL 1.1이라 재배포도 허용된다. 반대로 Assets 안 임시 TTF는 굽기 직후 삭제해 빌드에 안 들어가게 했다.
+- **검증 방법**: `Unity_RunCommand`가 이번에도 빌드를 "failed"로 오보고했으나 전부 Sentis(`com.unity.ai.inference`) 셰이더 경고였고, 콘솔 에러 0건 + 산출물 4종 타임스탬프 갱신(02:55 → 16:58)으로 실제 성공 판정. `index.html`에 미치환 `{{{ }}}` 매크로 0건 및 산출물 4개 참조 일치 확인. 배포 후 `curl -I`로 `.wasm.br`(`content-encoding: br` + `content-type: application/wasm`)와 `.data.br`(`br`) 헤더 검증. dist 총 **13MB** (wasm 7.2 / data 4.8 / framework 76K / loader 28K) — 직전 12MB 대비 약 1MB 증가.
+- **AI 산출물 vs 사용자 개입**: 빌드·검증·배포·커밋·push 전량 AI가 수행. 브라우저 최종 확인은 사용자가 수행.
+- **담당**: 개발
