@@ -132,15 +132,18 @@ public class EraManager : MonoBehaviour
     private void HandleBossDefeated()
     {
         if (_isTransitioning) return;
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
 
         if (CurrentEra == Era.Medieval)
         {
-            // 중세 보스(=예선 최종 보스) 처치. 아직 별도 클리어 화면은 없어 이벤트만 발행한다.
+            // 중세 보스(=예선 최종 보스) 처치. 클리어는 게임오버 여부와 무관하게 알린다 —
+            // 사망과 같은 프레임에 겹쳤을 때 어느 쪽을 보여줄지는 GameOverController가 정한다.
             Debug.Log("[EraManager] Game Clear!");
             OnGameClear?.Invoke();
             return;
         }
+
+        // 시대 전환은 판이 끝났으면 하지 않는다.
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
 
         StartCoroutine(TransitionRoutine(skipInitialWait: false));
     }

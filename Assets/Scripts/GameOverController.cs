@@ -59,15 +59,30 @@ public class GameOverController : MonoBehaviour
         if (restartButton != null) restartButton.onClick.RemoveListener(Restart);
     }
 
-    private void HandlePlayerDeath(Health _) => ShowResult(deathTitle, deathLabels, showEra: true);
+    private bool _resultShown;
+    private bool _clearShown;
 
-    private void HandleGameClear() => ShowResult(clearTitle, clearLabels, showEra: false);
-
-    private void ShowResult(string title, string labels, bool showEra)
+    private void HandlePlayerDeath(Health _)
     {
-        // 사망과 클리어가 같은 프레임에 겹칠 수 있다(보스를 잡으면서 죽는 경우).
-        // 먼저 도착한 쪽이 결과를 확정하고, 나중 것은 여기서 막힌다.
-        if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
+        // 결과가 이미 확정됐으면 무시한다. 클리어가 떠 있으면 사망이 덮지 않는다.
+        if (_resultShown) return;
+        ShowResult(deathTitle, deathLabels, showEra: true, isClear: false);
+    }
+
+    private void HandleGameClear()
+    {
+        if (_clearShown) return;
+
+        // 보스를 잡으면서 죽는 경우 사망과 클리어가 같은 프레임에 겹친다.
+        // 어느 쪽이 먼저 도착하든 클리어가 이긴다 — 사망 결과가 먼저 떴어도 덮어쓴다.
+        // (timeScale=0이라 물리가 멈추므로 클리어가 사망보다 한 프레임 넘게 늦게 올 수는 없다)
+        ShowResult(clearTitle, clearLabels, showEra: false, isClear: true);
+    }
+
+    private void ShowResult(string title, string labels, bool showEra, bool isClear)
+    {
+        _resultShown = true;
+        _clearShown = isClear;
 
         // GameManager가 먼저 알아야 한다 — AugmentManager가 이 플래그를 보고
         // 카드 표시와 timeScale 복구를 건너뛴다 (레벨업이 같은 프레임에 겹치는 경우 방어).
