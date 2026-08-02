@@ -60,6 +60,9 @@ public class EraManager : MonoBehaviour
 
     public Era CurrentEra { get; private set; } = Era.Primitive;
 
+    /// <summary>전환 연출(페이드~배너)이 진행 중인지. AnomalyDirector가 배너 충돌을 피할 때 본다.</summary>
+    public bool IsTransitioning => _isTransitioning;
+
     /// <summary>중세 보스 처치 시 발행. 지금은 이벤트만 나간다(게임 클리어 화면은 아직 없음).</summary>
     public event Action OnGameClear;
 

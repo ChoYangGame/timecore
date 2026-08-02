@@ -322,7 +322,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4292925551
   m_fontColor: {r: 0.435, g: 0.847, b: 0.878, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -335,7 +335,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -459,7 +459,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 2800349170
   m_fontColor: {r: 0.949, g: 0.937, b: 0.914, a: 0.65}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -472,7 +472,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -2044,7 +2044,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4293521394
   m_fontColor: {r: 0.949, g: 0.937, b: 0.914, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -2057,7 +2057,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -4362,7 +4362,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 2800349170
   m_fontColor: {r: 0.949, g: 0.937, b: 0.914, a: 0.65}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -4375,7 +4375,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -4627,7 +4627,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4281738267
   m_fontColor: {r: 0.106, g: 0.141, b: 0.212, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -4640,7 +4640,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -5722,6 +5722,78 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1926572994}
   m_CullTransparentMesh: 1
+--- !u!1 &1982608487
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1982608489}
+  - component: {fileID: 1982608488}
+  m_Layer: 0
+  m_Name: AnomalyDirector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1982608488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1982608487}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 906b71e9cc6156441900b6d7e76fd165, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnomalyDirector
+  enemySpawner: {fileID: 1781697617}
+  eraManager: {fileID: 794621459}
+  augmentManager: {fileID: 1120985799}
+  bossBanner: {fileID: 157301046}
+  titleController: {fileID: 1120985801}
+  playerHealth: {fileID: 1366259207}
+  primitiveEnemyPrefab: {fileID: 7272301557060868570, guid: dab18496bb395414c9478871ee548664, type: 3}
+  medievalEnemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
+  evaluateInterval: 5
+  warmupTime: 25
+  minInterventionInterval: 20
+  crisisHpRatio: 0.35
+  crisisHitCount: 4
+  overkillPressure: 0.9
+  overkillHpRatio: 0.65
+  intruderCount: 4
+  intrusionDensityFactor: 0.71
+  stagnantAliveRatio: 0.25
+  stagnantKillRate: 0.3
+  stagnantHpRatio: 0.5
+  accelerateFactor: 0.85
+  maxAccumulatedRatio: 0.5
+  minSpawnInterval: 0.35
+  intruderTint: {r: 0.784, g: 0.42, b: 0.878, a: 1}
+  intruderTintStrength: 0.35
+  intruderScale: 1.15
+  verboseLog: 1
+  maxLogEntries: 200
+--- !u!4 &1982608489
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1982608487}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2007248659
 GameObject:
   m_ObjectHideFlags: 0
@@ -6009,3 +6081,4 @@ SceneRoots:
   - {fileID: 1243934202}
   - {fileID: 256916285}
   - {fileID: 794621460}
+  - {fileID: 1982608489}
