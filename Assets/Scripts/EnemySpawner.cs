@@ -33,6 +33,12 @@ public class EnemySpawner : MonoBehaviour
     /// <summary>보스 등장 시 WaveManager 가 false 로 꺼서 일반 스폰을 중단시킨다.</summary>
     public bool SpawningEnabled { get; set; } = true;
 
+    /// <summary>시대 전환 시 EraManager가 호출: 이후 스폰되는 적의 프리팹을 교체한다.</summary>
+    public void SetEnemyPrefab(Enemy prefab)
+    {
+        enemyPrefab = prefab;
+    }
+
     /// <summary>스폰 직후(Awake 완료 후) 호출된다. 웨이브 난이도 스케일링을 붙이는 지점.</summary>
     public event System.Action<Enemy> OnEnemySpawned;
 

@@ -22,6 +22,22 @@ NHN 게임 AI 해커톤 예선 출품작. 2인 팀(개발 1, 디자인 1). 마�
   Build/ 폴더 타임스탬프와 용량으로 실제 성공 여부를 판단한다.
   Sentis 패키지(com.unity.ai.inference)의 셰이더 경고는 무시한다.
 
+## 폰트 서브셋 갱신
+
+- TMP 폰트 굽기는 MCP로 불가능하다 (인터랙티브 다이얼로그가 차단됨).
+- 새 글자가 필요하면 코드로 시도하지 말고, 아래를 사용자에게 전달하고 대기한다:
+  (1) 기존 포함 글자 + 새 글자를 합친 한 줄 문자열
+  (2) 설정값 (Padding 5px / Atlas 1024 / SDFAA)
+- 사용자가 Font Asset Creator로 직접 굽는다.
+- **새 애셋으로 만들면 안 된다.** Unity 6에서 Font Asset Creator로 새로 만들면
+  `TMP_FontAsset`이 아니라 `UnityEngine.TextCore.Text.FontAsset` 타입으로 생성돼
+  씬의 모든 TMP 텍스트가 폰트 참조를 잃는다 (2026-08-02 실제 발생).
+  반드시 기존 `Assets/Fonts/Pretendard SDF` 인스펙터의 **Update Atlas Texture**로 열어
+  제자리 갱신하고 **Save**(Save as 아님)로 덮어쓴다.
+- 폰트 참조가 깨졌을 때: 파일을 git으로 되돌린 뒤
+  `AssetDatabase.ImportAsset(ForceUpdate)` + 씬 재로드로 복구된다.
+  Play 모드 종료나 Library 삭제로는 안 풀린다.
+
 ## 작업 방식
 
 - 확장성보다 지금 돌아가는 것이 우선. 완벽한 아키텍처를 제안하지 말 것.

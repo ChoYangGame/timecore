@@ -26,17 +26,26 @@ public class WaveManager : MonoBehaviour
     [Tooltip("테스트용: 이 키를 누르면 웨이브 진행과 무관하게 즉시 보스를 소환한다")]
     [SerializeField] private Key debugBossSpawnKey = Key.B;
 
+    [Tooltip("보스 이름표 텍스트. EraManager.ConfigureBoss()가 시대 전환 시 갱신한다.")]
+    [SerializeField] private string bossName = "고대의 포식자";
+
+    [Tooltip("보스 스프라이트 색상. EraManager.ConfigureBoss()가 시대 전환 시 갱신한다.")]
+    [SerializeField] private Color bossColor = new Color(0.362f, 0.108f, 0.097f, 1f);
+
     public int CurrentWave { get; private set; } = 1;
 
-    /// <summary>보스 처치 시 발행. 지금은 다음 시대 전환 없이 이벤트만 나간다.</summary>
+    /// <summary>보스 처치 시 발행. EraManager가 구독해 다음 시대 전환(또는 게임 클리어)을 처리한다.</summary>
     public event Action OnBossDefeated;
 
     private float _waveTimer;
     private bool _bossSpawned;
     private string _pendingBannerText;
+    private float _initialSpawnInterval;
 
     private void Awake()
     {
+        _initialSpawnInterval = enemySpawner != null ? enemySpawner.SpawnInterval : 1.1f;
+
         if (enemySpawner != null) enemySpawner.OnEnemySpawned += HandleEnemySpawned;
         if (augmentManager != null) augmentManager.OnPanelClosed += HandlePanelClosed;
     }
@@ -96,8 +105,32 @@ public class WaveManager : MonoBehaviour
         Health bossHealth = boss.GetComponent<Health>();
         bossHealth.OnDeath += HandleBossDeath;
 
-        if (bossHpUI != null) bossHpUI.Show(bossHealth, "고대의 포식자");
+        SpriteRenderer sr = boss.GetComponent<SpriteRenderer>();
+        if (sr != null) sr.color = bossColor;
+
+        if (bossHpUI != null) bossHpUI.Show(bossHealth, bossName);
         ShowOrDeferBanner($"WAVE {bossWave} — BOSS");
+    }
+
+    /// <summary>시대 전환 시 EraManager가 다음 보스의 이름/색을 갱신한다 (프리팹은 재사용).</summary>
+    public void ConfigureBoss(string name, Color color)
+    {
+        bossName = name;
+        bossColor = color;
+    }
+
+    /// <summary>시대 전환 시 EraManager가 호출: 웨이브/스폰 상태를 새 시대 기준으로 되돌린다.</summary>
+    public void ResetForNewEra()
+    {
+        CurrentWave = 1;
+        _bossSpawned = false;
+        _waveTimer = 0f;
+
+        if (enemySpawner != null)
+        {
+            enemySpawner.SpawnInterval = _initialSpawnInterval;
+            enemySpawner.SpawningEnabled = true;
+        }
     }
 
     /// <summary>증강 카드가 떠 있으면 배너를 미루고, 아니면 바로 띄운다.</summary>

@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 5123154356287959232}
   - component: {fileID: 7272301557060868570}
   m_Layer: 0
-  m_Name: Enemy
+  m_Name: MedievalEnemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -86,7 +86,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 8468ecb41e0a5bd46a8074d97c8edd72, type: 3}
-  m_Color: {r: 0.65882355, g: 0.19607843, b: 0.1764706, a: 1}
+  m_Color: {r: 0.5411765, g: 0.42745098, b: 0.23137255, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -180,7 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b57e79d38216ec04b96d16d5fbd63f4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHp: 25
+  maxHp: 30
   flashDuration: 0.08
   flashRenderer: {fileID: 0}
   onDeathEvent:
@@ -199,7 +199,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c526c8f47a73f394aa4f2bbc339e0a5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  moveSpeed: 2.2
+  moveSpeed: 2.6
   contactDamage: 8
   expOrbPrefab: {fileID: 7890621601468930963, guid: 3cb5f082c2b31e04e95ddf3431b109e4, type: 3}
   contactCooldown: 0.7

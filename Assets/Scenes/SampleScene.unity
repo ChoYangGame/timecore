@@ -426,6 +426,8 @@ MonoBehaviour:
   minSpawnInterval: 0.4
   enemyHealthStepBonus: 0.15
   debugBossSpawnKey: 16
+  bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
+  bossColor: {r: 0.362, g: 0.108, b: 0.097, a: 1}
 --- !u!4 &256916285
 Transform:
   m_ObjectHideFlags: 0
@@ -1195,6 +1197,81 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &671454660
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 671454663}
+  - component: {fileID: 671454662}
+  - component: {fileID: 671454661}
+  m_Layer: 0
+  m_Name: EraFade
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &671454661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 671454660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 8468ecb41e0a5bd46a8074d97c8edd72, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &671454662
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 671454660}
+  m_CullTransparentMesh: 1
+--- !u!224 &671454663
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 671454660}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 3.2069201, y: 3.2069201, z: 3.2069201}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1120985798}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &686110166
 GameObject:
   m_ObjectHideFlags: 0
@@ -1407,6 +1484,72 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 794391960}
   m_CullTransparentMesh: 1
+--- !u!1 &794621458
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 794621460}
+  - component: {fileID: 794621459}
+  m_Layer: 0
+  m_Name: EraManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &794621459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794621458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3c87aa3d046da74b9f3f4fb0e06a7cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EraManager
+  waveManager: {fileID: 256916284}
+  enemySpawner: {fileID: 1781697617}
+  targetCamera: {fileID: 519420031}
+  bossBanner: {fileID: 157301046}
+  augmentManager: {fileID: 1120985799}
+  player: {fileID: 1366259211}
+  fadeImage: {fileID: 671454661}
+  primitiveConfig:
+    eraLabel: "\uC6D0\uC2DC \uC2DC\uB300"
+    backgroundColor: {r: 0.16470589, g: 0.22745098, b: 0.18039216, a: 1}
+    enemyPrefab: {fileID: 7272301557060868570, guid: dab18496bb395414c9478871ee548664, type: 3}
+    bossColor: {r: 0.362, g: 0.108, b: 0.097, a: 1}
+    bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
+  medievalConfig:
+    eraLabel: "\uC911\uC138 \uC2DC\uB300"
+    backgroundColor: {r: 0.18039216, g: 0.16470589, b: 0.21960784, a: 1}
+    enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
+    bossColor: {r: 0.5411765, g: 0.42745098, b: 0.23137255, a: 1}
+    bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
+  delayBeforeFade: 1
+  fadeDuration: 0.8
+  debugEraSwitchKey: 28
+--- !u!4 &794621460
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794621458}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &797202698
 GameObject:
   m_ObjectHideFlags: 0
@@ -1831,6 +1974,7 @@ RectTransform:
   - {fileID: 211120014}
   - {fileID: 1533690646}
   - {fileID: 157301049}
+  - {fileID: 671454663}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3662,3 +3806,4 @@ SceneRoots:
   - {fileID: 1120985798}
   - {fileID: 1243934202}
   - {fileID: 256916285}
+  - {fileID: 794621460}

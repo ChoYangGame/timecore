@@ -182,3 +182,43 @@
 - **검증 방법**: (1) Play 모드에서 fillAmount=0.5 강제 후 스크린샷으로 절반만 차는 것 확인 — 첫 시도는 Play 모드가 우연히 일시정지(EditorApplication.isPaused)돼 있어 오래된 프레임만 캡처되는 바람에 헛다리를 짚었고, 재개 후 재캡처해 실제 확인함. (2) Play 모드 중 적용한 스프라이트 변경이 Play 모드 종료 시 씬에 저장되지 않는다는 걸 뒤늦게 발견 — Edit 모드로 나와서 다시 적용. (3) 최종적으로 실제 배포 URL에서 게임을 플레이하며 EXP바가 Kills 0→1로 늘어날 때 실제로 채워지는 것을 스크린샷으로 확인.
 - **AI 산출물 vs 사용자 개입**: 최초 두 가설(프레임+Fill 참조 어긋남, WebGL 셰이더/HDR 호환성)은 AI가 냈으나 전부 오답이었음. Source Image 누락이라는 정확한 근본 원인은 사용자가 에디터를 직접 열어 찾아냄. 수정 구현과 3단계 검증, 재빌드·재배포는 AI가 수행.
 - **담당**: 개발
+
+### 2026-08-02 (D-6) | 시대 전환 시스템 구현 (원시 → 중세)
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: EraManager(빈 GameObject) 신규 작성. WaveManager.OnBossDefeated 구독 → 1초 대기(증강 카드 표시 중이면 닫힐 때까지 추가 대기) → 화면 풀블랙 페이드아웃(0.8초, unscaledDeltaTime) → 배경색·적 프리팹·보스 색상 교체 + 웨이브 리셋 + 플레이어를 맵 왼쪽으로 이동 + 잔여 적/투사체/경험치 오브 정리 → 페이드인(0.8초) → BossBannerUI 재사용해 시대 배너 표시. WaveManager에 ConfigureBoss()/ResetForNewEra(), EnemySpawner에 SetEnemyPrefab() 추가. MedievalEnemy 프리팹(Enemy 복제, 색 #8A6D3B, HP 30, 이동속도 2.6) 신규 제작. HUD_Canvas 최상단에 EraFade(풀스크린 검정 Image, Source Image=Square, raycastTarget=false) 배치. N키 즉시 전환 디버그 지원.
+- **프롬프트 원문**: "오늘 목표: 시대 전환 (원시 → 중세)" (이하 1~5번 섹션 스펙 전체 — EraManager 설계, 시대별 설정, 중세 적 프리팹, 전환 연출, 디버그 키 상세 포함, "UI 관련 작업 시 Image에 Source Image가 할당돼 있는지 반드시 확인해줘"까지 포함)
+- **설계 판단과 근거**: 시간 관계상 중세 보스는 별도 프리팹 없이 WaveManager가 스폰 직후 SpriteRenderer.color만 덮어쓰는 방식(ConfigureBoss로 이름·색 주입)을 택함 — 프리팹 구조 변경 없이 시대별 외형만 교체. ClearBattlefield는 FindObjectsByType로 Enemy/BossProjectile/ExpOrb를 전환 시 1회만 일괄 Destroy — 매 프레임 호출이 아니라 성능 영향 없음. 페이드 타이머는 증강 카드가 Time.timeScale=0을 걸 수 있어 기존 BossBannerUI와 동일하게 unscaledDeltaTime 기반으로 작성.
+- **검증 방법**: Play 모드에서 EraManager.ForceEraTransition()을 직접 호출해 실측 — 배경색이 RGBA(0.180,0.165,0.220,1)로 바뀌고, 새로 스폰된 적이 MedievalEnemy(Clone)/색 #8A6D3B/HP 30으로 교체되고, WaveManager.CurrentWave가 1로 리셋되며, 레벨(1)·킬수(계속 누적)는 그대로 유지됨을 확인. 강제 소환한 보스가 중세 색상(#8A6D3B)으로 나오는 것과, 그 보스에게 치명타를 줬을 때(2번째=중세 보스이므로) 추가 시대 전환 없이 EraManager.OnGameClear 이벤트만 발행되는 것을 로그로 확인.
+- **AI 산출물 vs 사용자 개입**: EraManager.cs 신규 작성, WaveManager/EnemySpawner 확장, MedievalEnemy 프리팹 제작, EraFade UI 배치, 씬 배선, Play 모드 실측 검증까지 전량 AI가 수행.
+- **담당**: 개발
+
+### 2026-08-02 (D-6) | 잘 안 된 시도: 참조 주입 도구 버그 + TMP 폰트 아틀라스 확장이 인터랙티브 다이얼로그에 막힘
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: (1) EraManager 필드 7개를 Unity_ManageGameObject의 `{"find":..., "component":...}` 참조 주입 문법으로 연결 시도 → 매번 "Unexpected token type 'EndObject'" JSON 역직렬화 오류로 실패("Property not found"라는 오해를 유발하는 오진단 메시지까지 표시). RunCommand로 SerializedObject.FindProperty(...).objectReferenceValue를 직접 대입하는 방식으로 우회해 해결. (2) "MEDIEVAL ERA"/"PRIMITIVE ERA" 표시에 필요한 대문자 M/D/I/R/T를 Pretendard SDF에 추가하려 TMP_FontAsset.CreateFontAsset/TryAddCharacters를 호출했으나 매번 "User interactions are not supported for MCP tool calls"로 즉시 차단됨. 단독 TTF 임포트는 성공하지만 TMP 폰트 엔진 초기화 자체가 인터랙티브 다이얼로그를 띄우는 것으로 확인, MCP로는 우회 불가 — 재부팅 후 첫 폰트 엔진 사용이라 발생했을 가능성.
+- **프롬프트 원문**: 해당 없음 (작업 중 AI가 자체 발견 및 진단)
+- **설계 판단과 근거**: (1)은 GameObject.Find가 비활성 오브젝트(BossBanner 등)를 못 찾는 것과는 별개의, 도구 자체의 JSON 파싱 버그로 판단 — 이후 참조 주입은 RunCommand+SerializedObject를 기본으로 쓴다. (2)는 실패한 4회 시도(SerializedObject 조작, 신규 폰트 애셋 생성, 최소 재현 테스트 2회) 중 남긴 임시 파일(_TempPretendard*.ttf)을 전부 정리했고, 기존 폰트 애셋이 Static/1024x1024/100자로 손상 없이 원상태임을 재확인함.
+- **검증 방법**: 실패 후 Pretendard SDF.asset의 atlasPopulationMode/atlasWidth/atlasHeight/characterTable.Count를 재조회해 변동 없음을 확인. Assets/Fonts/ 폴더에 임시 파일이 남아있지 않음을 확인.
+- **AI 산출물 vs 사용자 개입**: 진단과 우회 시도 전부 AI가 수행. 폰트 재굽기는 Unity 에디터에서 사람이 다이얼로그를 한 번 직접 클릭해야 풀리는 문제라 사용자 개입이 필요 — N키 디버그 전환 시 "PRIMITIVE ERA"/"MEDIEVAL ERA" 배너 텍스트가 일부 글자(M/D/I/R/T)만 tofu box로 보일 수 있음.
+- **담당**: 개발
+
+### 2026-08-02 (D-6) | 시대 배너 텍스트 영문 → 한글 교체 ("원시 시대"/"중세 시대")
+
+- **도구**: Claude Code (Sonnet 5) / Unity MCP
+- **작업**: EraManager의 eraLabel을 "PRIMITIVE ERA"/"MEDIEVAL ERA"에서 "원시 시대"/"중세 시대"로 교체(스크립트 기본값 + 씬 인스턴스 값 모두). 교체 전 폰트에 필요한 글자(중/세/시/대/원/공백)가 있는지 문자 코드로 전수 대조.
+- **프롬프트 원문**: "배너 텍스트를 '중세 시대', '원시 시대'로 바꿔줘. 이 글자들이 기존 SDF 폰트에 있는지 먼저 확인하고, 있으면 교체해줘."
+- **설계 판단과 근거**: 영문 라벨 전환 당시 필요했던 M/D/I/R/T 문제는 한글 교체로 자연히 해소됨(더 이상 필요 없음). 대신 "세"와 "원" 두 글자가 신규로 없음을 확인 — 직전 로그의 폰트 다이얼로그 차단 이슈가 동일하게 재현되어 추가 불가.
+- **검증 방법**: `font.characterTable`을 순회해 "중세시대원 " 6글자를 유니코드 단위로 대조 — 중/세/시/대/공백 중 세만 없고, 대신 원도 없음을 확인(있는 글자: 중, 시, 대, 공백 / 없는 글자: 세, 원).
+- **AI 산출물 vs 사용자 개입**: 글자 대조·스크립트·씬 값 교체는 AI가 수행. "세"/"원" 두 글자는 여전히 다이얼로그 차단으로 AI가 못 구움 — 이전 M/D/I/R/T와 같은 방법으로 사용자가 직접 2글자만 추가하면 됨. 그 전까지는 배너의 "세"/"원" 위치만 tofu box로 보임.
+- **담당**: 개발
+
+### 2026-08-02 (D-6) | 사고: 폰트 재굽기가 타입을 바꿔 씬의 TMP 참조 11개 전멸 → 복구
+
+- **도구**: Claude Code (Sonnet 5 → Opus 5) / Unity MCP
+- **작업**: "세"/"원" 2자를 추가하려 사용자가 Font Asset Creator로 폰트를 재생성(103자)했는데, Unity 6에서 **새 애셋으로 만들면 `TMP_FontAsset`이 아니라 `UnityEngine.TextCore.Text.FontAsset` 타입으로 생성**된다. 같은 GUID 자리에 다른 타입이 앉으면서 씬의 TMP_Text 11개가 전부 폰트 참조를 잃었고(9개는 LiberationSans SDF로 조용히 폴백, 2개는 null) 모든 한글이 □로 표시됨. 사용자가 `git checkout`으로 폰트 파일을 되돌렸으나 화면은 그대로였음.
+- **프롬프트 원문**: "폰트가 깨졌어. git checkout이 제대로 됐는지부터 확인하고 진행해줘. ... ## 절대 건드리면 안 되는 것 - Assets/Scenes/SampleScene.unity (오늘 작업한 시대 전환 내용이 있음) ... ## 하지 말 것 - 폰트를 다시 굽지 마. 복구만 해줘. - 원인이 확정되기 전에 파일을 삭제하거나 새로 만들지 마."
+- **설계 판단과 근거**: 복구 전에 디스크 상태를 먼저 전수 확인해 "checkout은 성공했고 디스크는 정상, 인메모리만 깨짐"을 분리해낸 것이 핵심이었다 — 이걸 안 하고 Library 삭제나 재굽기로 갔으면 오늘 작업까지 날릴 뻔했다. 씬 `isDirty=False`를 확인해 재로드로 잃을 것이 없음을 보장한 뒤에야 손을 댔다.
+- **검증 방법**: git status/diff(Fonts 변경 0건), 애셋 내 `m_Script` GUID(`71c1514a…`=TMP_FontAsset)와 `m_EditorClassIdentifier` 대조, .meta GUID와 씬의 `m_fontAsset` 참조 22건 일치 확인. 1차 시도(Play 모드 종료)는 실패 — Unity가 "이 GUID→유효하지 않음" 해석을 AssetDatabase에 캐싱해 재해석을 안 했기 때문. `ImportAsset(ForceUpdate)` + `OpenScene` 재로드 후 11/11 전부 Pretendard SDF 복귀, EraManager 배선·한글 라벨 전부 보존 확인.
+- **AI 산출물 vs 사용자 개입**: 폰트 재굽기와 git checkout은 사용자가 수행. 원인 분리(디스크 정상/인메모리 파손), Play 모드 종료로는 안 되는 이유 규명, 재임포트+재로드 복구, 보존 검증은 AI가 수행. 폰트는 100자 상태로 되돌아가 "세"/"원"은 여전히 없음 — 재굽기는 반드시 기존 애셋의 Update Atlas Texture → Save 경로로 해야 함을 CLAUDE.md에 규칙으로 추가.
+- **담당**: 개발
