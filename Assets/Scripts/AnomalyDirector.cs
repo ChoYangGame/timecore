@@ -72,6 +72,21 @@ public class AnomalyDirector : MonoBehaviour
     public float AppliedDensityRatio => _appliedRatio;
     public int DecisionCount => _log.Count;
     public string LastDecision => _log.Count > 0 ? _log[_log.Count - 1] : string.Empty;
+    public int EvaluationCount => _evalCount;
+
+    /// <summary>
+    /// 평가는 계속 돌았는데 왜 개입이 없었는지를 보여준다.
+    /// "개입 5회"만 있으면 디렉터가 멈춘 것처럼 보이지만,
+    /// "평가 59회 중 개입 5회"는 계속 감시하며 선별 개입했다는 뜻이 된다.
+    /// </summary>
+    public string GetActivitySummary()
+    {
+        return string.Format(
+            "평가 {0}회 / 개입 {1}회 | 건너뜀 — 워밍업 {2}, 쿨다운 {3}, 다른 UI·보스전 {4}, 조건 미성립 {5} " +
+            "| 마지막 개입 이후 최대 pressure {6:F2}",
+            _evalCount, _log.Count, _skipWarmup, _skipCooldown, _skipGuard, _skipNoRule,
+            _maxPressureSinceIntervention);
+    }
 
     private readonly List<string> _log = new List<string>();
     private readonly List<Enemy> _intruders = new List<Enemy>();
@@ -81,6 +96,12 @@ public class AnomalyDirector : MonoBehaviour
     private int _lastKillCount;
     private int _hitsInWindow;
     private float _appliedRatio = 1f;
+    private bool _eraKnown;
+    private EraManager.Era _lastEra;
+
+    private int _evalCount;
+    private int _skipWarmup, _skipCooldown, _skipGuard, _skipNoRule;
+    private float _maxPressureSinceIntervention;
 
     private void Start()
     {
@@ -125,9 +146,26 @@ public class AnomalyDirector : MonoBehaviour
         int hits = _hitsInWindow;
         _hitsInWindow = 0;
 
-        if (_elapsed < warmupTime) return;
-        if (!CanIntervene()) return;
-        if (_elapsed - _lastInterventionTime < minInterventionInterval) return;
+        _evalCount++;
+
+        // 시대가 바뀌면 WaveManager.ResetForNewEra()가 SpawnInterval을 초기값으로 되돌린다.
+        // 디렉터가 곱해둔 몫은 그 시점에 이미 사라졌으므로 기억도 함께 비운다.
+        // 안 그러면 상한에 걸린 것으로 오인해 남은 판 내내 밀도를 못 올린다.
+        EraManager.Era currentEra = eraManager != null ? eraManager.CurrentEra : EraManager.Era.Primitive;
+        if (!_eraKnown)
+        {
+            _lastEra = currentEra;
+            _eraKnown = true;
+        }
+        else if (currentEra != _lastEra)
+        {
+            _lastEra = currentEra;
+            _appliedRatio = 1f;
+        }
+
+        if (_elapsed < warmupTime) { _skipWarmup++; return; }
+        if (!CanIntervene()) { _skipGuard++; return; }
+        if (_elapsed - _lastInterventionTime < minInterventionInterval) { _skipCooldown++; return; }
 
         float spawnInterval = enemySpawner.SpawnInterval;
         float spawnRate = spawnInterval > 0.01f ? 1f / spawnInterval : 0f;
@@ -178,7 +216,12 @@ public class AnomalyDirector : MonoBehaviour
             Commit("전선 정체",
                 $"출현 주기 ×{accelerateFactor:F2} (누적 {before:F2}→{_appliedRatio:F2})",
                 killRate, spawnRate, pressure, hpRatio, hits, alive);
+            return;
         }
+
+        // 어느 규칙에도 안 걸렸다. 얼마나 가까웠는지 남겨두면 임계값 조정에 쓸 수 있다.
+        _skipNoRule++;
+        if (pressure > _maxPressureSinceIntervention) _maxPressureSinceIntervention = pressure;
     }
 
     /// <summary>다른 UI와 겹치거나 판이 멈춘 상태에서는 개입하지 않는다.</summary>
@@ -288,6 +331,7 @@ public class AnomalyDirector : MonoBehaviour
         float killRate, float spawnRate, float pressure, float hpRatio, int hits, int alive)
     {
         _lastInterventionTime = _elapsed;
+        _maxPressureSinceIntervention = 0f;
 
         string line = string.Format(
             "[AnomalyDirector] t={0:F1}s | kill/s={1:F2} spawn/s={2:F2} pressure={3:F2} hp={4:F2} hits={5} alive={6}/{7}\n" +
@@ -328,6 +372,7 @@ public class AnomalyDirector : MonoBehaviour
 
         StringBuilder sb = new StringBuilder();
         sb.AppendLine($"===== AnomalyDirector 판단 로그 ({_log.Count}건) =====");
+        sb.AppendLine(GetActivitySummary());
         foreach (string s in _log) sb.AppendLine(s);
         Debug.Log(sb.ToString());
     }
