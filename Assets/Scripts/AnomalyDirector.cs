@@ -102,6 +102,7 @@ public class AnomalyDirector : MonoBehaviour
     private int _evalCount;
     private int _skipWarmup, _skipCooldown, _skipGuard, _skipNoRule;
     private float _maxPressureSinceIntervention;
+    private bool _autoDumped;
 
     private void Start()
     {
@@ -118,6 +119,22 @@ public class AnomalyDirector : MonoBehaviour
     private void OnDestroy()
     {
         if (playerHealth != null) playerHealth.OnDamaged -= HandlePlayerDamaged;
+
+        // 판이 끝나는 모든 경로의 마지막 지점이다. Play 모드 종료와
+        // 재파견(GameOverController의 씬 리로드) 양쪽에서 불린다.
+        AutoDump();
+    }
+
+    // 에디터 Play 종료 시 OnDestroy보다 먼저 불린다. 씬 리로드에는 안 불리므로
+    // 이것만으로는 부족하고, 빌드에서 종료 시 OnDestroy가 생략되는 경우를 위한 이중 안전장치다.
+    private void OnApplicationQuit() => AutoDump();
+
+    /// <summary>인스펙터 우클릭을 잊어도 요약이 남도록 판당 1회 자동 출력한다.</summary>
+    private void AutoDump()
+    {
+        if (_autoDumped) return;
+        _autoDumped = true;
+        DumpLog();
     }
 
     private void HandlePlayerDamaged(float current, float max) => _hitsInWindow++;
@@ -364,15 +381,11 @@ public class AnomalyDirector : MonoBehaviour
     [ContextMenu("판단 로그 전체 출력")]
     public void DumpLog()
     {
-        if (_log.Count == 0)
-        {
-            Debug.Log("[AnomalyDirector] 기록된 판단 없음");
-            return;
-        }
-
+        // 개입 0건일 때야말로 "왜 안 했는지"(건너뜀 내역)가 필요하므로 조기 반환하지 않는다.
         StringBuilder sb = new StringBuilder();
-        sb.AppendLine($"===== AnomalyDirector 판단 로그 ({_log.Count}건) =====");
+        sb.AppendLine($"===== AnomalyDirector 판단 로그 (개입 {_log.Count}건 / 경과 {_elapsed:F1}s) =====");
         sb.AppendLine(GetActivitySummary());
+        if (_log.Count == 0) sb.AppendLine("(개입 없음 — 위 건너뜀 내역이 그 이유다)");
         foreach (string s in _log) sb.AppendLine(s);
         Debug.Log(sb.ToString());
     }
