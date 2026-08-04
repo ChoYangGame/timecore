@@ -16,6 +16,9 @@ public class ExpOrb : MonoBehaviour
     private bool _absorbing;
     private float _effectiveAbsorbRadius;
 
+    /// <summary>거리와 무관하게 즉시 흡수 상태로 만든다. 보스 처치 시 필드의 오브를 전부 자석처럼 끌어올 때 쓴다.</summary>
+    public void ForceAbsorb() => _absorbing = true;
+
     private void Start()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");

@@ -2664,6 +2664,7 @@ MonoBehaviour:
   augmentManager: {fileID: 1120985799}
   player: {fileID: 1366259211}
   fadeImage: {fileID: 671454661}
+  hourglassPrefab: {fileID: 7890621601468930900, guid: f60d5afd1d992394faffd2902ac3a5be, type: 3}
   primitiveConfig:
     eraLabel: "\uC6D0\uC2DC \uC2DC\uB300"
     backgroundColor: {r: 0.16470589, g: 0.22745098, b: 0.18039216, a: 1}
@@ -2676,7 +2677,6 @@ MonoBehaviour:
     enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
     bossColor: {r: 0.5411765, g: 0.42745098, b: 0.23137255, a: 1}
     bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
-  delayBeforeFade: 1
   fadeDuration: 0.8
   debugEraSwitchKey: 28
 --- !u!4 &794621460

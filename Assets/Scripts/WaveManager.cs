@@ -163,7 +163,14 @@ public class WaveManager : MonoBehaviour
     private void HandleBossDeath(Health _)
     {
         if (bossHpUI != null) bossHpUI.Hide();
+        MagnetizeAllExpOrbs();
         OnBossDefeated?.Invoke();
+    }
+
+    /// <summary>보스를 잡으면 필드에 남은 경험치 오브를 전부 자석처럼 끌어온다. 놓치는 경험치가 없게 하려는 것.</summary>
+    private static void MagnetizeAllExpOrbs()
+    {
+        foreach (ExpOrb orb in FindObjectsByType<ExpOrb>(FindObjectsSortMode.None)) orb.ForceAbsorb();
     }
 
     private void HandleEnemySpawned(Enemy enemy)

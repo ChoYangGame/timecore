@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 원시 → 중세 시대 전환을 관리한다. WaveManager.OnBossDefeated를 구독해
+/// 아레나 중앙에 모래시계를 스폰하고, 플레이어가 먹으면(Hourglass.OnCollected)
 /// 화면 정리 → 페이드아웃 → 배경/적 프리팹/웨이브 교체 → 페이드인 → 배너 순으로 진행한다.
 /// 플레이어 레벨/증강/HP는 그대로 유지한다(한 판 안에서 이어지는 구조).
 /// 부착 대상: EraManager (빈 GameObject)
@@ -32,6 +33,8 @@ public class EraManager : MonoBehaviour
     [SerializeField] private AugmentManager augmentManager;
     [SerializeField] private Transform player;
     [SerializeField] private Image fadeImage;
+    [Tooltip("원시 보스 처치 후 아레나 중앙에 스폰되는 모래시계. 플레이어가 먹으면 다음 시대로 전환된다.")]
+    [SerializeField] private Hourglass hourglassPrefab;
 
     [Header("시대별 설정")]
     [SerializeField] private EraConfig primitiveConfig = new EraConfig
@@ -50,7 +53,6 @@ public class EraManager : MonoBehaviour
     };
 
     [Header("연출 타이밍")]
-    [SerializeField] private float delayBeforeFade = 1f;
     [SerializeField] private float fadeDuration = 0.8f;
 
 #if UNITY_EDITOR
@@ -108,7 +110,7 @@ public class EraManager : MonoBehaviour
     public void ForceEraTransition()
     {
         if (_isTransitioning) return;
-        StartCoroutine(TransitionRoutine(skipInitialWait: true));
+        StartCoroutine(TransitionRoutine());
     }
 
     /// <summary>
@@ -148,14 +150,35 @@ public class EraManager : MonoBehaviour
         // 시대 전환은 판이 끝났으면 하지 않는다.
         if (GameManager.Instance != null && GameManager.Instance.IsGameOver) return;
 
-        StartCoroutine(TransitionRoutine(skipInitialWait: false));
+        SpawnHourglass();
     }
 
-    private IEnumerator TransitionRoutine(bool skipInitialWait)
+    /// <summary>아레나 중앙에 모래시계를 스폰한다. 플레이어가 먹어야 실제 전환이 시작된다.</summary>
+    private void SpawnHourglass()
+    {
+        if (hourglassPrefab == null)
+        {
+            // 프리팹이 안 꽂혀 있으면(테스트 씬 등) 예전처럼 바로 전환해 흐름이 막히지 않게 한다.
+            StartCoroutine(TransitionRoutine());
+            return;
+        }
+
+        Vector3 spawnPos = ArenaBounds.Instance != null
+            ? (Vector3)ArenaBounds.Instance.Rect.center
+            : Vector3.zero;
+
+        Hourglass hourglass = Instantiate(hourglassPrefab, spawnPos, Quaternion.identity);
+        hourglass.OnCollected += HandleHourglassCollected;
+    }
+
+    private void HandleHourglassCollected()
+    {
+        StartCoroutine(TransitionRoutine());
+    }
+
+    private IEnumerator TransitionRoutine()
     {
         _isTransitioning = true;
-
-        if (!skipInitialWait) yield return new WaitForSecondsRealtime(delayBeforeFade);
 
         // 증강 카드가 배너/시대 전환보다 우선순위가 높다: 카드가 떠 있으면 닫힐 때까지 대기.
         if (augmentManager != null) yield return new WaitUntil(() => !augmentManager.IsShowing);
