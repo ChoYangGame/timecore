@@ -32,7 +32,15 @@ public class PlayerMove : MonoBehaviour
 
         // 대각선이 빨라지지 않도록 정규화
         input = input.normalized;
-        transform.position += (Vector3)(input * (moveSpeed * Time.deltaTime));
+        Vector3 next = transform.position + (Vector3)(input * (moveSpeed * Time.deltaTime));
+
+        if (ArenaBounds.Instance != null)
+        {
+            Vector2 clamped = ArenaBounds.Instance.Clamp(next);
+            next.x = clamped.x;
+            next.y = clamped.y;
+        }
+        transform.position = next;
     }
 
     /// <summary>

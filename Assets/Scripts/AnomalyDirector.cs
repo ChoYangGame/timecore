@@ -299,7 +299,7 @@ public class AnomalyDirector : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            Enemy e = Instantiate(prefab, RandomPointOutsideView(), Quaternion.identity);
+            Enemy e = Instantiate(prefab, enemySpawner.GetArenaEdgeSpawnPoint(), Quaternion.identity);
 
             SpriteRenderer sr = e.GetComponent<SpriteRenderer>();
             if (sr != null) sr.color = Color.Lerp(sr.color, intruderTint, intruderTintStrength);
@@ -320,21 +320,6 @@ public class AnomalyDirector : MonoBehaviour
     {
         bool inMedieval = eraManager != null && eraManager.CurrentEra == EraManager.Era.Medieval;
         return inMedieval ? "원시" : "중세";
-    }
-
-    /// <summary>카메라를 감싸는 외접원 위의 랜덤한 점. EnemySpawner와 같은 방식이지만 독립적으로 계산한다.</summary>
-    private Vector3 RandomPointOutsideView()
-    {
-        Camera cam = Camera.main;
-        if (cam == null) return Vector3.zero;
-
-        float halfHeight = cam.orthographicSize;
-        float halfWidth = halfHeight * cam.aspect;
-        float radius = Mathf.Sqrt(halfWidth * halfWidth + halfHeight * halfHeight) + 2f;
-
-        float angle = Random.value * Mathf.PI * 2f;
-        Vector3 center = cam.transform.position;
-        return new Vector3(center.x + Mathf.Cos(angle) * radius, center.y + Mathf.Sin(angle) * radius, 0f);
     }
 
     /// <summary>판단을 화면에 알린다. 첫 줄은 왜(신호), 둘째 줄은 무엇을(개입).</summary>

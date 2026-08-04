@@ -200,18 +200,26 @@ public class EraManager : MonoBehaviour
         foreach (ExpOrb o in FindObjectsByType<ExpOrb>(FindObjectsSortMode.None)) Destroy(o.gameObject);
     }
 
-    /// <summary>기획서 상 시간 균열 지점: 맵(카메라 시야) 왼쪽 안쪽.</summary>
+    /// <summary>기획서 상 시간 균열 지점: 아레나 왼쪽 끝.</summary>
     private Vector3 LeftEdgeSpawnPoint()
     {
+        if (ArenaBounds.Instance != null)
+        {
+            const float inset = 1f;
+            Rect r = ArenaBounds.Instance.Rect;
+            return new Vector3(r.xMin + inset, r.center.y, 0f);
+        }
+
+        // ArenaBounds가 없을 때(씬에 배치 안 된 경우)의 폴백: 카메라 시야 왼쪽 안쪽.
         Camera cam = targetCamera != null ? targetCamera : Camera.main;
         if (cam == null) return Vector3.zero;
 
         float halfHeight = cam.orthographicSize;
         float halfWidth = halfHeight * cam.aspect;
-        const float inset = 1.5f;
+        const float camInset = 1.5f;
 
         Vector3 center = cam.transform.position;
-        return new Vector3(center.x - halfWidth + inset, center.y, 0f);
+        return new Vector3(center.x - halfWidth + camInset, center.y, 0f);
     }
 
     private EraConfig GetConfig(Era era) => era == Era.Primitive ? primitiveConfig : medievalConfig;

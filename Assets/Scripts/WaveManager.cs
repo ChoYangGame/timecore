@@ -175,17 +175,25 @@ public class WaveManager : MonoBehaviour
         h.SetMaxHp(h.MaxHp * multiplier);
     }
 
-    /// <summary>기획서 상 보스 출현 지점: 맵(카메라 시야) 오른쪽 바깥.</summary>
+    /// <summary>기획서 상 보스 출현 지점: 아레나 오른쪽 끝.</summary>
     private Vector3 RightEdgeSpawnPoint()
     {
+        if (ArenaBounds.Instance != null)
+        {
+            const float margin = 1f;
+            Rect r = ArenaBounds.Instance.Rect;
+            return new Vector3(r.xMax - margin, r.center.y, 0f);
+        }
+
+        // ArenaBounds가 없을 때(씬에 배치 안 된 경우)의 폴백: 카메라 시야 오른쪽 바깥.
         Camera cam = Camera.main;
         if (cam == null) return Vector3.zero;
 
         float halfHeight = cam.orthographicSize;
         float halfWidth = halfHeight * cam.aspect;
-        const float margin = 3f;
+        const float camMargin = 3f;
 
         Vector3 center = cam.transform.position;
-        return new Vector3(center.x + halfWidth + margin, center.y, 0f);
+        return new Vector3(center.x + halfWidth + camMargin, center.y, 0f);
     }
 }

@@ -13,8 +13,15 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float spawnInterval = 1.1f;
     [SerializeField] private int maxAlive = 40;
 
-    [Tooltip("화면 모서리 바깥으로 더 밀어낼 여유 거리")]
+    [Tooltip("화면 모서리 바깥으로 더 밀어낼 여유 거리 (ArenaBounds가 없을 때의 폴백에서만 쓰인다)")]
     [SerializeField] private float spawnMargin = 2f;
+
+    [Tooltip("비워두면 Player 태그를 가진 오브젝트를 자동으로 찾는다")]
+    [SerializeField] private Transform player;
+    [Tooltip("아레나 가장자리 스폰 시 플레이어와 최소 이 거리 이상 떨어지도록 시도한다")]
+    [SerializeField] private float minPlayerDistance = 4f;
+    [Tooltip("아레나 가장자리 지점을 뽑을 때 '카메라 뷰 밖 + 플레이어와 충분히 멂' 조건을 만족할 때까지 재시도하는 횟수")]
+    [SerializeField] private int maxEdgeAttempts = 6;
 
     public float SpawnInterval
     {
@@ -49,6 +56,12 @@ public class EnemySpawner : MonoBehaviour
     private void Awake()
     {
         _cam = Camera.main;
+
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null) player = p.transform;
+        }
     }
 
     private void Update()
@@ -68,12 +81,51 @@ public class EnemySpawner : MonoBehaviour
         RemoveDestroyed();
         if (_alive.Count >= maxAlive) return;
 
-        Enemy spawned = Instantiate(enemyPrefab, RandomPointOutsideView(), Quaternion.identity);
+        Enemy spawned = Instantiate(enemyPrefab, GetArenaEdgeSpawnPoint(), Quaternion.identity);
         _alive.Add(spawned);
         OnEnemySpawned?.Invoke(spawned);
     }
 
-    /// <summary>카메라를 감싸는 외접원 위의 랜덤한 점. 항상 화면 밖이 보장된다.</summary>
+    /// <summary>
+    /// 아레나 가장자리의 랜덤한 지점. 카메라 뷰 밖 + 플레이어와 minPlayerDistance 이상 떨어진 후보를
+    /// maxEdgeAttempts회까지 찾아본다. AnomalyDirector의 난입 스폰도 이 메서드를 그대로 쓴다.
+    /// ArenaBounds가 없으면(씬에 배치 안 된 경우) 기존 카메라 외접원 방식으로 폴백한다.
+    /// </summary>
+    public Vector3 GetArenaEdgeSpawnPoint()
+    {
+        if (ArenaBounds.Instance == null) return RandomPointOutsideView();
+
+        Vector3 fallback = ArenaBounds.Instance.RandomPointOnEdge();
+        for (int i = 0; i < maxEdgeAttempts; i++)
+        {
+            Vector2 candidate = ArenaBounds.Instance.RandomPointOnEdge();
+            bool farFromPlayer = IsFarFromPlayer(candidate);
+
+            if (farFromPlayer)
+            {
+                fallback = candidate;
+                if (_cam == null || !IsInsideCameraView(candidate)) return candidate;
+            }
+        }
+        return fallback;
+    }
+
+    private bool IsFarFromPlayer(Vector2 point)
+    {
+        if (player == null) return true;
+        return ((Vector2)player.position - point).sqrMagnitude >= minPlayerDistance * minPlayerDistance;
+    }
+
+    private bool IsInsideCameraView(Vector2 point)
+    {
+        float halfHeight = _cam.orthographicSize;
+        float halfWidth = halfHeight * _cam.aspect;
+        Vector3 center = _cam.transform.position;
+
+        return Mathf.Abs(point.x - center.x) <= halfWidth && Mathf.Abs(point.y - center.y) <= halfHeight;
+    }
+
+    /// <summary>카메라를 감싸는 외접원 위의 랜덤한 점. ArenaBounds가 없을 때만 쓰이는 폴백.</summary>
     private Vector3 RandomPointOutsideView()
     {
         float halfHeight = _cam.orthographicSize;
