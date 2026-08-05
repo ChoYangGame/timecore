@@ -27,7 +27,7 @@ public class GameOverController : MonoBehaviour
     [SerializeField] private TMP_Text labelsText;
     [Tooltip("위 라벨에 대응하는 값 4줄")]
     [SerializeField] private TMP_Text valuesText;
-    [Tooltip("도달한 시대 이름. 클리어 시에는 숨긴다 (중세 도달이 자명하므로)")]
+    [Tooltip("도달한 시대 이름. 클리어 시에는 숨긴다 (마지막 시대 도달이 자명하므로)")]
     [SerializeField] private TMP_Text eraText;
 
     [SerializeField] private Button restartButton;
@@ -127,8 +127,8 @@ public class GameOverController : MonoBehaviour
             eraText.gameObject.SetActive(showEra);
             if (showEra)
             {
-                bool medieval = eraManager != null && eraManager.CurrentEra == EraManager.Era.Medieval;
-                eraText.text = medieval ? "중세" : "원시";
+                EraManager.EraConfig cfg = eraManager != null ? eraManager.CurrentConfig : null;
+                eraText.text = cfg != null ? cfg.eraShortName : "원시";
             }
         }
     }

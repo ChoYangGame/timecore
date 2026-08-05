@@ -21,9 +21,9 @@ public class AnomalyDirector : MonoBehaviour
     [SerializeField] private TitleController titleController;
     [SerializeField] private Health playerHealth;
 
-    [Tooltip("난입시킬 시대별 적 프리팹. 현재 시대의 반대쪽이 튀어나온다.")]
-    [SerializeField] private Enemy primitiveEnemyPrefab;
-    [SerializeField] private Enemy medievalEnemyPrefab;
+    // 난입 적의 프리팹·색·이름은 EraManager.GetRandomOtherEraConfig()가 고른 시대 설정에서 가져온다.
+    // 시대가 2개일 때는 "반대 시대"로 충분했지만 4개가 되면서 반대가 정의되지 않아,
+    // 프리팹 목록을 여기에 따로 두지 않고 EraManager 하나만 보게 했다 (배선 중복·불일치 제거).
 
     [Header("주기")]
     [Tooltip("지표를 계산하는 간격(초). 매 프레임 계산하지 않는다.")]
@@ -206,7 +206,10 @@ public class AnomalyDirector : MonoBehaviour
         // --- 규칙 2: 과잉 화력 ---
         if (pressure >= overkillPressure && hpRatio >= overkillHpRatio)
         {
-            int spawned = SpawnIntruders(intruderCount);
+            // 시대를 한 번만 뽑아 프리팹·색·배너 문구에 모두 쓴다.
+            // 따로 뽑으면 "중세 개체 난입" 배너와 실제 스폰된 적이 어긋난다.
+            EraManager.EraConfig intruderEra = eraManager != null ? eraManager.GetRandomOtherEraConfig() : null;
+            int spawned = SpawnIntruders(intruderCount, intruderEra);
 
             // 난입 여력이 없으면(이미 포화) 개입 자체를 하지 않는다.
             // 아무것도 안 나왔는데 "개체 난입" 배너만 뜨면 배너와 화면이 어긋난다.
@@ -215,7 +218,7 @@ public class AnomalyDirector : MonoBehaviour
             float before = _appliedRatio;
             ApplyDensity(intrusionDensityFactor);
 
-            string eraName = IntruderEraName();
+            string eraName = intruderEra.eraShortName;
             Announce("시간 이상 감지 — 과잉 화력", $"균열 증폭: {eraName} 개체 난입");
             Commit("과잉 화력",
                 $"{eraName} 개체 {spawned} 난입, 밀도 ×{intrusionDensityFactor:F2} (누적 {before:F2}→{_appliedRatio:F2})",
@@ -284,9 +287,9 @@ public class AnomalyDirector : MonoBehaviour
         return true;
     }
 
-    private int SpawnIntruders(int count)
+    private int SpawnIntruders(int count, EraManager.EraConfig intruderEra)
     {
-        Enemy prefab = IntruderPrefab();
+        Enemy prefab = intruderEra != null ? intruderEra.enemyPrefab : null;
         if (prefab == null) return 0;
 
         // 죽은 난입 적 정리. 개입 시점(최소 20초 간격)에만 도는 루프라 부담이 없다.
@@ -297,29 +300,29 @@ public class AnomalyDirector : MonoBehaviour
         if (room <= 0) return 0;
         count = Mathf.Min(count, room);
 
+        // 외형은 난입한 시대의 색, 체력은 현재 시대 기준으로 맞춘다.
+        // 난입은 과잉 화력에 대한 압박 수단이라, 초반 시대 적이 튀어나온다고 후반에 무해해지면 규칙이 무의미해진다.
+        Color tinted = Color.Lerp(intruderEra.enemyColor, intruderTint, intruderTintStrength);
+        EraManager.EraConfig current = eraManager != null ? eraManager.CurrentConfig : null;
+        float hpMultiplier = current != null ? current.enemyHpMultiplier : 1f;
+
         for (int i = 0; i < count; i++)
         {
             Enemy e = Instantiate(prefab, enemySpawner.GetArenaEdgeSpawnPoint(), Quaternion.identity);
 
-            SpriteRenderer sr = e.GetComponent<SpriteRenderer>();
-            if (sr != null) sr.color = Color.Lerp(sr.color, intruderTint, intruderTintStrength);
+            Health h = e.GetComponent<Health>();
+            if (h != null)
+            {
+                // SetBaseColor를 써야 첫 피격 플래시 후 프리팹 색으로 되돌아가지 않는다.
+                h.SetBaseColor(tinted);
+                if (!Mathf.Approximately(hpMultiplier, 1f)) h.SetMaxHp(h.MaxHp * hpMultiplier);
+            }
+
             e.transform.localScale *= intruderScale;
 
             _intruders.Add(e);
         }
         return count;
-    }
-
-    private Enemy IntruderPrefab()
-    {
-        bool inMedieval = eraManager != null && eraManager.CurrentEra == EraManager.Era.Medieval;
-        return inMedieval ? primitiveEnemyPrefab : medievalEnemyPrefab;
-    }
-
-    private string IntruderEraName()
-    {
-        bool inMedieval = eraManager != null && eraManager.CurrentEra == EraManager.Era.Medieval;
-        return inMedieval ? "원시" : "중세";
     }
 
     /// <summary>판단을 화면에 알린다. 첫 줄은 왜(신호), 둘째 줄은 무엇을(개입).</summary>

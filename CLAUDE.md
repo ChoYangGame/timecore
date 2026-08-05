@@ -22,6 +22,15 @@ NHN 게임 AI 해커톤 예선 출품작. 2인 팀(개발 1, 디자인 1). 마�
   Build/ 폴더 타임스탬프와 용량으로 실제 성공 여부를 판단한다.
   Sentis 패키지(com.unity.ai.inference)의 셰이더 경고는 무시한다.
 
+## Unity 애셋 파일 외부 편집 금지 (하드 룰)
+
+- **Unity 에디터가 켜져 있는 동안 `.unity` / `.prefab` / `.asset` 파일을 외부 텍스트 편집으로 수정하지 않는다.**
+- 씬 직렬화 값을 바꿔야 하면 `SerializedObject` 주입 경로를 사용한다.
+  (`SerializedObject.FindProperty(...)` → 값 대입 → `ApplyModifiedPropertiesWithoutUndo()` → `SaveScene`)
+- 이유: Unity가 외부 변경을 감지해 모달 다이얼로그를 띄우는데,
+  **모달은 MCP로 닫을 수 없어 세션이 통째로 막힌다.** 2026-08-05에 8분 이상 차단됐다.
+- `.cs` 파일은 이 규칙의 대상이 아니다 (외부 편집 후 Auto Refresh로 정상 반영된다).
+
 ## 폰트 서브셋 갱신
 
 - **새 글자가 필요하면 즉시 굽지 않는다. docs/FONT_CHARS.md에 누적만 한다.**

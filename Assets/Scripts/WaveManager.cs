@@ -34,6 +34,15 @@ public class WaveManager : MonoBehaviour
     [Tooltip("보스 스프라이트 색상. EraManager.ConfigureBoss()가 시대 전환 시 갱신한다.")]
     [SerializeField] private Color bossColor = new Color(0.362f, 0.108f, 0.097f, 1f);
 
+    [Tooltip("보스 최대 체력 배율. EraManager가 시대 전환 시 갱신한다 (프리팹 HP는 그대로 두고 시대별로만 곱한다).")]
+    [SerializeField] private float bossHpMultiplier = 1f;
+
+    [Tooltip("적 최대 체력 배율. EraManager가 시대 전환 시 갱신한다. 웨이브 가산과 곱해진다.")]
+    [SerializeField] private float enemyHpMultiplier = 1f;
+
+    [Tooltip("적 스프라이트 색상. EraManager가 시대 전환 시 갱신한다 (프리팹을 늘리지 않고 시대를 구분한다).")]
+    [SerializeField] private Color enemyColor = new Color(0.659f, 0.196f, 0.176f, 1f);
+
     public int CurrentWave { get; private set; } = 1;
 
     /// <summary>보스 처치 시 발행. EraManager가 구독해 다음 시대 전환(또는 게임 클리어)을 처리한다.</summary>
@@ -109,18 +118,30 @@ public class WaveManager : MonoBehaviour
         Health bossHealth = boss.GetComponent<Health>();
         bossHealth.OnDeath += HandleBossDeath;
 
-        SpriteRenderer sr = boss.GetComponent<SpriteRenderer>();
-        if (sr != null) sr.color = bossColor;
+        // HP는 UI에 넘기기 전에 확정해야 한다. Show()가 그 시점의 MaxHp를 게이지 기준으로 잡는다.
+        if (!Mathf.Approximately(bossHpMultiplier, 1f)) bossHealth.SetMaxHp(bossHealth.MaxHp * bossHpMultiplier);
+
+        // sr.color 직접 대입이 아니라 SetBaseColor를 쓴다 — Health가 Awake에서 캐시한 프리팹 색으로
+        // 첫 피격 플래시 직후 되돌아가는 것을 막는다.
+        bossHealth.SetBaseColor(bossColor);
 
         if (bossHpUI != null) bossHpUI.Show(bossHealth, bossName);
         ShowOrDeferBanner($"WAVE {bossWave} — BOSS");
     }
 
-    /// <summary>시대 전환 시 EraManager가 다음 보스의 이름/색을 갱신한다 (프리팹은 재사용).</summary>
-    public void ConfigureBoss(string name, Color color)
+    /// <summary>시대 전환 시 EraManager가 다음 보스의 이름/색/체력 배율을 갱신한다 (프리팹은 재사용).</summary>
+    public void ConfigureBoss(string name, Color color, float hpMultiplier)
     {
         bossName = name;
         bossColor = color;
+        bossHpMultiplier = Mathf.Max(0.01f, hpMultiplier);
+    }
+
+    /// <summary>시대 전환 시 EraManager가 이후 스폰될 적의 체력 배율과 색을 갱신한다.</summary>
+    public void ConfigureEnemyScaling(float hpMultiplier, Color color)
+    {
+        enemyHpMultiplier = Mathf.Max(0.01f, hpMultiplier);
+        enemyColor = color;
     }
 
     /// <summary>시대 전환 시 EraManager가 호출: 웨이브/스폰 상태를 새 시대 기준으로 되돌린다.</summary>
@@ -178,8 +199,11 @@ public class WaveManager : MonoBehaviour
         Health h = enemy.GetComponent<Health>();
         if (h == null) return;
 
-        float multiplier = 1f + enemyHealthStepBonus * (CurrentWave - 1);
+        // 웨이브 가산은 시대마다 1로 리셋된다. 시대 배율은 그 위에 곱해져 시대 간 난이도 상승을 담당한다.
+        float multiplier = (1f + enemyHealthStepBonus * (CurrentWave - 1)) * enemyHpMultiplier;
         h.SetMaxHp(h.MaxHp * multiplier);
+
+        h.SetBaseColor(enemyColor);
     }
 
     /// <summary>기획서 상 보스 출현 지점: 아레나 오른쪽 끝.</summary>

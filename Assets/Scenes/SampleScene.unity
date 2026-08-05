@@ -835,10 +835,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArenaBackground
   eraManager: {fileID: 794621459}
-  primitiveSprite: {fileID: 21300000, guid: dfb9ea9fc14f767469eaf009be1a1f75, type: 3}
-  medievalSprite: {fileID: 21300000, guid: eba3e29049b8498418047884c31b402b, type: 3}
-  primitiveInset: {x: 1.7, y: 1.6}
-  medievalInset: {x: 1.7, y: 1.6}
+  eraSprites:
+  - {fileID: 21300000, guid: dfb9ea9fc14f767469eaf009be1a1f75, type: 3}
+  - {fileID: 21300000, guid: eba3e29049b8498418047884c31b402b, type: 3}
+  - {fileID: 21300000, guid: 6964207fe86cc1b4696146891eb3da15, type: 3}
+  - {fileID: 21300000, guid: a071e4c9ab565ff4e80fb3ee456b00f4, type: 3}
+  eraInsets:
+  - {x: 1.7, y: 1.6}
+  - {x: 1.7, y: 1.6}
+  - {x: 1.7, y: 1.6}
+  - {x: 1.7, y: 1.6}
   arenaScale: 1
   sortingOrder: -1000
 --- !u!212 &157391346
@@ -1312,14 +1318,17 @@ MonoBehaviour:
   bossHpUI: {fileID: 1533690647}
   bossBanner: {fileID: 157301046}
   augmentManager: {fileID: 1120985799}
-  waveDuration: 25
-  bossWave: 6
+  waveDuration: 15
+  bossWave: 5
   spawnIntervalMultiplier: 0.9
   minSpawnInterval: 0.4
   enemyHealthStepBonus: 0.15
   debugBossSpawnKey: 16
   bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
   bossColor: {r: 0.362, g: 0.108, b: 0.097, a: 1}
+  bossHpMultiplier: 1
+  enemyHpMultiplier: 1
+  enemyColor: {r: 0.659, g: 0.196, b: 0.176, a: 1}
 --- !u!4 &256916285
 Transform:
   m_ObjectHideFlags: 0
@@ -2665,18 +2674,43 @@ MonoBehaviour:
   player: {fileID: 1366259211}
   fadeImage: {fileID: 671454661}
   hourglassPrefab: {fileID: 7890621601468930900, guid: f60d5afd1d992394faffd2902ac3a5be, type: 3}
-  primitiveConfig:
-    eraLabel: "\uC6D0\uC2DC \uC2DC\uB300"
-    backgroundColor: {r: 0.16470589, g: 0.22745098, b: 0.18039216, a: 1}
+  eraConfigs:
+  - eraLabel: "\uC6D0\uC2DC \uC2DC\uB300"
+    eraShortName: "\uC6D0\uC2DC"
+    backgroundColor: {r: 0.165, g: 0.227, b: 0.18, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: dab18496bb395414c9478871ee548664, type: 3}
-    bossColor: {r: 0.362, g: 0.108, b: 0.097, a: 1}
+    enemyColor: {r: 0.769, g: 0.271, b: 0.165, a: 1}
+    enemyHpMultiplier: 1
+    bossColor: {r: 0.941, g: 0.463, b: 0.29, a: 1}
     bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
-  medievalConfig:
-    eraLabel: "\uC911\uC138 \uC2DC\uB300"
-    backgroundColor: {r: 0.18039216, g: 0.16470589, b: 0.21960784, a: 1}
+    bossHpMultiplier: 1
+  - eraLabel: "\uC911\uC138 \uC2DC\uB300"
+    eraShortName: "\uC911\uC138"
+    backgroundColor: {r: 0.18, g: 0.165, b: 0.22, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
-    bossColor: {r: 0.5411765, g: 0.42745098, b: 0.23137255, a: 1}
-    bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
+    enemyColor: {r: 0.18, g: 0.29, b: 0.42, a: 1}
+    enemyHpMultiplier: 1.2
+    bossColor: {r: 0.357, g: 0.541, b: 0.749, a: 1}
+    bossName: "\uAC15\uCCA0\uC758 \uC2EC\uBB38\uAD00"
+    bossHpMultiplier: 1.2
+  - eraLabel: "\uD604\uB300 \uC2DC\uB300"
+    eraShortName: "\uD604\uB300"
+    backgroundColor: {r: 0.145, g: 0.165, b: 0.2, a: 1}
+    enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
+    enemyColor: {r: 0.624, g: 0.749, b: 0.18, a: 1}
+    enemyHpMultiplier: 1.45
+    bossColor: {r: 0.831, g: 0.91, b: 0.361, a: 1}
+    bossName: "\uAC15\uD654 \uBCD1\uAE30"
+    bossHpMultiplier: 1.45
+  - eraLabel: "\uBBF8\uB798 \uC2DC\uB300"
+    eraShortName: "\uBBF8\uB798"
+    backgroundColor: {r: 0.11, g: 0.18, b: 0.2, a: 1}
+    enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
+    enemyColor: {r: 0.612, g: 0.114, b: 0.451, a: 1}
+    enemyHpMultiplier: 1.75
+    bossColor: {r: 0.847, g: 0.322, b: 0.898, a: 1}
+    bossName: "\uC2DC\uAC04\uC758 \uC9C0\uBC30\uC790"
+    bossHpMultiplier: 1.75
   fadeDuration: 0.8
   debugEraSwitchKey: 28
 --- !u!4 &794621460
@@ -6030,10 +6064,8 @@ MonoBehaviour:
   bossBanner: {fileID: 157301046}
   titleController: {fileID: 1120985801}
   playerHealth: {fileID: 1366259207}
-  primitiveEnemyPrefab: {fileID: 7272301557060868570, guid: dab18496bb395414c9478871ee548664, type: 3}
-  medievalEnemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
   evaluateInterval: 5
-  warmupTime: 25
+  warmupTime: 15
   minInterventionInterval: 20
   crisisHpRatio: 0.35
   crisisHitCount: 4

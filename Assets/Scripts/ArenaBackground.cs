@@ -22,13 +22,19 @@ public class ArenaBackground : MonoBehaviour
 {
     [SerializeField] private EraManager eraManager;
 
-    [Header("시대별 스프라이트")]
-    [SerializeField] private Sprite primitiveSprite;
-    [SerializeField] private Sprite medievalSprite;
+    [Header("시대별 스프라이트 — 인덱스 = EraManager.Era enum 값")]
+    [SerializeField] private Sprite[] eraSprites = new Sprite[4];
 
     [Header("시대별 inset (테두리 장식만큼 안쪽으로)")]
-    [SerializeField] private Vector2 primitiveInset = new Vector2(1.7f, 1.6f);
-    [SerializeField] private Vector2 medievalInset = new Vector2(1.7f, 1.6f);
+    [Tooltip("맵 4종이 모두 같은 규격(3344x1882)이라 기본값이 동일하다. 규격이 다른 맵을 넣을 때만 해당 인덱스를 조정한다.")]
+    [SerializeField]
+    private Vector2[] eraInsets =
+    {
+        new Vector2(1.7f, 1.6f),
+        new Vector2(1.7f, 1.6f),
+        new Vector2(1.7f, 1.6f),
+        new Vector2(1.7f, 1.6f),
+    };
 
     [Tooltip("아레나 전체 크기 배율. 화면의 1.3~1.5배 권장")]
     [SerializeField] private float arenaScale = 1f;
@@ -64,13 +70,27 @@ public class ArenaBackground : MonoBehaviour
 
     private void Apply(EraManager.Era era)
     {
-        bool medieval = era == EraManager.Era.Medieval;
-
-        _renderer.sprite = medieval ? medievalSprite : primitiveSprite;
-
+        int index = (int)era;
         _appliedEra = era;
 
+        Sprite sprite = index >= 0 && eraSprites != null && index < eraSprites.Length ? eraSprites[index] : null;
+        if (sprite == null)
+        {
+            // 배선 누락. 스프라이트를 비우면 renderer.bounds가 0이 되어 아레나 경계까지 무너지므로
+            // 이전 시대 배경을 그대로 두고 경고만 남긴다.
+            Debug.LogWarning($"[ArenaBackground] eraSprites[{index}]({era})가 비어 있다. 이전 배경을 유지한다.");
+            return;
+        }
+
+        _renderer.sprite = sprite;
+
         if (ArenaBounds.Instance != null)
-            ArenaBounds.Instance.Recalculate(_renderer, medieval ? medievalInset : primitiveInset);
+            ArenaBounds.Instance.Recalculate(_renderer, InsetFor(index));
+    }
+
+    private Vector2 InsetFor(int index)
+    {
+        if (eraInsets == null || eraInsets.Length == 0) return new Vector2(1.7f, 1.6f);
+        return eraInsets[Mathf.Clamp(index, 0, eraInsets.Length - 1)];
     }
 }

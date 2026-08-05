@@ -81,6 +81,22 @@ public class Health : MonoBehaviour
         CurrentHp = healToFull ? maxHp : Mathf.Min(CurrentHp, maxHp);
     }
 
+    /// <summary>
+    /// 스폰 후 스프라이트 색을 바꿀 때 쓴다 (시대별 적·보스 색 구분).
+    /// 피격 플래시가 되돌릴 원본 색까지 같이 갱신한다 — Awake에서 캐시해 둔 프리팹 색으로
+    /// 첫 피격 직후 되돌아가는 것을 막는다.
+    /// </summary>
+    public void SetBaseColor(Color color)
+    {
+        if (flashRenderer == null) flashRenderer = GetComponent<SpriteRenderer>();
+        if (flashRenderer == null) return;
+
+        _baseColor = color;
+
+        // 플래시 중이면 지금 흰색이다. 덮어쓰면 플래시가 끊겨 보이므로 코루틴이 끝나며 _baseColor로 복귀시킨다.
+        if (_flashRoutine == null) flashRenderer.color = color;
+    }
+
     /// <summary>최대 체력을 늘리고 늘어난 만큼만 즉시 회복한다 (풀피 회복이 아님).</summary>
     public void IncreaseMaxHp(float amount)
     {
