@@ -16,6 +16,11 @@ public class CameraFollow : MonoBehaviour
     private Vector3 _velocity;
     private Camera _cam;
 
+    // 흔들림을 뺀 순수 추적 위치. transform.position은 흔들림이 더해진 값이라
+    // 그걸 SmoothDamp의 시작점으로 쓰면 흔들림이 다음 프레임으로 계속 번진다.
+    private Vector3 _followPos;
+    private bool _followPosInit;
+
     private void Awake()
     {
         _cam = GetComponent<Camera>();
@@ -29,15 +34,26 @@ public class CameraFollow : MonoBehaviour
             if (player != null) target = player.transform;
         }
 
-        if (target != null) transform.position = DesiredPosition();
+        if (target != null)
+        {
+            transform.position = DesiredPosition();
+            _followPos = transform.position;
+            _followPosInit = true;
+        }
     }
 
     private void LateUpdate()
     {
         if (target == null) return;
 
-        transform.position = Vector3.SmoothDamp(
-            transform.position, DesiredPosition(), ref _velocity, smoothTime);
+        if (!_followPosInit) { _followPos = transform.position; _followPosInit = true; }
+
+        _followPos = Vector3.SmoothDamp(_followPos, DesiredPosition(), ref _velocity, smoothTime);
+
+        // 흔들림은 아레나 클램프가 끝난 뒤 마지막에 더한다.
+        // 클램프 전에 더하면 벽에 붙었을 때 흔들림이 잘려 사라진다.
+        Vector2 shake = CameraShake.CurrentOffset;
+        transform.position = new Vector3(_followPos.x + shake.x, _followPos.y + shake.y, _followPos.z);
     }
 
     private Vector3 DesiredPosition()

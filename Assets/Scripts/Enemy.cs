@@ -45,7 +45,8 @@ public class Enemy : MonoBehaviour
         if (sqr < 0.0001f) return;
 
         Vector3 dir = toPlayer / Mathf.Sqrt(sqr);
-        transform.position += dir * (moveSpeed * Time.deltaTime);
+        float speed = moveSpeed * RiftZone.SpeedMultiplierAt(transform.position);
+        transform.position += dir * (speed * Time.deltaTime);
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -64,6 +65,10 @@ public class Enemy : MonoBehaviour
     private void HandleDeath(Health _)
     {
         if (GameManager.Instance != null) GameManager.Instance.RegisterKill();
+
+        // 피격 플래시 중이면 SpriteRenderer는 흰색이라 BaseColor를 쓴다.
+        EffectSystem.Burst(transform.position, _health.BaseColor, 5, 4.5f, 0.3f, 0.35f);
+
         if (expOrbPrefab != null) Instantiate(expOrbPrefab, transform.position, Quaternion.identity);
         Destroy(gameObject);
     }

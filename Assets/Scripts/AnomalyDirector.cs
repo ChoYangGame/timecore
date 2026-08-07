@@ -36,6 +36,8 @@ public class AnomalyDirector : MonoBehaviour
     [Header("규칙 1 — 위기")]
     [SerializeField] private float crisisHpRatio = 0.35f;
     [SerializeField] private int crisisHitCount = 4;
+    [Tooltip("되돌릴 밀도가 없을 때 깔아주는 회복 코어. 비워두면 예전처럼 조용히 넘어간다")]
+    [SerializeField] private RecoveryCoreSpawner recoveryCoreSpawner;
 
     [Header("규칙 2 — 과잉 화력")]
     [Tooltip("처치속도/스폰속도. 1.0이면 스폰되는 만큼 정확히 처치 중")]
@@ -53,6 +55,16 @@ public class AnomalyDirector : MonoBehaviour
     [SerializeField] private float stagnantKillRate = 0.3f;
     [SerializeField] private float stagnantHpRatio = 0.5f;
     [SerializeField] private float accelerateFactor = 0.85f;
+
+    [Header("규칙 4 — 전선 고정 (한 자리에서만 싸움)")]
+    [Tooltip("비워두면 규칙 4는 조용히 비활성된다")]
+    [SerializeField] private RiftZoneSpawner riftZoneSpawner;
+    [Tooltip("평가 간격 동안 플레이어가 이 거리 미만으로 움직였으면 한 자리에 고착됐다고 본다")]
+    [SerializeField] private float campMoveDistance = 4f;
+    [Tooltip("연속 몇 번 고착 판정이 나와야 개입할지. 5초 간격이므로 2면 약 10초")]
+    [SerializeField] private int campStreak = 2;
+    [Tooltip("체력이 이보다 낮으면 개입하지 않는다. 몰린 플레이어를 더 몰지 않기 위한 것")]
+    [SerializeField] private float campHpRatio = 0.5f;
 
     [Header("안전장치")]
     [Tooltip("디렉터가 만들 수 있는 최대 밀도. 0.5 = 원본의 2배")]
@@ -98,6 +110,11 @@ public class AnomalyDirector : MonoBehaviour
     private float _appliedRatio = 1f;
     private bool _eraKnown;
     private EraManager.Era _lastEra;
+
+    private Vector2 _lastPlayerPos;
+    private bool _playerPosKnown;
+    private int _campCount;
+    private float _lastMovedDistance;
 
     private int _evalCount;
     private int _skipWarmup, _skipCooldown, _skipGuard, _skipNoRule;
@@ -180,8 +197,13 @@ public class AnomalyDirector : MonoBehaviour
             _appliedRatio = 1f;
         }
 
+        // 규칙 4의 "한 자리 고착"은 개입 쿨다운과 무관하게 매 평가마다 센다.
+        // 쿨다운 뒤에서 세면 20초에 한 번씩만 표본이 쌓여 연속 판정이 사실상 불가능해진다.
+        bool canIntervene = CanIntervene();
+        UpdateCampStreak(canIntervene);
+
         if (_elapsed < warmupTime) { _skipWarmup++; return; }
-        if (!CanIntervene()) { _skipGuard++; return; }
+        if (!canIntervene) { _skipGuard++; return; }
         if (_elapsed - _lastInterventionTime < minInterventionInterval) { _skipCooldown++; return; }
 
         float spawnInterval = enemySpawner.SpawnInterval;
@@ -192,13 +214,25 @@ public class AnomalyDirector : MonoBehaviour
         int alive = enemySpawner.AliveCount;
         float aliveRatio = enemySpawner.MaxAlive > 0 ? (float)alive / enemySpawner.MaxAlive : 0f;
 
-        // --- 규칙 1: 위기 --- 되돌릴 개입이 없으면 조용히 넘어간다(배너·쿨다운 소모 없음)
+        // --- 규칙 1: 위기 ---
         if (hpRatio < crisisHpRatio || hits >= crisisHitCount)
         {
             if (RevertDensity())
             {
                 Announce("시간 이상 안정화", "균열 복구 중");
                 Commit("위기", "누적 밀도 원복 (×1.00 복귀)", killRate, spawnRate, pressure, hpRatio, hits, alive);
+                return;
+            }
+
+            // 되돌릴 밀도가 없으면 예전에는 아무것도 못 했다 — 디렉터가 밀도를 올린 적 없는 판에서는
+            // 죽어가는 플레이어에게 해줄 게 없었다는 뜻이다. 그 구멍을 회복 코어로 메운다.
+            // 다른 규칙이 전부 압박 수단이라 이것만이 유일한 구제책이다.
+            if (recoveryCoreSpawner != null && recoveryCoreSpawner.Spawn())
+            {
+                Announce("시간 이상 감지 — 생존 위기", "균열 안정: 회복 코어 출현");
+                Commit("생존 위기",
+                    $"hp {hpRatio:F2} / 피격 {hits}회 → 회복 코어 배치",
+                    killRate, spawnRate, pressure, hpRatio, hits, alive);
             }
             return;
         }
@@ -239,9 +273,54 @@ public class AnomalyDirector : MonoBehaviour
             return;
         }
 
+        // --- 규칙 4: 전선 고정 (적은 충분히 있는데 플레이어가 한 구역에서만 싸운다) ---
+        // 앞의 세 규칙은 전부 "적을 얼마나 낼지"를 조절한다. 이 규칙만 공간을 바꾼다 —
+        // 안전한 자리를 찾아 굳힌 플레이어에게 그 자리를 느린 땅으로 만들어 이동을 강제한다.
+        if (_campCount >= campStreak && hpRatio >= campHpRatio && aliveRatio > stagnantAliveRatio)
+        {
+            // 배치에 실패하면(프리팹 미배선 등) 배너도 쿨다운도 소모하지 않는다.
+            // 규칙 2가 난입 여력이 없을 때 조용히 넘어가는 것과 같은 이유다.
+            if (riftZoneSpawner == null || !riftZoneSpawner.SpawnOnPlayer()) return;
+
+            _campCount = 0;
+
+            Announce("시간 이상 감지 — 전선 고정", "균열 발생: 시간 감속 지대");
+            Commit("전선 고정",
+                $"플레이어 이동 {_lastMovedDistance:F1} < {campMoveDistance:F1} ×{campStreak}회 → 감속 지대 배치",
+                killRate, spawnRate, pressure, hpRatio, hits, alive);
+            return;
+        }
+
         // 어느 규칙에도 안 걸렸다. 얼마나 가까웠는지 남겨두면 임계값 조정에 쓸 수 있다.
         _skipNoRule++;
         if (pressure > _maxPressureSinceIntervention) _maxPressureSinceIntervention = pressure;
+    }
+
+    /// <summary>
+    /// 직전 평가 이후 플레이어가 얼마나 움직였는지로 "한 자리 고착"을 센다.
+    /// 개입할 수 없는 상황(타이틀 대기·보스전·시대 전환·증강 카드)에서는 표본이 의미가 없으므로
+    /// 연속 기록을 끊는다 — 카드를 고르느라 멈춰 있던 것을 고착으로 오인하면 안 된다.
+    /// </summary>
+    private void UpdateCampStreak(bool canIntervene)
+    {
+        if (playerHealth == null)
+        {
+            _playerPosKnown = false;
+            _campCount = 0;
+            return;
+        }
+
+        Vector2 pos = playerHealth.transform.position;
+        _lastMovedDistance = _playerPosKnown ? Vector2.Distance(pos, _lastPlayerPos) : float.MaxValue;
+        _lastPlayerPos = pos;
+
+        bool hadPrevious = _playerPosKnown;
+        _playerPosKnown = true;
+
+        if (!canIntervene || !hadPrevious) { _campCount = 0; return; }
+
+        if (_lastMovedDistance < campMoveDistance) _campCount++;
+        else _campCount = 0;
     }
 
     /// <summary>다른 UI와 겹치거나 판이 멈춘 상태에서는 개입하지 않는다.</summary>
@@ -308,21 +387,36 @@ public class AnomalyDirector : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            Enemy e = Instantiate(prefab, enemySpawner.GetArenaEdgeSpawnPoint(), Quaternion.identity);
+            Vector3 pos = enemySpawner.GetInFieldSpawnPoint();
 
-            Health h = e.GetComponent<Health>();
-            if (h != null)
+            // 일반 스폰과 같은 예고 표식을 쓴다. 난입은 한 번에 4마리가 나오므로
+            // 예고 없이 필드 안에서 터지면 피할 방법이 없다.
+            if (!enemySpawner.SpawnWithPortal(prefab, pos, tinted, e => Dress(e, tinted, hpMultiplier)))
             {
-                // SetBaseColor를 써야 첫 피격 플래시 후 프리팹 색으로 되돌아가지 않는다.
-                h.SetBaseColor(tinted);
-                if (!Mathf.Approximately(hpMultiplier, 1f)) h.SetMaxHp(h.MaxHp * hpMultiplier);
+                // 표식 프리팹이 없으면 예전처럼 가장자리에서 즉시 스폰한다.
+                Enemy e = Instantiate(prefab, enemySpawner.GetArenaEdgeSpawnPoint(), Quaternion.identity);
+                Dress(e, tinted, hpMultiplier);
             }
-
-            e.transform.localScale *= intruderScale;
-
-            _intruders.Add(e);
         }
         return count;
+    }
+
+    /// <summary>난입 적의 외형·체력·추적 목록 등록. 표식이 열린 뒤에 불릴 수 있어 따로 뺐다.</summary>
+    private void Dress(Enemy e, Color tinted, float hpMultiplier)
+    {
+        if (e == null) return;
+
+        Health h = e.GetComponent<Health>();
+        if (h != null)
+        {
+            // SetBaseColor를 써야 첫 피격 플래시 후 프리팹 색으로 되돌아가지 않는다.
+            h.SetBaseColor(tinted);
+            if (!Mathf.Approximately(hpMultiplier, 1f)) h.SetMaxHp(h.MaxHp * hpMultiplier);
+        }
+
+        e.transform.localScale *= intruderScale;
+
+        _intruders.Add(e);
     }
 
     /// <summary>판단을 화면에 알린다. 첫 줄은 왜(신호), 둘째 줄은 무엇을(개입).</summary>

@@ -1344,6 +1344,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &355057000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 355057002}
+  - component: {fileID: 355057001}
+  m_Layer: 0
+  m_Name: RecoveryCoreSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &355057001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355057000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5280c05b4827c2f4f9d2673f2ce13320, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RecoveryCoreSpawner
+  corePrefab: {fileID: 8473870324643402251, guid: c7c299d0e46c5e1468ecee9dda7ce045, type: 3}
+  enemySpawner: {fileID: 1781697617}
+  eraManager: {fileID: 794621459}
+  player: {fileID: 1366259211}
+  captureRadius: 2.2
+  healAmount: 35
+  spawnDistance: 5.5
+  maxConcurrent: 1
+  ambientInterval: 0
+--- !u!4 &355057002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355057000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &386855051
 GameObject:
   m_ObjectHideFlags: 0
@@ -1952,6 +2005,7 @@ GameObject:
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
   - component: {fileID: 519420033}
+  - component: {fileID: 519420034}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2092,6 +2146,21 @@ MonoBehaviour:
   target: {fileID: 0}
   smoothTime: 0.12
   offset: {x: 0, y: 0}
+--- !u!114 &519420034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14c35eb864128fd468e5161e258f6653, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraShake
+  maxOffset: 0.45
+  playerHitStrength: 0.55
+  playerHitDuration: 0.18
 --- !u!1 &587644543
 GameObject:
   m_ObjectHideFlags: 0
@@ -2129,6 +2198,163 @@ RectTransform:
   m_AnchoredPosition: {x: 44, y: -32}
   m_SizeDelta: {x: -136, y: 32}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &617895547
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 617895549}
+  - component: {fileID: 617895548}
+  m_Layer: 0
+  m_Name: EraHazardSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &617895548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 617895547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dc6e15fd3900d345b58f09fa6fbe0d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EraHazardSpawner
+  beamPrefab: {fileID: 3494185938582172935, guid: a733e8bc61a09c44a9867290d120ae83, type: 3}
+  homingPrefab: {fileID: 4494170139058310823, guid: 64bb2420e1b1ddf4180d40a67598b4f6, type: 3}
+  ventPrefab: {fileID: 2747093133807887974, guid: 19f824a660b5de1438f048b4a6cab130, type: 3}
+  ventProjectilePrefab: {fileID: 1023799924345262575, guid: e8fc4cbbff0275b41be22ee129c9d983, type: 3}
+  enemySpawner: {fileID: 1781697617}
+  eraManager: {fileID: 794621459}
+  patterns:
+  - label: "\uC9C0\uBA74 \uADE0\uC5F4"
+    arrangement: 0
+    beamCount: 1
+    warnDuration: 1.6
+    fireDuration: 0.5
+    beamWidth: 2.4
+    playerDamage: 12
+    enemyDamage: 0
+    interval: 13
+    minGap: 3
+    homingCount: 0
+    homingInterval: 16
+    homingTrackDuration: 1.5
+    homingLockDuration: 0.7
+    homingFireDuration: 0.35
+    homingSize: 3.4
+    homingTrackSpeed: 3.6
+    homingDamage: 15
+    ventCount: 0
+    ventInterval: 18
+    ventWarnDuration: 1.2
+    ventLifetime: 6
+    ventBurstInterval: 1.5
+    ventBurstCount: 6
+    ventSpinPerBurst: 12
+    ventSize: 1.6
+  - label: "\uD654\uC0B4 \uC138\uB840"
+    arrangement: 1
+    beamCount: 3
+    warnDuration: 1.4
+    fireDuration: 0.45
+    beamWidth: 1.7
+    playerDamage: 14
+    enemyDamage: 0
+    interval: 12
+    minGap: 3
+    homingCount: 1
+    homingInterval: 17
+    homingTrackDuration: 1.5
+    homingLockDuration: 0.7
+    homingFireDuration: 0.35
+    homingSize: 3.4
+    homingTrackSpeed: 3.6
+    homingDamage: 14
+    ventCount: 0
+    ventInterval: 18
+    ventWarnDuration: 1.2
+    ventLifetime: 6
+    ventBurstInterval: 1.5
+    ventBurstCount: 6
+    ventSpinPerBurst: 12
+    ventSize: 1.6
+  - label: "\uC2ED\uC790 \uD3ED\uACA9"
+    arrangement: 2
+    beamCount: 2
+    warnDuration: 1.2
+    fireDuration: 0.45
+    beamWidth: 1.9
+    playerDamage: 16
+    enemyDamage: 0
+    interval: 11
+    minGap: 3
+    homingCount: 1
+    homingInterval: 15
+    homingTrackDuration: 1.5
+    homingLockDuration: 0.7
+    homingFireDuration: 0.35
+    homingSize: 3.4
+    homingTrackSpeed: 3.6
+    homingDamage: 16
+    ventCount: 1
+    ventInterval: 19
+    ventWarnDuration: 1.2
+    ventLifetime: 6
+    ventBurstInterval: 1.5
+    ventBurstCount: 6
+    ventSpinPerBurst: 12
+    ventSize: 1.6
+  - label: "\uB808\uC774\uC800 \uACA9\uC790"
+    arrangement: 3
+    beamCount: 4
+    warnDuration: 1
+    fireDuration: 0.4
+    beamWidth: 1.5
+    playerDamage: 18
+    enemyDamage: 0
+    interval: 10
+    minGap: 3
+    homingCount: 2
+    homingInterval: 14
+    homingTrackDuration: 1.5
+    homingLockDuration: 0.7
+    homingFireDuration: 0.35
+    homingSize: 3.4
+    homingTrackSpeed: 3.6
+    homingDamage: 18
+    ventCount: 2
+    ventInterval: 17
+    ventWarnDuration: 1.2
+    ventLifetime: 7
+    ventBurstInterval: 1.5
+    ventBurstCount: 6
+    ventSpinPerBurst: 12
+    ventSize: 1.6
+  firstDelay: 8
+  beamStagger: 0.12
+--- !u!4 &617895549
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 617895547}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -2350,6 +2576,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 625302614}
   m_CullTransparentMesh: 1
+--- !u!1 &661190766
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 661190768}
+  - component: {fileID: 661190767}
+  m_Layer: 0
+  m_Name: EffectSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &661190767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 661190766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c66d8146b3eb1e4fac947c2e7aadfe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectSystem
+  pieceSprite: {fileID: 21300000, guid: 8468ecb41e0a5bd46a8074d97c8edd72, type: 3}
+  poolSize: 96
+  sortingOrder: 50
+  drag: 3.5
+--- !u!4 &661190768
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 661190766}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &671454660
 GameObject:
   m_ObjectHideFlags: 0
@@ -5432,6 +5706,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1750131941}
   m_CullTransparentMesh: 1
+--- !u!1 &1764668974
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1764668976}
+  - component: {fileID: 1764668975}
+  m_Layer: 0
+  m_Name: RiftZoneSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1764668975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764668974}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53d128af423d66f49afa8717ddfeb6bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RiftZoneSpawner
+  riftZonePrefab: {fileID: 9122526889221224330, guid: 5c34941e8294b6947a682cf089a29521, type: 3}
+  enemySpawner: {fileID: 1781697617}
+  eraManager: {fileID: 794621459}
+  player: {fileID: 1366259211}
+  firstSpawnDelay: 12
+  spawnInterval: 15
+  maxConcurrent: 2
+  sizeRange: {x: 5, y: 7}
+  minPlayerDistance: 6
+  maxPlacementAttempts: 8
+  edgePadding: 0.5
+  baseColor: {r: 0.373, g: 0.196, b: 0.573, a: 1}
+  eraTintStrength: 0.3
+--- !u!4 &1764668976
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764668974}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1781697615
 GameObject:
   m_ObjectHideFlags: 0
@@ -5483,6 +5814,13 @@ MonoBehaviour:
   player: {fileID: 0}
   minPlayerDistance: 4
   maxEdgeAttempts: 6
+  spawnInsideField: 1
+  portalPrefab: {fileID: 8525165815666483273, guid: d93453095d2c29549ae6bcf8c040e8cc, type: 3}
+  portalWarnDuration: 0.7
+  portalSize: 1.4
+  insideMinPlayerDistance: 6
+  insideEdgePadding: 1.2
+  eraManager: {fileID: 794621459}
 --- !u!1 &1815008819
 GameObject:
   m_ObjectHideFlags: 0
@@ -6069,6 +6407,7 @@ MonoBehaviour:
   minInterventionInterval: 20
   crisisHpRatio: 0.35
   crisisHitCount: 4
+  recoveryCoreSpawner: {fileID: 355057001}
   overkillPressure: 0.9
   overkillHpRatio: 0.65
   intruderCount: 4
@@ -6078,6 +6417,10 @@ MonoBehaviour:
   stagnantKillRate: 0.3
   stagnantHpRatio: 0.5
   accelerateFactor: 0.85
+  riftZoneSpawner: {fileID: 1764668975}
+  campMoveDistance: 4
+  campStreak: 2
+  campHpRatio: 0.5
   maxAccumulatedRatio: 0.5
   minSpawnInterval: 0.35
   intruderTint: {r: 0.784, g: 0.42, b: 0.878, a: 1}
@@ -6391,3 +6734,7 @@ SceneRoots:
   - {fileID: 412539369}
   - {fileID: 1111696451}
   - {fileID: 157391347}
+  - {fileID: 1764668976}
+  - {fileID: 617895549}
+  - {fileID: 355057002}
+  - {fileID: 661190768}

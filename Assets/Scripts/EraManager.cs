@@ -300,12 +300,20 @@ public class EraManager : MonoBehaviour
         waveManager.ConfigureEnemyScaling(cfg.enemyHpMultiplier, cfg.enemyColor);
     }
 
-    /// <summary>화면에 남은 적/보스 투사체/경험치 오브를 전부 정리한다. 암전 중에만 호출된다.</summary>
+    /// <summary>화면에 남은 적/보스 투사체/경험치 오브/감속 지대를 전부 정리한다. 암전 중에만 호출된다.</summary>
     private void ClearBattlefield()
     {
         foreach (Enemy e in FindObjectsByType<Enemy>(FindObjectsSortMode.None)) Destroy(e.gameObject);
         foreach (BossProjectile p in FindObjectsByType<BossProjectile>(FindObjectsSortMode.None)) Destroy(p.gameObject);
         foreach (ExpOrb o in FindObjectsByType<ExpOrb>(FindObjectsSortMode.None)) Destroy(o.gameObject);
+        RiftZone.ClearAll();
+        HazardBeam.ClearAll();
+        HomingHazard.ClearAll();
+        RiftVent.ClearAll();
+        RecoveryCore.ClearAll();
+
+        // 아직 안 열린 스폰 표식까지 지운다. 안 지우면 다음 시대 화면에서 이전 시대 적이 튀어나온다.
+        SpawnPortal.ClearAll();
     }
 
     /// <summary>기획서 상 시간 균열 지점: 아레나 왼쪽 끝.</summary>

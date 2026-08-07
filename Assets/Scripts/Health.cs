@@ -23,6 +23,12 @@ public class Health : MonoBehaviour
 
     public float MaxHp => maxHp;
     public float CurrentHp { get; private set; }
+
+    /// <summary>
+    /// 피격 플래시가 되돌릴 원본 색. 사망 이펙트가 이걸 쓴다 —
+    /// 맞고 죽는 순간에는 SpriteRenderer.color가 흰색이라 그걸 읽으면 이펙트가 전부 하얗게 나온다.
+    /// </summary>
+    public Color BaseColor => _baseColor;
     public bool IsDead { get; private set; }
     public bool IsInvincible { get; private set; }
 
@@ -95,6 +101,22 @@ public class Health : MonoBehaviour
 
         // 플래시 중이면 지금 흰색이다. 덮어쓰면 플래시가 끊겨 보이므로 코루틴이 끝나며 _baseColor로 복귀시킨다.
         if (_flashRoutine == null) flashRenderer.color = color;
+    }
+
+    /// <summary>
+    /// 최대 체력은 그대로 두고 현재 체력만 회복한다. 회복 코어가 쓴다.
+    /// 실제로 회복된 양을 돌려준다 — 풀피일 때 코어가 소모되지 않게 하려는 것.
+    /// </summary>
+    public float Heal(float amount)
+    {
+        if (IsDead || amount <= 0f) return 0f;
+
+        float before = CurrentHp;
+        CurrentHp = Mathf.Min(maxHp, CurrentHp + amount);
+
+        float healed = CurrentHp - before;
+        if (healed > 0f) OnDamaged?.Invoke(CurrentHp, maxHp);
+        return healed;
     }
 
     /// <summary>최대 체력을 늘리고 늘어난 만큼만 즉시 회복한다 (풀피 회복이 아님).</summary>

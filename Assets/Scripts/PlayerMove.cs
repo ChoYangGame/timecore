@@ -32,7 +32,10 @@ public class PlayerMove : MonoBehaviour
 
         // 대각선이 빨라지지 않도록 정규화
         input = input.normalized;
-        Vector3 next = transform.position + (Vector3)(input * (moveSpeed * Time.deltaTime));
+
+        // 시간 감속 지대 안이면 느려진다. 적에게도 같은 배율이 걸린다.
+        float speed = moveSpeed * RiftZone.SpeedMultiplierAt(transform.position);
+        Vector3 next = transform.position + (Vector3)(input * (speed * Time.deltaTime));
 
         if (ArenaBounds.Instance != null)
         {
