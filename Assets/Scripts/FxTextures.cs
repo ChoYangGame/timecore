@@ -18,14 +18,32 @@ public static class FxTextures
 {
     private const int Size = 64;
 
-    private static Sprite _dot, _ring, _glowBar, _softSquare, _edgeGradient, _solid;
+    private static Sprite _dot, _ring, _glowBar, _softSquare, _edgeGradient, _solid, _spear;
 
     // 도메인 리로드를 끈 에디터에서 이전 판의 텍스처를 물고 있는 것을 막는다.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
     {
-        _dot = _ring = _glowBar = _softSquare = _edgeGradient = _solid = null;
+        _dot = _ring = _glowBar = _softSquare = _edgeGradient = _solid = _spear = null;
     }
+
+    /// <summary>
+    /// +X 끝이 뾰족한 창. 꼬리(-X)는 부드럽게 사라진다.
+    /// 회전만 주면 어느 방향으로든 찔러 넣을 수 있다 — 중세 "창 찌르기"가 이걸 쓴다.
+    /// </summary>
+    public static Sprite Spear => _spear != null ? _spear : (_spear = Build("FxSpear", (u, v) =>
+    {
+        // 촉으로 갈수록 폭이 좁아진다. 0.42 → 0.015.
+        float halfWidth = Mathf.Lerp(0.42f, 0.015f, u * u);
+        float d = Mathf.Abs(v - 0.5f);
+
+        float a = Mathf.Clamp01(1f - d / Mathf.Max(0.0001f, halfWidth));
+        a = a * a;
+
+        // 자루 끝은 흐리게 빼서 잘린 막대로 보이지 않게 한다.
+        a *= Mathf.Clamp01(u * 5f);
+        return a;
+    }));
 
     /// <summary>가장자리가 부드러운 원. 조각·불티·파편 기본형.</summary>
     public static Sprite Dot => _dot != null ? _dot : (_dot = Build("FxDot", (u, v) =>
