@@ -138,15 +138,14 @@ public class HazardBeam : MonoBehaviour
     {
         _template = GetComponent<SpriteRenderer>();
 
-        // 루트는 템플릿으로만 쓴다. 실제로 보이는 건 전부 자식 조각이다.
+        // 루트는 정렬 순서 템플릿으로만 쓴다. 실제로 보이는 건 전부 자식 조각이다.
         _template.enabled = false;
 
-        if (_template.sprite != null)
-        {
-            Vector2 size = _template.sprite.bounds.size;
-            if (size.x > 0.0001f) _spriteW = size.x;
-            if (size.y > 0.0001f) _spriteH = size.y;
-        }
+        // 조각 스프라이트는 FxTextures가 코드로 구운 것을 쓴다(전부 월드 bounds 1x1).
+        // 프리팹의 내장 Square를 늘려 쓰던 동안에는 위아래 경계가 칼같이 서서
+        // 빛이 아니라 히트박스 사각형으로 보였다.
+        _spriteW = 1f;
+        _spriteH = 1f;
 
         GameObject p = GameObject.FindGameObjectWithTag("Player");
         if (p != null) _player = p.transform;
@@ -165,6 +164,31 @@ public class HazardBeam : MonoBehaviour
             case BeamStyle.Bombardment: return 8;  // 폭발
             case BeamStyle.Volley: return 10;      // 화살
             default: return 4;
+        }
+    }
+
+    /// <summary>
+    /// 조각 index가 쓸 모양. 층마다 다른 것을 쓰는 게 핵심이다 —
+    /// 길게 늘이는 층은 세로로 부드럽게 빠지는 띠, 터지는 층은 원, 파편은 각진 사각형.
+    /// index 0은 어느 스타일이든 "바탕 띠"라 항상 GlowBar다.
+    /// </summary>
+    private Sprite LayerShape(int index)
+    {
+        if (index == 0) return FxTextures.GlowBar;
+
+        switch (_spec.style)
+        {
+            // 지면 파편은 각이 살아 있어야 갈라진 돌로 읽힌다.
+            case BeamStyle.Fissure: return FxTextures.SoftSquare;
+
+            // 화살대는 얇고 길다. 세로로 빠지는 띠라야 끝이 뾰족해 보인다.
+            case BeamStyle.Volley: return FxTextures.GlowBar;
+
+            // 폭발은 둥글어야 한다. 사각형이 커졌다 작아지면 그냥 사각형이다.
+            case BeamStyle.Bombardment: return FxTextures.Dot;
+
+            // 레이저: 1~2는 글로우/코어(늘이는 층), 3~4는 끝단 캡(둥근 점).
+            default: return index <= 2 ? FxTextures.GlowBar : FxTextures.Dot;
         }
     }
 
@@ -188,7 +212,7 @@ public class HazardBeam : MonoBehaviour
             go.transform.SetParent(transform, false);
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = _template.sprite;
+            sr.sprite = LayerShape(i);
             // 뒤 조각일수록 위에 그린다. 레이저의 흰 코어가 글로우 위에 얹혀야 한다.
             sr.sortingOrder = sortingOrder + i;
             sr.enabled = false;
@@ -213,7 +237,9 @@ public class HazardBeam : MonoBehaviour
                     // 1.0을 밑돌면 파편 사이가 벌어져 밝은 바탕이 큼직하게 드러난다 — 갈라진 틈이 아니라
                     // 얼룩진 띠로 보인다(실측). 반드시 겹치도록 1.0~1.5로 잡는다.
                     _segLen[i] = Random.Range(1f, 1.5f);
-                    _segWid[i] = Random.Range(0.7f, 0.95f);
+                    // 0.7~0.95로 두니 파편이 띠를 거의 다 덮어 뜨거운 바탕이 안 보였다 —
+                    // 빛나는 틈이 아니라 갈색 덩어리로 읽혔다(실측). 위아래로 바탕을 남긴다.
+                    _segWid[i] = Random.Range(0.42f, 0.68f);
                     // 기울기를 크게 준다. ±8도로는 파편이 아니라 그냥 검은 사각형으로 보였다(실측).
                     _segTilt[i] = Random.Range(-15f, 15f);
                     break;
@@ -281,7 +307,7 @@ public class HazardBeam : MonoBehaviour
             case BeamStyle.Fissure:
                 // 갈라진 틈에서 흙먼지가 위로 솟는다.
                 CameraShake.Shake(0.45f, 0.18f);
-                EffectSystem.Ring(c, bright, 10, 6f, 0.34f, 0.4f);
+                EffectSystem.Ring(c, bright, 1f, 5.5f, 0.4f);
                 EffectSystem.Spray(c + _dir * (half * 0.5f), _perp, _spec.color, 4, 60f, 5f, 0.3f, 0.4f);
                 break;
 
@@ -294,14 +320,14 @@ public class HazardBeam : MonoBehaviour
 
             case BeamStyle.Bombardment:
                 CameraShake.Shake(0.55f, 0.22f);
-                EffectSystem.Ring(c, bright, 12, 9f, 0.36f, 0.35f);
+                EffectSystem.Ring(c, bright, 1.2f, 7f, 0.35f);
                 EffectSystem.Burst(c + _dir * (half * 0.45f), bright, 5, 7f, 0.32f, 0.35f);
                 break;
 
             default:   // Laser — 흔들림보다 빛. 양 끝에서 링이 번진다.
                 CameraShake.Shake(0.3f, 0.14f);
-                EffectSystem.Ring(c + _dir * half, bright, 8, 8f, 0.26f, 0.3f);
-                EffectSystem.Ring(c - _dir * half, bright, 8, 8f, 0.26f, 0.3f);
+                EffectSystem.Ring(c + _dir * half, bright, 0.6f, 3.2f, 0.3f);
+                EffectSystem.Ring(c - _dir * half, bright, 0.6f, 3.2f, 0.3f);
                 break;
         }
     }
@@ -418,7 +444,7 @@ public class HazardBeam : MonoBehaviour
         // 바탕은 "달궈진 틈". 시대 색 자체가 이미 밝아서 흰색을 섞을수록 채도만 빠진다 —
         // 0.35에서도 살구색 띠가 됐다(실측). 거의 원색으로 두고 파편의 어둠으로 대비를 만든다.
         SetLayer(0, 0f, 0f, _spec.length, _spec.width, 0f,
-            Color.Lerp(_spec.color, Color.white, 0.12f), 0.95f * fade);
+            Color.Lerp(_spec.color, Color.white, 0.12f), fade);
 
         for (int i = 1; i < _layers.Length; i++)
         {
@@ -521,12 +547,12 @@ public class HazardBeam : MonoBehaviour
         SetLayer(2, 0f, 0f, _spec.length, _spec.width * 0.24f * punch * flicker, 0f,
             Color.Lerp(_spec.color, Color.white, 0.9f), fade);
 
-        // 3, 4: 끝단 캡. along 0.5 = 길이의 절반이라 정확히 끝단에 앉는다.
-        // 45도 돌려 마름모로 보이게 하면 같은 사각형인데도 캡으로 읽힌다.
+        // 3, 4: 끝단 캡(둥근 점). along 0.5 = 길이의 절반이라 정확히 끝단에 앉는다.
+        // 빔이 어디서 끊기는지 보이면 길이가 읽힌다.
         float cap = _spec.width * 0.85f * punch;
         Color capColor = Color.Lerp(_spec.color, Color.white, 0.7f);
-        SetLayer(3, 0.5f, 0f, cap, cap, 45f, capColor, 0.8f * fade);
-        SetLayer(4, -0.5f, 0f, cap, cap, 45f, capColor, 0.8f * fade);
+        SetLayer(3, 0.5f, 0f, cap, cap, 0f, capColor, 0.8f * fade);
+        SetLayer(4, -0.5f, 0f, cap, cap, 0f, capColor, 0.8f * fade);
     }
 
     /// <summary>

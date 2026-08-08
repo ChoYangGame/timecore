@@ -19,8 +19,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EffectSystem : MonoBehaviour
 {
-    [Tooltip("조각에 쓸 스프라이트. 다른 오브젝트와 같은 내장 Square를 쓴다")]
-    [SerializeField] private Sprite pieceSprite;
+    // 조각 스프라이트는 인스펙터에서 받지 않는다. FxTextures가 코드로 만든 것을 쓴다 —
+    // 내장 Square를 쓰던 동안에는 무엇을 해도 이펙트가 네모로 보였다.
+    // 모양은 방출 종류마다 다르다: 흩어지는 조각은 Dot, 충격파는 Ring.
 
     [Tooltip("미리 만들어 둘 조각 수. 넘치면 가장 오래된 조각부터 재사용한다")]
     [SerializeField] private int poolSize = 96;
@@ -53,8 +54,6 @@ public class EffectSystem : MonoBehaviour
 
     public static int PoolSize => _instance != null ? _instance._tf.Length : 0;
 
-    /// <summary>조각에 쓰는 내장 Square. 화면 플래시·앰비언트가 같은 스프라이트를 빌려 쓴다(새 에셋 0).</summary>
-    public static Sprite PieceSprite => _instance != null ? _instance.pieceSprite : null;
 
     private void Awake()
     {
@@ -84,11 +83,8 @@ public class EffectSystem : MonoBehaviour
         _drag = new float[n];
         _shrink = new float[n];
 
-        if (pieceSprite != null)
-        {
-            float w = pieceSprite.bounds.size.x;
-            if (w > 0.0001f) _spriteWidth = w;
-        }
+        // FxTextures는 전부 PPU를 크기와 맞춰 구워서 월드 bounds가 1x1이다.
+        _spriteWidth = 1f;
 
         for (int i = 0; i < n; i++)
         {
@@ -96,7 +92,7 @@ public class EffectSystem : MonoBehaviour
             go.transform.SetParent(transform, false);
 
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = pieceSprite;
+            sr.sprite = FxTextures.Dot;
             sr.sortingOrder = sortingOrder;
             sr.enabled = false;
 
@@ -128,22 +124,22 @@ public class EffectSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 등간격으로 퍼져나가는 링. 감속하지 않고 크기도 거의 유지해서 "충격파가 번져나간다"로 읽힌다.
-    /// 예고→발사 전환처럼 순간을 못 박아야 하는 곳에 쓴다(Burst는 흩어지느라 순간이 흐려진다).
+    /// 크기가 변하는 고리 하나. startSize에서 endSize로 자라거나(충격파) 오므라든다(시전 예고).
+    ///
+    /// 처음에는 조각 12~14개를 원형으로 흩뿌려 링을 만들었는데, 조각 자체가 고리 모양이라
+    /// "도넛으로 만든 도넛"처럼 보였다(실측). 고리는 한 장으로 그리는 게 맞고, 덤으로 조각도 1개만 쓴다.
     /// </summary>
     public static void Ring(Vector2 position, Color color,
-        int count = 12, float speed = 9f, float size = 0.3f, float lifetime = 0.35f)
+        float startSize = 0.8f, float endSize = 3.2f, float lifetime = 0.35f)
     {
         if (_instance == null) return;
 
-        count = Mathf.Clamp(count, 3, 24);
-        float baseAngle = Random.value * 360f;
+        startSize = Mathf.Max(0.01f, startSize);
 
-        for (int i = 0; i < count; i++)
-        {
-            float angle = baseAngle + (360f / count) * i;
-            _instance.Emit(position, Dir(angle) * speed, color, size, lifetime, 0f, 0.35f);
-        }
+        // shrink는 "수명이 끝날 때까지 줄어드는 비율"이라 음수면 커진다.
+        // size(t) = startSize * (1 + (t-1) * shrink), t는 1(탄생)에서 0(소멸)으로 간다.
+        float grow = Mathf.Max(0.01f, endSize) / startSize;
+        _instance.Emit(position, Vector2.zero, color, startSize, lifetime, 0f, -(grow - 1f), FxTextures.Ring);
     }
 
     /// <summary>원뿔 방향 분사. 맞은 방향·발사 방향처럼 "어디서 왔는지"를 보여줘야 할 때 쓴다.</summary>
@@ -179,7 +175,7 @@ public class EffectSystem : MonoBehaviour
     }
 
     private void Emit(Vector2 position, Vector2 velocity, Color color,
-        float size, float lifetime, float dragValue, float shrink)
+        float size, float lifetime, float dragValue, float shrink, Sprite shape = null)
     {
         if (_tf == null || _tf.Length == 0) return;
 
@@ -188,6 +184,9 @@ public class EffectSystem : MonoBehaviour
 
         // 이미 살아있던 조각을 덮어쓰면 살아있는 수는 그대로다.
         if (_life[slot] <= 0f) _alive++;
+
+        // 조각마다 모양이 다를 수 있다. 풀은 공유하되 스프라이트만 갈아끼운다.
+        _sr[slot].sprite = shape != null ? shape : FxTextures.Dot;
 
         _velocity[slot] = velocity;
         _color[slot] = color;

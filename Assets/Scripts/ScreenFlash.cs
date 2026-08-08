@@ -6,9 +6,9 @@ using UnityEngine;
 /// 씬에 배치하지 않는다. 처음 쓰일 때 카메라 자식으로 스스로 만들어진다 —
 /// 씬 파일을 건드리지 않으려는 것이다(에디터 모달로 세션이 막힌 전례가 있다).
 ///
-/// 그라데이션 텍스처가 없어서 가장자리 어둠을 **띠 3겹**으로 흉내낸다.
-/// 안쪽으로 갈수록 두껍고 옅은 띠를 깔면 경계가 뭉개져 비네트처럼 읽힌다.
-/// 스프라이트는 EffectSystem이 쓰는 내장 Square를 그대로 빌린다(새 에셋 0).
+/// 가장자리 물듦은 `FxTextures.EdgeGradient` 한 장으로 그린다. 처음에는 그라데이션 텍스처가 없어
+/// 두께·농도가 다른 **띠 3겹**으로 흉내냈는데, 겹친 띠의 경계가 그대로 보여 조잡했다.
+/// 지금은 변마다 그라데이션 한 장을 바깥이 진하도록 회전시켜 붙인다(변당 3장 → 1장).
 ///
 /// timeScale과 무관하게 돌아야 한다 — 히트스톱이 걸린 순간이 정확히 번쩍여야 하는 순간이다.
 /// 부착 대상: 없음 (런타임 자동 생성)
@@ -16,15 +16,15 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class ScreenFlash : MonoBehaviour
 {
-    /// <summary>가장자리 한 변당 띠 수. 안쪽일수록 두껍고 옅다.</summary>
-    private const int StepsPerEdge = 3;
-
     private static ScreenFlash _instance;
 
     private Camera _camera;
 
-    private SpriteRenderer[] _edges;      // 4변 x StepsPerEdge
+    private SpriteRenderer[] _edges;      // 아래·위·오른쪽·왼쪽 순서로 4장
     private SpriteRenderer _full;
+
+    /// <summary>변마다 그라데이션의 진한 쪽(로컬 -Y)이 화면 바깥을 향하도록 돌리는 각도.</summary>
+    private static readonly float[] EdgeAngle = { 0f, 180f, 90f, 270f };
 
     private Color _edgeColor = Color.red;
     private float _edgePeak;
@@ -75,9 +75,6 @@ public class ScreenFlash : MonoBehaviour
         Camera cam = Camera.main;
         if (cam == null) return null;
 
-        // EffectSystem이 아직 Awake 전이면 스프라이트가 없다. 그 프레임은 조용히 건너뛴다.
-        if (EffectSystem.PieceSprite == null) return null;
-
         GameObject go = new GameObject("ScreenFlash");
         go.transform.SetParent(cam.transform, false);
 
@@ -90,16 +87,11 @@ public class ScreenFlash : MonoBehaviour
 
     private void Build()
     {
-        Sprite sprite = EffectSystem.PieceSprite;
-
-        _edges = new SpriteRenderer[4 * StepsPerEdge];
+        _edges = new SpriteRenderer[4];
         for (int i = 0; i < _edges.Length; i++)
-        {
-            // 두꺼운(=옅은) 띠를 먼저, 얇고 진한 띠를 위에 올린다.
-            _edges[i] = MakeQuad(sprite, "Edge" + i, 32000 + i % StepsPerEdge);
-        }
+            _edges[i] = MakeQuad(FxTextures.EdgeGradient, "Edge" + i, 32000);
 
-        _full = MakeQuad(sprite, "Full", 32000 + StepsPerEdge);
+        _full = MakeQuad(FxTextures.Solid, "Full", 32001);
     }
 
     private SpriteRenderer MakeQuad(Sprite sprite, string label, int order)
@@ -128,14 +120,12 @@ public class ScreenFlash : MonoBehaviour
         // 브라우저 창 크기가 바뀌면 aspect가 달라진다. 살아있는 동안만 다시 잰다.
         float halfH = _camera != null ? _camera.orthographicSize : 5f;
         float halfW = halfH * (_camera != null ? _camera.aspect : 1.777f);
-        float spriteW = EffectSystem.PieceSprite != null ? EffectSystem.PieceSprite.bounds.size.x : 1f;
-        if (spriteW <= 0.0001f) spriteW = 1f;
 
         if (edgeAlive)
         {
             _edgeLife -= dt;
             float t = Mathf.Clamp01(_edgeLife / _edgeMaxLife);
-            LayoutEdges(halfW, halfH, spriteW, _edgePeak * t);
+            LayoutEdges(halfW, halfH, _edgePeak * t);
             if (_edgeLife <= 0f) HideEdges();
         }
 
@@ -145,8 +135,9 @@ public class ScreenFlash : MonoBehaviour
             float t = Mathf.Clamp01(_fullLife / _fullMaxLife);
             float a = _fullPeak * t;
 
+            // FxTextures는 bounds가 1x1이라 월드 크기를 그대로 스케일에 넣으면 된다.
             _full.transform.localPosition = new Vector3(0f, 0f, 1f);
-            _full.transform.localScale = new Vector3(halfW * 2.2f / spriteW, halfH * 2.2f / spriteW, 1f);
+            _full.transform.localScale = new Vector3(halfW * 2.2f, halfH * 2.2f, 1f);
 
             Color c = _fullColor;
             c.a = a;
@@ -155,50 +146,43 @@ public class ScreenFlash : MonoBehaviour
         }
     }
 
-    private void LayoutEdges(float halfW, float halfH, float spriteW, float alpha)
+    /// <summary>
+    /// 변마다 그라데이션 한 장. 스케일은 회전 전(로컬) 기준으로 넣는다 —
+    /// 로컬 X가 변을 따라가는 길이, 로컬 Y가 안쪽으로 스며드는 두께다.
+    /// 회전은 그 뒤에 적용되므로 세로 변에서도 같은 식이 그대로 쓰인다.
+    /// </summary>
+    private void LayoutEdges(float halfW, float halfH, float alpha)
     {
-        // 안쪽으로 갈수록 두껍고 옅게. 셋이 겹치면서 경계가 뭉개진다.
-        float[] thickness = { 0.30f, 0.18f, 0.09f };
-        float[] weight = { 0.30f, 0.60f, 1f };
+        // 가로변은 화면 높이의, 세로변은 화면 폭의 일정 비율만큼 스며든다.
+        float thickH = halfH * 0.42f;
+        float thickV = halfW * 0.30f;
 
-        for (int step = 0; step < StepsPerEdge; step++)
+        Color c = _edgeColor;
+        c.a = alpha;
+
+        for (int side = 0; side < 4; side++)
         {
-            float th = halfH * thickness[step];
-            float a = alpha * weight[step];
+            SpriteRenderer sr = _edges[side];
+            bool horizontal = side < 2;
 
-            Color c = _edgeColor;
-            c.a = a;
+            float thickness = horizontal ? thickH : thickV;
+            float length = horizontal ? halfW * 2.05f : halfH * 2.05f;
 
-            for (int side = 0; side < 4; side++)
+            // 0=아래, 1=위, 2=오른쪽, 3=왼쪽. 진한 쪽(로컬 -Y)이 바깥을 보도록 EdgeAngle로 돌린다.
+            Vector3 pos;
+            switch (side)
             {
-                SpriteRenderer sr = _edges[side * StepsPerEdge + step];
-
-                bool horizontal = side < 2;
-                float length = horizontal ? halfW * 2.2f : halfH * 2.2f;
-
-                Vector3 pos;
-                Vector3 scale;
-
-                if (horizontal)
-                {
-                    // 0 = 위, 1 = 아래
-                    float y = (side == 0 ? halfH : -halfH) + (side == 0 ? -th * 0.5f : th * 0.5f);
-                    pos = new Vector3(0f, y, 1f);
-                    scale = new Vector3(length / spriteW, th / spriteW, 1f);
-                }
-                else
-                {
-                    // 2 = 오른쪽, 3 = 왼쪽
-                    float x = (side == 2 ? halfW : -halfW) + (side == 2 ? -th * 0.5f : th * 0.5f);
-                    pos = new Vector3(x, 0f, 1f);
-                    scale = new Vector3(th / spriteW, length / spriteW, 1f);
-                }
-
-                sr.transform.localPosition = pos;
-                sr.transform.localScale = scale;
-                sr.color = c;
-                sr.enabled = a > 0.004f;
+                case 0: pos = new Vector3(0f, -halfH + thickness * 0.5f, 1f); break;
+                case 1: pos = new Vector3(0f, halfH - thickness * 0.5f, 1f); break;
+                case 2: pos = new Vector3(halfW - thickness * 0.5f, 0f, 1f); break;
+                default: pos = new Vector3(-halfW + thickness * 0.5f, 0f, 1f); break;
             }
+
+            sr.transform.localPosition = pos;
+            sr.transform.localRotation = Quaternion.Euler(0f, 0f, EdgeAngle[side]);
+            sr.transform.localScale = new Vector3(length, thickness, 1f);
+            sr.color = c;
+            sr.enabled = alpha > 0.004f;
         }
     }
 

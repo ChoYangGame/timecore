@@ -70,9 +70,12 @@ public class Boss : MonoBehaviour
         [Header("ChargeDash")]
         public int dashCount = 1;
         public float dashDuration = 0.8f;
-        public float dashSpeed = 10f;
+        [Tooltip("플레이어 기본 이동속도는 6이다. 2배를 넘기면 옆으로 피할 시간이 사라진다")]
+        public float dashSpeed = 9f;
         [Tooltip("돌진과 돌진 사이 재조준 시간")]
-        public float dashGap = 0.45f;
+        public float dashGap = 0.5f;
+        [Tooltip("돌진 하나하나 앞에 붙는 예고 시간. 연타의 2·3번째가 무예고로 날아오는 것을 막는다")]
+        public float dashWindup = 0.35f;
 
         [Header("RadialBurst / BlinkStrike")]
         public int burstCount = 8;
@@ -171,9 +174,12 @@ public class Boss : MonoBehaviour
             {
                 new Pattern
                 {
+                    // 속도 12(플레이어의 2배)에 무예고 연타라 너무 빨랐다. 예전 단발 돌진의 9로 되돌리고
+                    // 돌진마다 웅크림을 붙였다. 패턴 진입 예고는 웅크림과 겹치므로 0.9 → 0.5로 줄인다.
                     label = "광폭 돌진", kind = PatternKind.ChargeDash,
-                    telegraph = 0.9f, recover = 1.5f,
-                    dashCount = 3, dashDuration = 0.55f, dashSpeed = 12f, dashGap = 0.45f,
+                    telegraph = 0.5f, recover = 1.5f,
+                    dashCount = 3, dashDuration = 0.55f, dashSpeed = 9f,
+                    dashGap = 0.5f, dashWindup = 0.35f,
                 },
                 new Pattern
                 {
@@ -454,9 +460,10 @@ public class Boss : MonoBehaviour
 
         _isCasting = true;
 
-        // 느리게 번지는 링. 흩어지는 Burst와 달리 "지금 뭔가 모으고 있다"로 읽힌다.
+        // 바깥에서 안으로 오므라드는 링(startSize > endSize). 퍼지는 링과 방향이 반대라
+        // "터졌다"가 아니라 "모으고 있다"로 읽힌다.
         EffectSystem.Ring(transform.position, Color.Lerp(_health.BaseColor, Color.white, 0.4f),
-            10, 3.2f, 0.26f, Mathf.Min(0.5f, duration));
+            3.4f, 0.9f, Mathf.Min(0.5f, duration));
 
         float t = 0f;
         while (t < duration && !_health.IsDead)
@@ -497,6 +504,20 @@ public class Boss : MonoBehaviour
         {
             if (_health.IsDead || _player == null) yield break;
 
+            // 돌진마다 짧게 웅크린다. 패턴 진입 시의 Telegraph는 첫 돌진만 알려주기 때문에,
+            // 이게 없으면 연타의 2·3번째가 예고 없이 날아온다 — "너무 빠르다"의 실제 원인이었다.
+            if (p.dashWindup > 0f)
+            {
+                _isCasting = true;
+                EffectSystem.Ring(transform.position, Color.Lerp(_health.BaseColor, Color.white, 0.5f),
+                    2.8f, 0.8f, p.dashWindup);
+                yield return new WaitForSeconds(p.dashWindup);
+                _isCasting = false;
+
+                if (_health.IsDead || _player == null) yield break;
+            }
+
+            // 조준은 웅크림이 끝난 뒤에 한다. 미리 잡으면 예고를 보고 움직여도 따라온다.
             Vector3 toPlayer = _player.position - transform.position;
             _dashDirection = toPlayer.sqrMagnitude > 0.0001f ? ((Vector2)toPlayer).normalized : Vector2.right;
             _dashSpeed = p.dashSpeed;
@@ -782,7 +803,7 @@ public class Boss : MonoBehaviour
 
             // 사라지는 자리 / 나타나는 자리 양쪽에 링을 남긴다. 어디로 갔는지 눈이 따라갈 수 있어야 한다.
             Color blinkColor = Color.Lerp(_health.BaseColor, Color.white, 0.5f);
-            EffectSystem.Ring(transform.position, blinkColor, 10, 7f, 0.26f, 0.3f);
+            EffectSystem.Ring(transform.position, blinkColor, 0.8f, 3.4f, 0.3f);
             EffectSystem.Linger(transform.position, _health.BaseColor, _baseScale.x * 0.9f, 0.25f);
 
             float angle = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
@@ -791,7 +812,7 @@ public class Boss : MonoBehaviour
             if (ArenaBounds.Instance != null) target = ArenaBounds.Instance.Clamp(target);
 
             transform.position = target;
-            EffectSystem.Ring(target, blinkColor, 12, 9f, 0.28f, 0.32f);
+            EffectSystem.Ring(target, blinkColor, 0.6f, 4f, 0.32f);
             CameraShake.Shake(0.2f, 0.1f);
 
             FireRadial(p.burstCount, p.ringSpin * i);
@@ -860,8 +881,9 @@ public class Boss : MonoBehaviour
         Vector2 at = transform.position;
         Color bright = Color.Lerp(_health.BaseColor, Color.white, 0.6f);
 
-        EffectSystem.Ring(at, Color.white, 12, 14f, 0.3f, 0.35f);
-        EffectSystem.Ring(at, bright, 12, 8f, 0.4f, 0.55f);
+        // 빠르고 얇은 링이 먼저, 느리고 큰 링이 뒤따른다. 둘의 속도 차이가 다단 폭발로 읽힌다.
+        EffectSystem.Ring(at, Color.white, 1f, 7f, 0.35f);
+        EffectSystem.Ring(at, bright, 1.5f, 11f, 0.6f);
         EffectSystem.Burst(at, _health.BaseColor, 14, 5f, 0.36f, 0.8f);
 
         CameraShake.Shake(0.8f, 0.45f);
