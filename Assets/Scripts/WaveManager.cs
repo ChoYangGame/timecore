@@ -48,6 +48,13 @@ public class WaveManager : MonoBehaviour
 
     public int CurrentWave { get; private set; } = 1;
 
+    /// <summary>
+    /// 보스가 살아있는 동안 true. 기믹 스포너들이 "보스전 모드"로 도는 신호다.
+    /// _bossSpawned와 따로 두는 이유: _bossSpawned는 시대 전환까지 true로 남아 있어서,
+    /// 보스를 잡고 모래시계를 주우러 걸어가는 동안에도 레이저가 계속 깔린다.
+    /// </summary>
+    public bool BossActive { get; private set; }
+
     /// <summary>보스 처치 시 발행. EraManager가 구독해 다음 시대 전환(또는 게임 클리어)을 처리한다.</summary>
     public event Action OnBossDefeated;
 
@@ -114,7 +121,10 @@ public class WaveManager : MonoBehaviour
     {
         if (_bossSpawned || bossPrefab == null) return;
         _bossSpawned = true;
+        BossActive = true;
 
+        // 잡몹 스폰만 끈다. 시대 기믹(레이저·장판·분출구·회복 코어)은 BossActive를 보고
+        // 간격을 늘린 채 계속 돈다 — 보스전 아레나가 텅 비어 보이지 않게 하려는 것.
         if (enemySpawner != null) enemySpawner.SpawningEnabled = false;
 
         Boss boss = Instantiate(bossPrefab, RightEdgeSpawnPoint(), Quaternion.identity);
@@ -156,6 +166,7 @@ public class WaveManager : MonoBehaviour
     {
         CurrentWave = 1;
         _bossSpawned = false;
+        BossActive = false;
         _waveTimer = 0f;
 
         if (enemySpawner != null)
@@ -190,6 +201,7 @@ public class WaveManager : MonoBehaviour
 
     private void HandleBossDeath(Health _)
     {
+        BossActive = false;
         if (bossHpUI != null) bossHpUI.Hide();
         MagnetizeAllExpOrbs();
         OnBossDefeated?.Invoke();

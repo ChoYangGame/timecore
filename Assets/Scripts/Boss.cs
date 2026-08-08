@@ -844,8 +844,10 @@ public class Boss : MonoBehaviour
         _isDashing = false;
         _isCasting = false;
 
-        // 보스가 남긴 기믹까지 같이 걷어낸다. 죽은 보스의 예고 레이저에 맞아 죽는 것은
-        // 어떤 설명으로도 방어가 안 된다. 보스전 중에는 시대 기믹이 쉬므로 여기 남은 건 전부 보스 것이다.
+        // 필드에 남은 기믹을 전부 걷어낸다. 죽은 보스의 예고 레이저에 맞아 죽는 것은
+        // 어떤 설명으로도 방어가 안 된다. 보스전에는 시대 기믹도 같이 돌고 있으므로
+        // (WaveManager.BossActive) 보스 것만 골라낼 수 없고, 골라낼 이유도 없다 —
+        // 보스를 잡은 순간 화면이 정리되는 편이 맞다.
         HazardBeam.ClearAll();
         HomingHazard.ClearAll();
         RiftVent.ClearAll();

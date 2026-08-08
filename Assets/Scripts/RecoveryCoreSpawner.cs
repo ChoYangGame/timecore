@@ -31,6 +31,9 @@ public class RecoveryCoreSpawner : MonoBehaviour
     [SerializeField] private float ambientInterval = 0f;
 
     private float _timer;
+    private WaveManager _waveManager;
+
+    private bool BossPhase => _waveManager != null && _waveManager.BossActive;
 
     private void Awake()
     {
@@ -39,6 +42,8 @@ public class RecoveryCoreSpawner : MonoBehaviour
             GameObject p = GameObject.FindGameObjectWithTag("Player");
             if (p != null) player = p.transform;
         }
+
+        _waveManager = FindFirstObjectByType<WaveManager>();
     }
 
     private void Update()
@@ -59,7 +64,11 @@ public class RecoveryCoreSpawner : MonoBehaviour
         if (ArenaBounds.Instance == null) return false;
         if (GameManager.Instance == null || GameManager.Instance.IsGameOver) return false;
         if (eraManager != null && eraManager.IsTransitioning) return false;
-        if (enemySpawner == null || !enemySpawner.SpawningEnabled) return false;
+
+        // 보스전에도 허용한다. 디렉터의 "생존 위기" 개입이 가장 필요한 구간이 보스전인데,
+        // SpawningEnabled로 막아 두니 정작 그때 회복 코어를 하나도 못 놓고 있었다.
+        if (!BossPhase && (enemySpawner == null || !enemySpawner.SpawningEnabled)) return false;
+
         return RecoveryCore.ActiveCount < maxConcurrent;
     }
 

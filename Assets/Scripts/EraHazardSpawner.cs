@@ -10,8 +10,10 @@ using UnityEngine;
 /// 현대 십자 폭격(직교 2줄) / 미래 레이저 격자(가로세로 4줄, 예고 짧게)
 /// 뒤 시대일수록 줄이 많고 예고가 짧아 회피 난이도가 올라간다.
 ///
-/// 웨이브 중에만 돈다. 보스전·시대 전환·타이틀 대기에서는 쉰다 — 보스 패턴 위에 레이저까지
-/// 겹치면 피할 수 없는 죽음이 나온다. RiftZoneSpawner와 같은 신호(EnemySpawner.SpawningEnabled)를 쓴다.
+/// 웨이브 중에는 그대로 돌고, 보스전에는 간격을 늘려 계속 돈다. 시대 전환·타이틀 대기에서만 쉰다.
+/// 처음에는 보스전에도 완전히 쉬게 했는데(보스 패턴 위에 레이저가 겹치면 피할 수 없는 죽음이 나온다),
+/// 그러니 보스전 아레나가 시대 색만 남고 텅 비어 버렸다. 지금은 끄는 대신 주기를 늘린다 —
+/// 위험은 남기되 보스 패턴과 동시에 터질 확률을 낮추는 쪽이다.
 ///
 /// 부착 대상: EraHazardSpawner (빈 GameObject)
 /// </summary>
@@ -152,17 +154,34 @@ public class EraHazardSpawner : MonoBehaviour
     [Tooltip("한 패턴 안에서 줄마다 주는 시간차(초). 0이면 전부 동시에 나온다")]
     [SerializeField] private float beamStagger = 0.12f;
 
+    [Tooltip("보스전 동안 패턴 간격에 곱하는 값. 1이면 웨이브와 같은 밀도, 클수록 뜸해진다")]
+    [SerializeField] private float bossPhaseIntervalMultiplier = 1.7f;
+
     // 세 종류가 서로 다른 주기로 돈다. 한 타이머로 묶으면 매번 셋이 동시에 터져 화면을 읽을 수 없다.
     private float _beamTimer, _homingTimer, _ventTimer;
     private bool _beamStarted, _homingStarted, _ventStarted;
     private EraManager.Era _lastEra;
     private bool _eraKnown;
 
+    private WaveManager _waveManager;
+    private bool _lastBossActive;
+
+    // 씬 참조를 새로 꽂으려면 씬 편집이 필요하다(에디터 모달 위험). 런타임에 찾아 캐시한다.
+    private void Awake() => _waveManager = FindFirstObjectByType<WaveManager>();
+
+    private bool BossPhase => _waveManager != null && _waveManager.BossActive;
+
+    /// <summary>보스전에는 주기를 늘린다. 보스 패턴과 겹쳐 터지는 빈도를 낮추려는 것.</summary>
+    private float Scaled(float interval)
+    {
+        return BossPhase ? interval * Mathf.Max(1f, bossPhaseIntervalMultiplier) : interval;
+    }
+
     private void Update()
     {
         if (!CanFire())
         {
-            // 보스전·전환 중에는 타이머를 되돌린다. 그 구간이 끝나자마자 예고가 튀어나오면
+            // 전환·타이틀 중에는 타이머를 되돌린다. 그 구간이 끝나자마자 예고가 튀어나오면
             // 플레이어가 화면을 읽을 틈이 없다.
             ResetTimers();
             return;
@@ -177,6 +196,14 @@ public class EraHazardSpawner : MonoBehaviour
             ResetTimers();
         }
 
+        // 웨이브 → 보스전으로 넘어가는 순간에도 한 번 되돌린다. 보스 등장 배너·첫 패턴 위로
+        // 레이저 예고가 곧장 겹치면 상황을 읽을 수 없다(firstDelay만큼 다시 벌어준다).
+        if (BossPhase != _lastBossActive)
+        {
+            _lastBossActive = BossPhase;
+            ResetTimers();
+        }
+
         PatternConfig cfg = CurrentPattern();
         if (cfg == null) return;
 
@@ -184,7 +211,7 @@ public class EraHazardSpawner : MonoBehaviour
 
         // --- 직선 패턴 ---
         _beamTimer += dt;
-        if (_beamTimer >= (_beamStarted ? cfg.interval : firstDelay))
+        if (_beamTimer >= (_beamStarted ? Scaled(cfg.interval) : firstDelay))
         {
             _beamTimer = 0f;
             _beamStarted = true;
@@ -196,7 +223,7 @@ public class EraHazardSpawner : MonoBehaviour
         {
             _homingTimer += dt;
             // 직선과 같은 순간에 겹치지 않도록 첫 발동을 절반만큼 밀어 둔다.
-            float need = _homingStarted ? cfg.homingInterval : firstDelay + cfg.homingInterval * 0.5f;
+            float need = _homingStarted ? Scaled(cfg.homingInterval) : firstDelay + cfg.homingInterval * 0.5f;
             if (_homingTimer >= need)
             {
                 _homingTimer = 0f;
@@ -209,7 +236,7 @@ public class EraHazardSpawner : MonoBehaviour
         if (cfg.ventCount > 0 && ventPrefab != null)
         {
             _ventTimer += dt;
-            float need = _ventStarted ? cfg.ventInterval : firstDelay + cfg.ventInterval * 0.75f;
+            float need = _ventStarted ? Scaled(cfg.ventInterval) : firstDelay + cfg.ventInterval * 0.75f;
             if (_ventTimer >= need)
             {
                 _ventTimer = 0f;
@@ -299,6 +326,10 @@ public class EraHazardSpawner : MonoBehaviour
         if (ArenaBounds.Instance == null) return false;
         if (GameManager.Instance == null || GameManager.Instance.IsGameOver) return false;
         if (eraManager != null && eraManager.IsTransitioning) return false;
+
+        // 보스전에는 잡몹 스폰이 꺼지지만 기믹은 계속 돈다(간격만 늘어난다).
+        if (BossPhase) return true;
+
         if (enemySpawner == null || !enemySpawner.SpawningEnabled) return false;
         return true;
     }

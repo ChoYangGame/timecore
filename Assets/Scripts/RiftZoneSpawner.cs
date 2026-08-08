@@ -3,9 +3,8 @@ using UnityEngine;
 /// <summary>
 /// 시간 감속 지대(RiftZone)를 아레나에 배치한다.
 ///
-/// 상시 스폰은 웨이브 중에만 돈다. 보스전·시대 전환·타이틀 대기에서는 쉰다 —
-/// EnemySpawner.SpawningEnabled를 그대로 신호로 쓴다(WaveManager가 보스 등장 시 꺼주는 플래그다).
-/// 보스전에 지대까지 겹치면 보스 패턴이 억울한 죽음으로 바뀌기 때문이다.
+/// 상시 스폰은 웨이브 중에 돌고, 보스전에는 주기를 늘려 계속 돈다. 시대 전환·타이틀 대기에서만 쉰다.
+/// (EraHazardSpawner와 같은 규칙이다 — 보스전에 기믹을 통째로 끄니 아레나가 텅 비어 보였다.)
 ///
 /// AnomalyDirector의 "전선 고정" 개입은 SpawnOnPlayer()를 호출한다.
 /// 상시 스폰과 디렉터 개입을 분리해 둔 이유: 디렉터 조건이 한 번도 성립하지 않는 판에서도
@@ -33,6 +32,9 @@ public class RiftZoneSpawner : MonoBehaviour
     [Tooltip("동시에 존재할 수 있는 지대 수. 디렉터 개입분도 여기에 포함해 센다")]
     [SerializeField] private int maxConcurrent = 2;
 
+    [Tooltip("보스전 동안 스폰 간격에 곱하는 값. 감속 지대는 보스 돌진과 겹치면 특히 위험해 더 뜸하게 둔다")]
+    [SerializeField] private float bossPhaseIntervalMultiplier = 2f;
+
     [Header("배치")]
     [SerializeField] private Vector2 sizeRange = new Vector2(5f, 7f);
     [Tooltip("상시 스폰이 플레이어 발밑에 뜨지 않게 하는 최소 거리. 디렉터 개입은 이 제한을 받지 않는다")]
@@ -49,6 +51,10 @@ public class RiftZoneSpawner : MonoBehaviour
 
     private float _timer;
     private bool _firstSpawned;
+    private WaveManager _waveManager;
+    private bool _lastBossActive;
+
+    private bool BossPhase => _waveManager != null && _waveManager.BossActive;
 
     private void Awake()
     {
@@ -57,21 +63,34 @@ public class RiftZoneSpawner : MonoBehaviour
             GameObject p = GameObject.FindGameObjectWithTag("Player");
             if (p != null) player = p.transform;
         }
+
+        // 씬 참조를 새로 꽂으면 씬 편집이 필요하다(에디터 모달 위험). 런타임에 찾아 캐시한다.
+        _waveManager = FindFirstObjectByType<WaveManager>();
     }
 
     private void Update()
     {
         if (!CanSpawn())
         {
-            // 보스전·전환 중에는 타이머를 되돌린다. 그 구간이 끝나자마자 지대가 튀어나오면
+            // 전환·타이틀 중에는 타이머를 되돌린다. 그 구간이 끝나자마자 지대가 튀어나오면
             // 플레이어가 상황을 읽을 틈이 없다.
             _timer = 0f;
             return;
         }
 
+        // 웨이브 → 보스전 전환 순간에도 한 번 되돌려 여유를 준다.
+        if (BossPhase != _lastBossActive)
+        {
+            _lastBossActive = BossPhase;
+            _timer = 0f;
+            _firstSpawned = false;
+        }
+
         _timer += Time.deltaTime;
 
-        float required = _firstSpawned ? spawnInterval : firstSpawnDelay;
+        float required = _firstSpawned
+            ? spawnInterval * (BossPhase ? Mathf.Max(1f, bossPhaseIntervalMultiplier) : 1f)
+            : firstSpawnDelay;
         if (_timer < required) return;
 
         _timer = 0f;
@@ -87,7 +106,11 @@ public class RiftZoneSpawner : MonoBehaviour
         if (ArenaBounds.Instance == null) return false;
         if (GameManager.Instance == null || GameManager.Instance.IsGameOver) return false;
         if (eraManager != null && eraManager.IsTransitioning) return false;
-        // 보스전 중에는 WaveManager가 일반 스폰을 꺼둔다. 타이틀 대기 중에도 꺼져 있다.
+
+        // 보스전에는 잡몹 스폰이 꺼지지만 지대는 계속 깔린다(간격만 늘어난다).
+        if (BossPhase) return true;
+
+        // 타이틀 대기 중에는 SpawningEnabled가 꺼져 있다.
         if (enemySpawner == null || !enemySpawner.SpawningEnabled) return false;
         return true;
     }

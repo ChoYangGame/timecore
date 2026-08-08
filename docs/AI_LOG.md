@@ -443,3 +443,14 @@
 - **검증 방법**: 빌드 전 콘솔 에러 0건. `BuildPipeline.BuildPlayer`가 이번에도 Sentis 셰이더 경고로 "failed" 오보고 → 산출물 4종 타임스탬프 갱신(21:21:56~21:22:06)으로 성공 판정. `Build/index.html` 미치환 매크로 0건 + 참조 경로 4종 일치. 배포 후 `curl -I`로 **4종 Content-Length가 로컬과 바이트 단위 전부 일치**(data 25,623,672 / wasm 7,479,099 / framework 75,630 / loader 26,982), `.wasm.br`은 `application/wasm` + `content-encoding: br` 유지. 총 33,189,486 → **33,209,859 bytes (+20,373)** — 신규 스크립트 3개와 기존 10개 수정뿐이고 **새 에셋이 0**이라 증가분이 코드 몫에 그쳤다(내장 Square만 재사용한 판단이 용량에서 확인됐다).
 - **AI 산출물 vs 사용자 개입**: 커밋·푸시·빌드 판정·배포·검증 전량 AI 수행. 브라우저 실제 플레이 확인은 사용자 대기.
 - **담당**: 개발
+
+### 2026-08-08 (D-2) | 보스전에 시대 기믹이 하나도 안 나오던 문제 + 배경 파티클 제거
+
+- **도구**: Claude Code (Opus 5) / Unity MCP (Play 모드 실측)
+- **작업**: `WaveManager.BossActive` 추가. `EraHazardSpawner`·`RiftZoneSpawner`·`RecoveryCoreSpawner`의 게이트를 "잡몹 스폰이 켜져 있을 때만"에서 "보스전에도 돌되 간격만 늘림"으로 변경(빔·장판·분출구 1.7배, 감속 지대 2.0배). 조잡하다는 판단으로 `AmbientParticles.cs` 삭제.
+- **프롬프트 원문**: "배경 파티클이 너무 조잡해서 그냥 빼줘 그리고 보스를 할때 맵기믹이 안나오는데 수정해줘"
+- **설계 판단과 근거**: 원인은 세 스포너가 전부 `EnemySpawner.SpawningEnabled` 하나를 신호로 쓰고 있었고, `WaveManager`가 보스 등장 시 그것을 꺼버린 것이다. 원래는 의도한 설계였지만(보스 패턴 위에 레이저가 겹치면 피할 수 없는 죽음) 실제로는 보스전 아레나가 텅 비었다. 끄는 대신 **주기를 늘리는** 쪽으로 바꿨다 — 위험은 남기되 동시 발생 확률을 낮춘다. `_bossSpawned`를 그대로 쓰지 않고 `BossActive`를 따로 둔 이유: `_bossSpawned`는 시대 전환까지 true라 보스를 잡고 모래시계를 주우러 가는 동안에도 레이저가 계속 깔린다. `RecoveryCoreSpawner`도 함께 열었다 — 디렉터의 "생존 위기" 개입이 가장 필요한 구간이 보스전인데 정작 그때 회복 코어를 하나도 못 놓고 있었다(같은 게이트에 걸려 있던 별개 버그). 씬 참조는 새로 꽂지 않고 `FindFirstObjectByType`로 런타임 캐시 — 씬 편집 회피.
+- **오진단 3연속과 그 교훈**: Play 모드 검증에서 세 번 헛짚었다. (1) `TitleController.StartRun()`을 안 불러 `GameManager.Instance`가 null → `CanFire()`가 false를 반환하는데 이걸 "고친 게 안 먹혔다"로 읽었다. (2) 고쳐서 다시 보니 `IsGameOver=True`·`timeScale=0` — **무인 플레이어가 보스전에서 7.6초 만에 죽어** 스포너가 전부 멎은 것이었다. (3) Play 세션을 오래 켜 둔 탓에 웨이브가 혼자 진행돼 보스가 이미 소환된 오염 상태에서 측정하고 있었다. 셋 다 코드가 아니라 **측정 환경**이 원인이었다.
+- **검증 방법**: 점 샘플링(빔 수명 약 2.5초)으로는 못 잡아서, bool을 반환하는 공개 API로 게이트를 직접 쳤다. 보스 소환과 **같은 프레임**에서 `BossActive=True` / `SpawningEnabled=False`(예전 게이트가 막던 바로 그 조건)일 때 `RiftZoneSpawner.SpawnOnPlayer()`와 `RecoveryCoreSpawner.Spawn()`이 **둘 다 true** 반환, 실제 오브젝트 각 1개 생성 확인. 콘솔 에러 0건, 씬·프리팹 변경 0건.
+- **AI 산출물 vs 사용자 개입**: 원인 규명·구현·검증 전량 AI. 보스전 기믹 밀도(1.7배/2.0배)가 적당한지는 사용자 확인 대기.
+- **담당**: 개발
