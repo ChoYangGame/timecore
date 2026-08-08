@@ -455,7 +455,7 @@ public class EraHazardSpawner : MonoBehaviour
         EraManager.Era era = eraManager != null ? eraManager.CurrentEra : EraManager.Era.Primitive;
         switch (era)
         {
-            case EraManager.Era.Medieval: return HazardBeam.BeamStyle.Volley;        // 화살 세례
+            case EraManager.Era.Medieval: return HazardBeam.BeamStyle.Electric;      // 전기 방전
             case EraManager.Era.Modern: return HazardBeam.BeamStyle.Bombardment;     // 십자 폭격
             case EraManager.Era.Future: return HazardBeam.BeamStyle.Laser;           // 레이저 격자
             default: return HazardBeam.BeamStyle.Fissure;                            // 지면 균열

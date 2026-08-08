@@ -208,9 +208,11 @@ public class Boss : MonoBehaviour
             {
                 new Pattern
                 {
-                    label = "화살 세례", kind = PatternKind.BeamStrike,
+                    // 시대 기믹이 전기로 바뀌었으므로 보스도 같은 언어를 쓴다 —
+                    // 필드는 방전인데 보스만 화살이면 같은 시대로 안 읽힌다.
+                    label = "감전 처형", kind = PatternKind.BeamStrike,
                     telegraph = 0.6f, recover = 1.3f,
-                    beamShape = BeamShape.Parallel, beamStyle = HazardBeam.BeamStyle.Volley,
+                    beamShape = BeamShape.Parallel, beamStyle = HazardBeam.BeamStyle.Electric,
                     beamCount = 4, beamWarn = 1.25f, beamFire = 0.4f,
                     beamWidth = 1.5f, beamDamage = 15f,
                 },
@@ -401,8 +403,10 @@ public class Boss : MonoBehaviour
         if (Time.time < _nextTrailTime) return;
         _nextTrailTime = Time.time + trailInterval;
 
-        EffectSystem.Linger(transform.position, Color.Lerp(_health.BaseColor, Color.black, 0.25f),
-            _baseScale.x * 0.85f, 0.28f);
+        // 돌진 잔상은 연기로 남긴다. 단색 사각형 잔상은 "보스가 복제된" 것처럼 보이는데,
+        // 연기는 뭉개져 있어 지나간 자국으로 읽힌다.
+        EffectSystem.Linger(transform.position, Color.Lerp(_health.AccentColor, Color.black, 0.25f),
+            _baseScale.x * 0.85f, 0.28f, FxSprites.Smoke);
     }
 
     // ────────────────────────────── 패턴 루프 ──────────────────────────────
@@ -462,7 +466,7 @@ public class Boss : MonoBehaviour
 
         // 바깥에서 안으로 오므라드는 링(startSize > endSize). 퍼지는 링과 방향이 반대라
         // "터졌다"가 아니라 "모으고 있다"로 읽힌다.
-        EffectSystem.Ring(transform.position, Color.Lerp(_health.BaseColor, Color.white, 0.4f),
+        EffectSystem.Ring(transform.position, Color.Lerp(_health.AccentColor, Color.white, 0.4f),
             3.4f, 0.9f, Mathf.Min(0.5f, duration));
 
         float t = 0f;
@@ -509,7 +513,7 @@ public class Boss : MonoBehaviour
             if (p.dashWindup > 0f)
             {
                 _isCasting = true;
-                EffectSystem.Ring(transform.position, Color.Lerp(_health.BaseColor, Color.white, 0.5f),
+                EffectSystem.Ring(transform.position, Color.Lerp(_health.AccentColor, Color.white, 0.5f),
                     2.8f, 0.8f, p.dashWindup);
                 yield return new WaitForSeconds(p.dashWindup);
                 _isCasting = false;
@@ -525,7 +529,7 @@ public class Boss : MonoBehaviour
 
             CameraShake.Shake(0.25f, 0.12f);
             // 박차고 나가는 방향의 반대로 흙을 찬다. 어느 쪽으로 돌진하는지가 조각으로도 읽힌다.
-            EffectSystem.Spray(transform.position, -_dashDirection, _health.BaseColor,
+            EffectSystem.Spray(transform.position, -_dashDirection, _health.AccentColor,
                 7, 70f, 7f, 0.28f, 0.32f);
 
             yield return new WaitForSeconds(p.dashDuration);
@@ -598,7 +602,7 @@ public class Boss : MonoBehaviour
     {
         Rect arena = ArenaBounds.Instance.Rect;
         float length = Mathf.Sqrt(arena.width * arena.width + arena.height * arena.height);
-        Color color = _health.BaseColor;
+        Color color = _health.AccentColor;
 
         int count = Mathf.Max(1, p.beamCount);
         bool verticalFirst = UnityEngine.Random.value < 0.5f;
@@ -718,7 +722,7 @@ public class Boss : MonoBehaviour
                 fireDuration = 0.35f,
                 trackSpeed = p.homingSpeed,
                 playerDamage = p.homingDamage,
-                color = _health.BaseColor,
+                color = _health.AccentColor,
             });
         }
 
@@ -757,7 +761,7 @@ public class Boss : MonoBehaviour
                 burstInterval = p.ventInterval,
                 burstCount = p.ventBurst,
                 spinPerBurst = p.ventSpin,
-                color = _health.BaseColor,
+                color = _health.AccentColor,
             }, projectilePrefab);
         }
 
@@ -787,7 +791,7 @@ public class Boss : MonoBehaviour
             Vector2 pos = new Vector2(Mathf.Clamp(x, area.xMin, area.xMax), y);
 
             RiftZone zone = Instantiate(_zonePrefab, pos, Quaternion.identity);
-            zone.Configure(_health.BaseColor, p.zoneSize);
+            zone.Configure(_health.AccentColor, p.zoneSize);
 
             if (i < count - 1) yield return new WaitForSeconds(0.18f);
         }
@@ -802,9 +806,10 @@ public class Boss : MonoBehaviour
             if (_health.IsDead || _player == null) yield break;
 
             // 사라지는 자리 / 나타나는 자리 양쪽에 링을 남긴다. 어디로 갔는지 눈이 따라갈 수 있어야 한다.
-            Color blinkColor = Color.Lerp(_health.BaseColor, Color.white, 0.5f);
+            Color blinkColor = Color.Lerp(_health.AccentColor, Color.white, 0.5f);
             EffectSystem.Ring(transform.position, blinkColor, 0.8f, 3.4f, 0.3f);
-            EffectSystem.Linger(transform.position, _health.BaseColor, _baseScale.x * 0.9f, 0.25f);
+            EffectSystem.Linger(transform.position, _health.AccentColor, _baseScale.x * 0.9f, 0.25f,
+                FxSprites.Smoke);
 
             float angle = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
             Vector2 offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * p.blinkDistance;
@@ -879,12 +884,12 @@ public class Boss : MonoBehaviour
         // 격파 연출. 링 3겹을 속도만 다르게 겹치면 코루틴 없이도 다단 폭발로 보인다 —
         // 오브젝트가 이 프레임에 파괴되므로 시간에 걸친 연출을 여기서 돌릴 수 없다.
         Vector2 at = transform.position;
-        Color bright = Color.Lerp(_health.BaseColor, Color.white, 0.6f);
+        Color bright = Color.Lerp(_health.AccentColor, Color.white, 0.6f);
 
         // 빠르고 얇은 링이 먼저, 느리고 큰 링이 뒤따른다. 둘의 속도 차이가 다단 폭발로 읽힌다.
         EffectSystem.Ring(at, Color.white, 1f, 7f, 0.35f);
         EffectSystem.Ring(at, bright, 1.5f, 11f, 0.6f);
-        EffectSystem.Burst(at, _health.BaseColor, 14, 5f, 0.36f, 0.8f);
+        EffectSystem.Burst(at, _health.AccentColor, 14, 5f, 0.36f, 0.8f);
 
         CameraShake.Shake(0.8f, 0.45f);
         ScreenFlash.Full(Color.white, 0.3f, 0.28f);

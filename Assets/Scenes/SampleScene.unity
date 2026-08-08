@@ -1327,6 +1327,7 @@ MonoBehaviour:
   bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
   bossColor: {r: 0.362, g: 0.108, b: 0.097, a: 1}
   bossHpMultiplier: 1
+  bossEraIndex: 0
   enemyHpMultiplier: 1
   enemyColor: {r: 0.659, g: 0.196, b: 0.176, a: 1}
 --- !u!4 &256916285
@@ -2340,6 +2341,7 @@ MonoBehaviour:
     ventSize: 1.6
   firstDelay: 8
   beamStagger: 0.12
+  bossPhaseIntervalMultiplier: 1.7
 --- !u!4 &617895549
 Transform:
   m_ObjectHideFlags: 0
@@ -2605,7 +2607,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c66d8146b3eb1e4fac947c2e7aadfe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EffectSystem
-  pieceSprite: {fileID: 21300000, guid: 8468ecb41e0a5bd46a8074d97c8edd72, type: 3}
   poolSize: 96
   sortingOrder: 50
   drag: 3.5
@@ -2953,8 +2954,13 @@ MonoBehaviour:
     eraShortName: "\uC6D0\uC2DC"
     backgroundColor: {r: 0.165, g: 0.227, b: 0.18, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: dab18496bb395414c9478871ee548664, type: 3}
+    enemySprite: {fileID: 0}
     enemyColor: {r: 0.769, g: 0.271, b: 0.165, a: 1}
-    enemyHpMultiplier: 1
+    enemyHpMultiplier: 0.85
+    enemySpeedMultiplier: 1.1
+    spawnInterval: 1.7
+    maxAlive: 48
+    bossSprite: {fileID: 0}
     bossColor: {r: 0.941, g: 0.463, b: 0.29, a: 1}
     bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
     bossHpMultiplier: 1
@@ -2962,8 +2968,13 @@ MonoBehaviour:
     eraShortName: "\uC911\uC138"
     backgroundColor: {r: 0.18, g: 0.165, b: 0.22, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
+    enemySprite: {fileID: 0}
     enemyColor: {r: 0.18, g: 0.29, b: 0.42, a: 1}
-    enemyHpMultiplier: 1.2
+    enemyHpMultiplier: 1.45
+    enemySpeedMultiplier: 0.85
+    spawnInterval: 2.4
+    maxAlive: 30
+    bossSprite: {fileID: 0}
     bossColor: {r: 0.357, g: 0.541, b: 0.749, a: 1}
     bossName: "\uAC15\uCCA0\uC758 \uC2EC\uBB38\uAD00"
     bossHpMultiplier: 1.2
@@ -2971,8 +2982,13 @@ MonoBehaviour:
     eraShortName: "\uD604\uB300"
     backgroundColor: {r: 0.145, g: 0.165, b: 0.2, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
+    enemySprite: {fileID: 0}
     enemyColor: {r: 0.624, g: 0.749, b: 0.18, a: 1}
-    enemyHpMultiplier: 1.45
+    enemyHpMultiplier: 1.3
+    enemySpeedMultiplier: 1.15
+    spawnInterval: 1.6
+    maxAlive: 46
+    bossSprite: {fileID: 0}
     bossColor: {r: 0.831, g: 0.91, b: 0.361, a: 1}
     bossName: "\uAC15\uD654 \uBCD1\uAE30"
     bossHpMultiplier: 1.45
@@ -2980,8 +2996,13 @@ MonoBehaviour:
     eraShortName: "\uBBF8\uB798"
     backgroundColor: {r: 0.11, g: 0.18, b: 0.2, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
+    enemySprite: {fileID: 0}
     enemyColor: {r: 0.612, g: 0.114, b: 0.451, a: 1}
-    enemyHpMultiplier: 1.75
+    enemyHpMultiplier: 2.1
+    enemySpeedMultiplier: 1.25
+    spawnInterval: 2.2
+    maxAlive: 34
+    bossSprite: {fileID: 0}
     bossColor: {r: 0.847, g: 0.322, b: 0.898, a: 1}
     bossName: "\uC2DC\uAC04\uC758 \uC9C0\uBC30\uC790"
     bossHpMultiplier: 1.75
@@ -4448,6 +4469,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHp: 100
   flashDuration: 0.08
+  artHitTint: {r: 1, g: 0.32, b: 0.28, a: 1}
   flashRenderer: {fileID: 0}
   onDeathEvent:
     m_PersistentCalls:
@@ -5742,6 +5764,7 @@ MonoBehaviour:
   firstSpawnDelay: 12
   spawnInterval: 15
   maxConcurrent: 2
+  bossPhaseIntervalMultiplier: 2
   sizeRange: {x: 5, y: 7}
   minPlayerDistance: 6
   maxPlacementAttempts: 8

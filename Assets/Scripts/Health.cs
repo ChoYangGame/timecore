@@ -12,8 +12,12 @@ public class Health : MonoBehaviour
 {
     [SerializeField] private float maxHp = 100f;
 
-    [Tooltip("피격 시 흰색으로 번쩍이는 시간(초)")]
+    [Tooltip("피격 시 번쩍이는 시간(초)")]
     [SerializeField] private float flashDuration = 0.08f;
+
+    [Tooltip("컬러 아트 스프라이트를 쓸 때의 피격 색. SpriteRenderer.color는 곱연산이라 " +
+             "흰색을 곱해도 아무 변화가 없다 — 밝게가 아니라 붉게 물들여서 타격을 읽힌다.")]
+    [SerializeField] private Color artHitTint = new Color(1f, 0.32f, 0.28f, 1f);
 
     [Tooltip("비워두면 같은 GameObject 의 SpriteRenderer 를 자동으로 찾는다")]
     [SerializeField] private SpriteRenderer flashRenderer;
@@ -29,6 +33,12 @@ public class Health : MonoBehaviour
     /// 맞고 죽는 순간에는 SpriteRenderer.color가 흰색이라 그걸 읽으면 이펙트가 전부 하얗게 나온다.
     /// </summary>
     public Color BaseColor => _baseColor;
+
+    /// <summary>
+    /// 파편·표식 같은 연출에 쓸 강조색. 흰 사각형 시절에는 BaseColor와 같은 값이지만,
+    /// 컬러 아트를 쓰면 BaseColor가 흰색(틴트 없음)이 되므로 그때도 시대 색을 잃지 않게 따로 둔다.
+    /// </summary>
+    public Color AccentColor => _accentColor;
     public bool IsDead { get; private set; }
     public bool IsInvincible { get; private set; }
 
@@ -46,6 +56,10 @@ public class Health : MonoBehaviour
     public event Action<float> OnHit;
 
     private Color _baseColor = Color.white;
+    private Color _accentColor = Color.white;
+
+    /// <summary>컬러 아트 스프라이트를 받았는지. 피격 플래시 색을 고르는 데만 쓴다.</summary>
+    private bool _hasArt;
     private Coroutine _flashRoutine;
 
     [Tooltip("피격 시 무적 지속시간(초). 0이면 비활성 — '위상 이동' 같은 증강이 켠다.")]
@@ -56,7 +70,7 @@ public class Health : MonoBehaviour
     {
         CurrentHp = maxHp;
         if (flashRenderer == null) flashRenderer = GetComponent<SpriteRenderer>();
-        if (flashRenderer != null) _baseColor = flashRenderer.color;
+        if (flashRenderer != null) _baseColor = _accentColor = flashRenderer.color;
     }
 
     public void TakeDamage(float amount)
@@ -105,10 +119,37 @@ public class Health : MonoBehaviour
         if (flashRenderer == null) flashRenderer = GetComponent<SpriteRenderer>();
         if (flashRenderer == null) return;
 
-        _baseColor = color;
+        _baseColor = _accentColor = color;
 
         // 플래시 중이면 지금 흰색이다. 덮어쓰면 플래시가 끊겨 보이므로 코루틴이 끝나며 _baseColor로 복귀시킨다.
         if (_flashRoutine == null) flashRenderer.color = color;
+    }
+
+    /// <summary>
+    /// 시대별 컬러 아트를 입힌다. sprite가 null이면 기존 틴트 방식(SetBaseColor)으로 그대로 떨어진다 —
+    /// 아트가 아직 없는 시대와 섞여 있어도 온 것부터 적용되게 하려는 것이다.
+    ///
+    /// 아트가 있을 때 색을 흰색으로 두는 이유: SpriteRenderer.color는 곱연산이라
+    /// 시대 색을 그대로 곱하면 무슨 색으로 그려 왔든 그 색조로 덮여버린다.
+    /// 시대 색은 버리지 않고 AccentColor로 넘겨 파편·표식 연출이 계속 쓰게 한다.
+    /// </summary>
+    public void SetAppearance(Sprite sprite, Color accent)
+    {
+        if (sprite == null)
+        {
+            SetBaseColor(accent);
+            return;
+        }
+
+        if (flashRenderer == null) flashRenderer = GetComponent<SpriteRenderer>();
+        if (flashRenderer == null) return;
+
+        flashRenderer.sprite = sprite;
+        _hasArt = true;
+        _baseColor = Color.white;
+        _accentColor = accent;
+
+        if (_flashRoutine == null) flashRenderer.color = Color.white;
     }
 
     /// <summary>
@@ -145,7 +186,8 @@ public class Health : MonoBehaviour
 
     private IEnumerator FlashRoutine()
     {
-        flashRenderer.color = Color.white;
+        // 흰 사각형이면 흰색으로 번쩍이는 게 맞지만, 컬러 아트에 흰색을 곱하면 화면상 변화가 0이다.
+        flashRenderer.color = _hasArt ? artHitTint : Color.white;
         yield return new WaitForSeconds(flashDuration);
         flashRenderer.color = _baseColor;
         _flashRoutine = null;

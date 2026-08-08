@@ -385,32 +385,46 @@ public class AnomalyDirector : MonoBehaviour
         EraManager.EraConfig current = eraManager != null ? eraManager.CurrentConfig : null;
         float hpMultiplier = current != null ? current.enemyHpMultiplier : 1f;
 
+        // 속도도 HP와 같은 이유로 '현재' 시대 기준이다 — 원시 적이 미래에 난입했을 때
+        // 혼자 느리면 압박 수단으로서 무의미해진다. 0 가드는 인스펙터에서 비워 둔 시대 대비다.
+        float speedMultiplier = current != null && current.enemySpeedMultiplier > 0f
+            ? current.enemySpeedMultiplier
+            : 1f;
+
+        // 난입한 시대의 아트를 그대로 입힌다. 아트가 있으면 tinted는 화면에 안 나오고 파편 색으로만 남는데,
+        // "다른 시대에서 왔다"는 신호는 색보다 스프라이트 자체가 더 분명하게 준다.
+        Sprite intruderSprite = intruderEra.enemySprite;
+
         for (int i = 0; i < count; i++)
         {
             Vector3 pos = enemySpawner.GetInFieldSpawnPoint();
 
             // 일반 스폰과 같은 예고 표식을 쓴다. 난입은 한 번에 4마리가 나오므로
             // 예고 없이 필드 안에서 터지면 피할 방법이 없다.
-            if (!enemySpawner.SpawnWithPortal(prefab, pos, tinted, e => Dress(e, tinted, hpMultiplier)))
+            if (!enemySpawner.SpawnWithPortal(prefab, pos, tinted, e => Dress(e, tinted, hpMultiplier, intruderSprite, speedMultiplier)))
             {
                 // 표식 프리팹이 없으면 예전처럼 가장자리에서 즉시 스폰한다.
                 Enemy e = Instantiate(prefab, enemySpawner.GetArenaEdgeSpawnPoint(), Quaternion.identity);
-                Dress(e, tinted, hpMultiplier);
+                Dress(e, tinted, hpMultiplier, intruderSprite, speedMultiplier);
             }
         }
         return count;
     }
 
     /// <summary>난입 적의 외형·체력·추적 목록 등록. 표식이 열린 뒤에 불릴 수 있어 따로 뺐다.</summary>
-    private void Dress(Enemy e, Color tinted, float hpMultiplier)
+    private void Dress(Enemy e, Color tinted, float hpMultiplier, Sprite sprite, float speedMultiplier)
     {
         if (e == null) return;
+
+        // 난입 적은 OnEnemySpawned를 타지 않는다(SpawnWithPortal이 콜백만 부른다).
+        // 그래서 능력치를 여기서 직접 걸어야 하고, 이중 적용 걱정도 없다.
+        e.ApplySpeedMultiplier(speedMultiplier);
 
         Health h = e.GetComponent<Health>();
         if (h != null)
         {
-            // SetBaseColor를 써야 첫 피격 플래시 후 프리팹 색으로 되돌아가지 않는다.
-            h.SetBaseColor(tinted);
+            // SetAppearance를 써야 첫 피격 플래시 후 프리팹 색으로 되돌아가지 않는다.
+            h.SetAppearance(sprite, tinted);
             if (!Mathf.Approximately(hpMultiplier, 1f)) h.SetMaxHp(h.MaxHp * hpMultiplier);
         }
 

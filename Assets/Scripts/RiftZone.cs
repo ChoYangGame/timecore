@@ -91,6 +91,12 @@ public class RiftZone : MonoBehaviour
     {
         size = worldSize;
         _tint = tint;
+
+        // 소용돌이 스프라이트로 갈아끼운다. "시간이 휘었다"를 형태로 보여주는 유일한 장치라
+        // 단색 원으로는 그냥 색깔 웅덩이로 읽힌다. 프리팹을 건드리지 않으려고 런타임에 바꾼다.
+        if (_renderer == null) _renderer = GetComponent<SpriteRenderer>();
+        if (_renderer != null && FxSprites.Twirl != null) _renderer.sprite = FxSprites.Twirl;
+
         ApplySize();
         ApplyAlpha();
     }

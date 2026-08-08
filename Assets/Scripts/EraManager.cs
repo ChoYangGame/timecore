@@ -31,11 +31,26 @@ public class EraManager : MonoBehaviour
 
         public Enemy enemyPrefab;
 
-        [Tooltip("이 시대 적의 스프라이트 색. 프리팹 색을 덮어쓴다 — 프리팹을 늘리지 않고 시대를 구분하려는 것")]
+        [Tooltip("이 시대 적의 컬러 아트. 비워두면 아래 enemyColor로 흰 사각형을 물들이는 기존 방식으로 떨어진다")]
+        public Sprite enemySprite;
+
+        [Tooltip("이 시대 적의 색. enemySprite가 있으면 틴트가 아니라 파편·스폰 표식의 강조색으로만 쓰인다")]
         public Color enemyColor = Color.white;
 
         [Tooltip("이 시대 적의 최대 체력 배율. 웨이브 가산과 곱해진다")]
         public float enemyHpMultiplier = 1f;
+
+        [Tooltip("이 시대 적의 이동속도 배율. 0 이하면 1로 본다 (씬에 값이 없을 때 적이 얼어붙는 것 방지)")]
+        public float enemySpeedMultiplier = 1f;
+
+        [Tooltip("이 시대 시작 스폰 간격(초). 웨이브가 오르면 여기서부터 짧아진다. 0 이하면 기존 값을 유지한다")]
+        public float spawnInterval = 2f;
+
+        [Tooltip("이 시대 동시 생존 적 상한. 0 이하면 기존 값을 유지한다")]
+        public int maxAlive = 40;
+
+        [Tooltip("이 시대 보스의 컬러 아트. 비워두면 bossColor 틴트 방식으로 떨어진다")]
+        public Sprite bossSprite;
 
         public Color bossColor = Color.white;
         public string bossName = "고대의 포식자";
@@ -66,7 +81,11 @@ public class EraManager : MonoBehaviour
             backgroundColor = new Color(0.165f, 0.227f, 0.180f, 1f),
             // 바닥이 중간 톤 모래갈색이라 같은 갈색은 묻힌다. 채도를 올린 적갈색으로 띄운다.
             enemyColor = new Color(0.769f, 0.271f, 0.165f, 1f),
-            enemyHpMultiplier = 1f,
+            // 야수 떼: 개체는 가장 약하고 조금 빠르되 숫자로 민다.
+            enemyHpMultiplier = 0.85f,
+            enemySpeedMultiplier = 1.10f,
+            spawnInterval = 1.7f,
+            maxAlive = 48,
             bossColor = new Color(0.941f, 0.463f, 0.290f, 1f),
             bossName = "고대의 포식자",
             bossHpMultiplier = 1f,
@@ -78,7 +97,11 @@ public class EraManager : MonoBehaviour
             backgroundColor = new Color(0.180f, 0.165f, 0.220f, 1f),
             // 바닥이 따뜻한 회색 석재라 회색은 묻힌다. 차가운 강철청으로 색온도를 반대로 둔다.
             enemyColor = new Color(0.180f, 0.290f, 0.420f, 1f),
-            enemyHpMultiplier = 1.2f,
+            // 중장 보병: 느리고 단단하다. 숫자를 줄여 한 마리씩 상대하는 느낌을 만든다.
+            enemyHpMultiplier = 1.45f,
+            enemySpeedMultiplier = 0.85f,
+            spawnInterval = 2.4f,
+            maxAlive = 30,
             bossColor = new Color(0.357f, 0.541f, 0.749f, 1f),
             bossName = "강철의 심문관",
             bossHpMultiplier = 1.2f,
@@ -90,7 +113,12 @@ public class EraManager : MonoBehaviour
             backgroundColor = new Color(0.145f, 0.165f, 0.200f, 1f),
             // 바닥이 어두운 청회색 아스팔트라 밝은 올리브가 명도로 갈린다.
             enemyColor = new Color(0.624f, 0.749f, 0.180f, 1f),
-            enemyHpMultiplier = 1.45f,
+            // 기계화 보병: HP는 중세보다 낮다. 압박을 체력이 아니라 물량과 속도로 만든다 —
+            // 두 시대가 똑같이 '더 단단해짐'이면 질감이 안 갈린다.
+            enemyHpMultiplier = 1.30f,
+            enemySpeedMultiplier = 1.15f,
+            spawnInterval = 1.6f,
+            maxAlive = 46,
             bossColor = new Color(0.831f, 0.910f, 0.361f, 1f),
             bossName = "강화 병기",
             bossHpMultiplier = 1.45f,
@@ -103,7 +131,11 @@ public class EraManager : MonoBehaviour
             // 바닥이 밝은 회색 금속이고 시안 발광 장식이 깔려 있다. 플레이어 자체도 시안이라
             // 시안 계열을 쓰면 셋이 겹친다 — 시안의 보색인 마젠타로 색상 자체를 갈라놓는다.
             enemyColor = new Color(0.612f, 0.114f, 0.451f, 1f),
-            enemyHpMultiplier = 1.75f,
+            // 소수 정예: 가장 단단하고 가장 빠르다. 대신 수가 적어 한 마리를 처리하는 동안 버틸 수 있다.
+            enemyHpMultiplier = 2.10f,
+            enemySpeedMultiplier = 1.25f,
+            spawnInterval = 2.2f,
+            maxAlive = 34,
             bossColor = new Color(0.847f, 0.322f, 0.898f, 1f),
             bossName = "시간의 지배자",
             bossHpMultiplier = 1.75f,
@@ -298,8 +330,8 @@ public class EraManager : MonoBehaviour
     {
         // 패턴 세트 인덱스는 CurrentEra를 그대로 넘긴다 — 호출 시점 둘 다(Awake / ApplyEra 직후)
         // CurrentEra가 cfg와 같은 시대를 가리킨다.
-        waveManager.ConfigureBoss(cfg.bossName, cfg.bossColor, cfg.bossHpMultiplier, (int)CurrentEra);
-        waveManager.ConfigureEnemyScaling(cfg.enemyHpMultiplier, cfg.enemyColor);
+        waveManager.ConfigureBoss(cfg.bossName, cfg.bossColor, cfg.bossHpMultiplier, (int)CurrentEra, cfg.bossSprite);
+        waveManager.ConfigureEnemyScaling(cfg);
     }
 
     /// <summary>화면에 남은 적/보스 투사체/경험치 오브/감속 지대를 전부 정리한다. 암전 중에만 호출된다.</summary>

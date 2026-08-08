@@ -46,6 +46,15 @@ public class WaveManager : MonoBehaviour
     [Tooltip("적 스프라이트 색상. EraManager가 시대 전환 시 갱신한다 (프리팹을 늘리지 않고 시대를 구분한다).")]
     [SerializeField] private Color enemyColor = new Color(0.659f, 0.196f, 0.176f, 1f);
 
+    // 시대별 컬러 아트. EraManager가 전환 때마다 넣어 준다.
+    // [SerializeField]를 붙이지 않은 이유: 인스펙터에서 채울 값이 아니라 EraConfig에서 흘러오는 값이고,
+    // 직렬화하면 씬에 빈 슬롯 두 개가 더 생겨 EraConfig 쪽과 어느 쪽이 진짜인지 헷갈린다.
+    private Sprite bossSprite;
+    private Sprite enemySprite;
+
+    // 시대별 적 이동속도 배율. 스폰 직후 1회만 곱한다 (Update에서 매 프레임 곱하면 공짜가 아니다).
+    private float enemySpeedMultiplier = 1f;
+
     public int CurrentWave { get; private set; } = 1;
 
     /// <summary>
@@ -137,28 +146,45 @@ public class WaveManager : MonoBehaviour
         // HP는 UI에 넘기기 전에 확정해야 한다. Show()가 그 시점의 MaxHp를 게이지 기준으로 잡는다.
         if (!Mathf.Approximately(bossHpMultiplier, 1f)) bossHealth.SetMaxHp(bossHealth.MaxHp * bossHpMultiplier);
 
-        // sr.color 직접 대입이 아니라 SetBaseColor를 쓴다 — Health가 Awake에서 캐시한 프리팹 색으로
-        // 첫 피격 플래시 직후 되돌아가는 것을 막는다.
-        bossHealth.SetBaseColor(bossColor);
+        // sr.color/sr.sprite 직접 대입이 아니라 SetAppearance를 쓴다 — Health가 Awake에서 캐시한 프리팹 색으로
+        // 첫 피격 플래시 직후 되돌아가는 것을 막는다. bossSprite가 null이면 기존 틴트 방식 그대로다.
+        bossHealth.SetAppearance(bossSprite, bossColor);
 
         if (bossHpUI != null) bossHpUI.Show(bossHealth, bossName);
         ShowOrDeferBanner($"WAVE {bossWave} — BOSS");
     }
 
     /// <summary>시대 전환 시 EraManager가 다음 보스의 이름/색/체력 배율/패턴 세트를 갱신한다 (프리팹은 재사용).</summary>
-    public void ConfigureBoss(string name, Color color, float hpMultiplier, int eraIndex)
+    public void ConfigureBoss(string name, Color color, float hpMultiplier, int eraIndex, Sprite sprite = null)
     {
         bossName = name;
         bossColor = color;
+        bossSprite = sprite;
         bossHpMultiplier = Mathf.Max(0.01f, hpMultiplier);
         bossEraIndex = Mathf.Max(0, eraIndex);
     }
 
-    /// <summary>시대 전환 시 EraManager가 이후 스폰될 적의 체력 배율과 색을 갱신한다.</summary>
-    public void ConfigureEnemyScaling(float hpMultiplier, Color color)
+    /// <summary>
+    /// 시대 전환 시 EraManager가 이후 스폰될 적의 능력치·외형·물량을 갱신한다.
+    /// ApplyEra에서 ResetForNewEra() 다음에 불리므로 여기서 스폰 간격을 덮어써야 시대 값이 남는다.
+    ///
+    /// 0 이하를 "값 없음 = 기존 값 유지"로 본다. 인스펙터에서 비워 둔 시대가 있어도
+    /// 속도 배율 0으로 적이 얼어붙거나 maxAlive 0으로 스폰이 멎지 않게 하려는 것이다.
+    /// (필드를 새로 추가해도 씬이 0을 주지는 않는다 — eraConfigs가 배열 초기화식이라
+    ///  역직렬화 때 C# 값이 먼저 깔리고 씬에 있는 필드만 덮인다. 2026-08-09 실측.)
+    /// </summary>
+    public void ConfigureEnemyScaling(EraManager.EraConfig cfg)
     {
-        enemyHpMultiplier = Mathf.Max(0.01f, hpMultiplier);
-        enemyColor = color;
+        if (cfg == null) return;
+
+        enemyHpMultiplier = Mathf.Max(0.01f, cfg.enemyHpMultiplier);
+        enemySpeedMultiplier = cfg.enemySpeedMultiplier > 0f ? cfg.enemySpeedMultiplier : 1f;
+        enemyColor = cfg.enemyColor;
+        enemySprite = cfg.enemySprite;
+
+        if (enemySpawner == null) return;
+        if (cfg.spawnInterval > 0f) enemySpawner.SpawnInterval = cfg.spawnInterval;
+        if (cfg.maxAlive > 0) enemySpawner.MaxAlive = cfg.maxAlive;
     }
 
     /// <summary>시대 전환 시 EraManager가 호출: 웨이브/스폰 상태를 새 시대 기준으로 되돌린다.</summary>
@@ -215,6 +241,9 @@ public class WaveManager : MonoBehaviour
 
     private void HandleEnemySpawned(Enemy enemy)
     {
+        // 속도는 Health와 무관하므로 먼저 적용한다 — Health가 없어도 시대 속도는 걸려야 한다.
+        enemy.ApplySpeedMultiplier(enemySpeedMultiplier);
+
         Health h = enemy.GetComponent<Health>();
         if (h == null) return;
 
@@ -222,7 +251,7 @@ public class WaveManager : MonoBehaviour
         float multiplier = (1f + enemyHealthStepBonus * (CurrentWave - 1)) * enemyHpMultiplier;
         h.SetMaxHp(h.MaxHp * multiplier);
 
-        h.SetBaseColor(enemyColor);
+        h.SetAppearance(enemySprite, enemyColor);
     }
 
     /// <summary>기획서 상 보스 출현 지점: 아레나 오른쪽 끝.</summary>

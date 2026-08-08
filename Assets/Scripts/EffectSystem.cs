@@ -106,7 +106,8 @@ public class EffectSystem : MonoBehaviour
     /// 이펙트가 없다고 게임 로직이 멈추면 안 된다.
     /// </summary>
     public static void Burst(Vector2 position, Color color,
-        int count = 6, float speed = 5f, float size = 0.32f, float lifetime = 0.4f)
+        int count = 6, float speed = 5f, float size = 0.32f, float lifetime = 0.4f,
+        Sprite shape = null)
     {
         if (_instance == null) return;
 
@@ -119,7 +120,7 @@ public class EffectSystem : MonoBehaviour
             float angle = baseAngle + (360f / count) * i + Random.Range(-12f, 12f);
             _instance.Emit(position, Dir(angle) * (speed * Random.Range(0.7f, 1.25f)), color,
                 size * Random.Range(0.75f, 1.3f), lifetime * Random.Range(0.8f, 1.2f),
-                _instance.drag, 1f);
+                _instance.drag, 1f, shape);
         }
     }
 
@@ -144,7 +145,8 @@ public class EffectSystem : MonoBehaviour
 
     /// <summary>원뿔 방향 분사. 맞은 방향·발사 방향처럼 "어디서 왔는지"를 보여줘야 할 때 쓴다.</summary>
     public static void Spray(Vector2 position, Vector2 direction, Color color,
-        int count = 6, float spreadDeg = 45f, float speed = 6f, float size = 0.28f, float lifetime = 0.35f)
+        int count = 6, float spreadDeg = 45f, float speed = 6f, float size = 0.28f, float lifetime = 0.35f,
+        Sprite shape = null)
     {
         if (_instance == null) return;
         if (direction.sqrMagnitude < 0.0001f) direction = Vector2.right;
@@ -157,15 +159,16 @@ public class EffectSystem : MonoBehaviour
             float angle = baseAngle + Random.Range(-spreadDeg, spreadDeg) * 0.5f;
             _instance.Emit(position, Dir(angle) * (speed * Random.Range(0.6f, 1.3f)), color,
                 size * Random.Range(0.75f, 1.25f), lifetime * Random.Range(0.8f, 1.2f),
-                _instance.drag, 1f);
+                _instance.drag, 1f, shape);
         }
     }
 
     /// <summary>제자리에서 알파만 빠지는 조각 하나. 잔상·그을음처럼 "지나간 자국"에 쓴다.</summary>
-    public static void Linger(Vector2 position, Color color, float size = 0.5f, float lifetime = 0.5f)
+    public static void Linger(Vector2 position, Color color, float size = 0.5f, float lifetime = 0.5f,
+        Sprite shape = null)
     {
         if (_instance == null) return;
-        _instance.Emit(position, Vector2.zero, color, size, lifetime, 0f, 0f);
+        _instance.Emit(position, Vector2.zero, color, size, lifetime, 0f, 0f, shape);
     }
 
     private static Vector2 Dir(float angleDeg)

@@ -34,6 +34,12 @@ public class HazardBeam : MonoBehaviour
         Bombardment,
         /// <summary>미래 — 레이저. 넓은 글로우 + 흰 코어 + 끝단 캡, 코어가 깜빡인다</summary>
         Laser,
+
+        /// <summary>
+        /// 중세 — 전기 방전. 지그재그 아크가 한 줄로 이어지고 관절마다 스파크가 튄다.
+        /// **반드시 enum 끝에 둔다** — 중간에 끼우면 씬에 직렬화된 보스 패턴의 beamStyle 인덱스가 전부 밀린다.
+        /// </summary>
+        Electric,
     }
 
     public struct Spec
@@ -164,6 +170,7 @@ public class HazardBeam : MonoBehaviour
             case BeamStyle.Fissure: return 8;      // 지그재그로 이어지는 균열 마디
             case BeamStyle.Bombardment: return 8;  // 순서대로 터지는 폭발
             case BeamStyle.Volley: return 5;       // 굵은 창. 10개 얇은 화살보다 "콱" 꽂힌다
+            case BeamStyle.Electric: return 10;    // 아크 마디. 균열보다 잘게 꺾여야 전기로 읽힌다
             default: return 4;
         }
     }
@@ -185,8 +192,13 @@ public class HazardBeam : MonoBehaviour
             // 창은 촉이 있어야 "찌른다"로 읽힌다. 막대로는 안 된다.
             case BeamStyle.Volley: return FxTextures.Spear;
 
-            // 폭발은 둥글어야 한다. 사각형이 커졌다 작아지면 그냥 사각형이다.
-            case BeamStyle.Bombardment: return FxTextures.Dot;
+            // 폭발은 불꽃 스프라이트를 쓴다. 절차 생성 원(Dot)은 가장자리가 매끈해서
+            // 커졌다 작아지면 "빛나는 공"이지 "터짐"이 아니다. 불규칙한 형상이 필요하다.
+            case BeamStyle.Bombardment: return FxSprites.Flame != null ? FxSprites.Flame : FxTextures.Dot;
+
+            // 전기 아크는 얇고 곧은 마디를 이어 만든다. 마디 자체는 띠가 맞다 —
+            // 여기에 스파크 텍스처를 쓰면 마디마다 별이 박혀 선이 끊겨 보인다.
+            case BeamStyle.Electric: return FxTextures.GlowBar;
 
             // 레이저: 0~3은 헤일로/글로우/중간/코어(늘이는 층), 4~5는 끝단 캡(둥근 점).
             default: return index <= 3 ? FxTextures.GlowBar : FxTextures.Dot;
@@ -201,7 +213,11 @@ public class HazardBeam : MonoBehaviour
     /// 그래서 빔 위에 마디+1개의 꼭짓점을 위아래로 번갈아 찍고, 마디 e가 꼭짓점 e와 e+1을 잇게 한다 —
     /// 각 마디의 길이와 기울기가 두 점 사이 거리·각도로 정해지므로 선이 끊기지 않는다.
     /// </summary>
-    private void BuildFissureNodes(int extras)
+    /// <param name="ampMin">꼭짓점 진폭 최소 (굵기 대비 비율)</param>
+    /// <param name="ampMax">꼭짓점 진폭 최대</param>
+    /// <param name="widMin">마디 굵기 배율 최소</param>
+    /// <param name="widMax">마디 굵기 배율 최대</param>
+    private void BuildZigzagNodes(int extras, float ampMin, float ampMax, float widMin, float widMax)
     {
         if (extras < 1) return;
 
@@ -210,11 +226,11 @@ public class HazardBeam : MonoBehaviour
         for (int j = 0; j <= extras; j++)
         {
             float side = (j % 2 == 0) ? 1f : -1f;
-            // 진폭이 크면 균열이 판정 띠 밖으로 크게 벗어난다. 0.34까지 흔드니 눈에 띄게 삐져나왔다(실측).
-            nodePerp[j] = side * Random.Range(0.14f, 0.27f);
+            // 진폭이 크면 판정 띠 밖으로 크게 벗어난다. 균열에서 0.34까지 흔드니 눈에 띄게 삐져나왔다(실측).
+            nodePerp[j] = side * Random.Range(ampMin, ampMax);
         }
 
-        // 양 끝은 가운데로 모아 균열이 뾰족하게 시작·끝나게 한다.
+        // 양 끝은 가운데로 모아 뾰족하게 시작·끝나게 한다.
         nodePerp[0] *= 0.25f;
         nodePerp[extras] *= 0.25f;
 
@@ -235,7 +251,7 @@ public class HazardBeam : MonoBehaviour
             // 1.06을 곱해 마디끼리 살짝 겹치게 한다. 딱 맞추면 이음매에 틈이 보인다.
             _segLen[i] = Mathf.Sqrt(dAlong * dAlong + dPerp * dPerp) * 1.06f;
             _segTilt[i] = Mathf.Atan2(dPerp, dAlong) * Mathf.Rad2Deg;
-            _segWid[i] = Random.Range(0.24f, 0.38f);
+            _segWid[i] = Random.Range(widMin, widMax);
             _segDelay[i] = (float)e / Mathf.Max(1, extras - 1);
         }
     }
@@ -255,8 +271,10 @@ public class HazardBeam : MonoBehaviour
 
         int extras = count - 1;
 
-        // 균열은 마디끼리 이어져야 해서 배치를 따로 계산한다.
-        if (_spec.style == BeamStyle.Fissure) BuildFissureNodes(extras);
+        // 균열·전기는 마디끼리 이어져야 해서 배치를 따로 계산한다.
+        // 전기는 더 크게·더 잘게 꺾이고 훨씬 얇다 — 굵으면 갈라진 땅이지 방전이 아니다.
+        if (_spec.style == BeamStyle.Fissure) BuildZigzagNodes(extras, 0.14f, 0.27f, 0.24f, 0.38f);
+        else if (_spec.style == BeamStyle.Electric) BuildZigzagNodes(extras, 0.20f, 0.40f, 0.10f, 0.17f);
 
         for (int i = 0; i < count; i++)
         {
@@ -283,7 +301,8 @@ public class HazardBeam : MonoBehaviour
             switch (_spec.style)
             {
                 case BeamStyle.Fissure:
-                    break;   // BuildFissureNodes가 이미 채웠다. 여기서 덮어쓰면 지그재그가 끊긴다
+                case BeamStyle.Electric:
+                    break;   // BuildZigzagNodes가 이미 채웠다. 여기서 덮어쓰면 지그재그가 끊긴다
 
                 case BeamStyle.Volley:
                     // 창은 전부 같은 쪽 위에서 내리꽂힌다. 방향이 제각각이면 찌르기로 안 읽힌다.
@@ -361,6 +380,19 @@ public class HazardBeam : MonoBehaviour
                 EffectSystem.Ring(c, bright, 0.8f, 3.4f, 0.25f);
                 break;
 
+            case BeamStyle.Electric:
+                // 방전은 "쿵"이 아니라 "탁". 흔들림은 아주 짧게 두고 대신 화면을 순간적으로 희게 친다 —
+                // 전기의 세기는 진동이 아니라 광량으로 읽힌다.
+                CameraShake.Shake(0.3f, 0.07f);
+                ScreenFlash.Full(Color.Lerp(_spec.color, Color.white, 0.7f), 0.1f, 0.09f);
+
+                // 양 끝(전극)에서 스파크가 터진다. 아크 마디의 스파크는 DrawElectric이 따로 낸다.
+                EffectSystem.Burst(c + _dir * half, Color.Lerp(_spec.color, Color.white, 0.6f),
+                    6, 7f, 0.22f, 0.26f, FxSprites.Spark);
+                EffectSystem.Burst(c - _dir * half, Color.Lerp(_spec.color, Color.white, 0.6f),
+                    6, 7f, 0.22f, 0.26f, FxSprites.Spark);
+                break;
+
             case BeamStyle.Bombardment:
                 // 여기서 크게 터뜨리지 않는다. 연쇄가 주인공이라 첫 방이 세면 순서가 안 읽힌다.
                 // 폭발 하나하나의 이펙트·흔들림은 DrawBombardment가 낸다.
@@ -373,8 +405,11 @@ public class HazardBeam : MonoBehaviour
                 EffectSystem.Ring(c - _dir * half, bright, 0.6f, 4.5f, 0.32f);
 
                 // 발사구 섬광. 링이 번지는 동안 끝단이 하얗게 남는다.
-                EffectSystem.Linger(c + _dir * half, Color.Lerp(_spec.color, Color.white, 0.85f), _spec.width * 1.4f, 0.22f);
-                EffectSystem.Linger(c - _dir * half, Color.Lerp(_spec.color, Color.white, 0.85f), _spec.width * 1.4f, 0.22f);
+                // 스파크 스프라이트를 써서 매끈한 원이 아니라 갈라지는 빛으로 보이게 한다.
+                EffectSystem.Linger(c + _dir * half, Color.Lerp(_spec.color, Color.white, 0.85f),
+                    _spec.width * 1.4f, 0.22f, FxSprites.Spark);
+                EffectSystem.Linger(c - _dir * half, Color.Lerp(_spec.color, Color.white, 0.85f),
+                    _spec.width * 1.4f, 0.22f, FxSprites.Spark);
 
                 // 화면 전체가 아주 짧게 밝아진다. 격자로 4줄이 겹쳐도 ScreenFlash가 센 것만 남긴다.
                 ScreenFlash.Full(Color.Lerp(_spec.color, Color.white, 0.55f), 0.13f, 0.16f);
@@ -447,6 +482,7 @@ public class HazardBeam : MonoBehaviour
             case BeamStyle.Fissure: DrawFissure(fireT, fade); break;
             case BeamStyle.Volley: DrawVolley(fireT, fade); break;
             case BeamStyle.Bombardment: DrawBombardment(fireT, fade); break;
+            case BeamStyle.Electric: DrawElectric(fireT, fade); break;
             default: DrawLaser(fireT, fade); break;
         }
     }
@@ -515,8 +551,9 @@ public class HazardBeam : MonoBehaviour
             {
                 _segFired[i] = true;
                 Vector2 at = SegmentWorldPos(i);
+                // 흙먼지는 연기 스프라이트로 낸다. 절차 생성 점으로는 "먼지가 인다"가 안 나온다.
                 EffectSystem.Spray(at, _perp, Color.Lerp(_spec.color, Color.black, 0.45f),
-                    3, 70f, 4.5f, 0.26f, 0.35f);
+                    3, 70f, 4.5f, 0.26f, 0.35f, FxSprites.Smoke);
             }
 
             SetLayer(i,
@@ -588,6 +625,57 @@ public class HazardBeam : MonoBehaviour
     }
 
     /// <summary>
+    /// 중세 — 전기가 흐른다. 지그재그 아크가 한 줄로 이어지고 관절마다 스파크가 튄다.
+    ///
+    /// 균열과 같은 지그재그 뼈대를 쓰지만 읽히는 것은 정반대여야 한다. 세 가지로 갈랐다.
+    /// (1) **순서 없이 한 번에** 켠다 — 균열은 끝에서부터 열리지만 방전은 순간이다.
+    /// (2) **훨씬 얇고 거의 흰색** — 굵고 어두우면 갈라진 땅이다. 전기는 코어가 뜨거워야 한다.
+    /// (3) **마디마다 위상을 달리해 깜빡인다** — 전부 같은 밝기로 켜져 있으면 네온사인이지 방전이 아니다.
+    /// </summary>
+    private void DrawElectric(float fireT, float fade)
+    {
+        // 바탕은 판정 범위 그 자체다. 0.28로 두니 모래 배경 위에서 아예 안 보였다(실측) —
+        // 아크만 보이고 띠가 안 보이면 어디까지가 위험한지 읽을 수가 없다.
+        SetLayer(0, 0f, 0f, _spec.length, _spec.width, 0f,
+            Color.Lerp(_spec.color, Color.black, 0.15f), fireAlpha * 0.5f * fade);
+
+        // 아크 전체의 떨림. 두 주기를 겹쳐 규칙적으로 안 보이게 한다.
+        float pulse = 0.72f + 0.18f * Mathf.Sin(_elapsed * 71f) + 0.10f * Mathf.Sin(_elapsed * 173f);
+
+        for (int i = 1; i < _layers.Length; i++)
+        {
+            // 방전은 순간이다. 균열의 0.45와 달리 0.06 — 사실상 동시에 켠다.
+            if (fireT < _segDelay[i] * 0.06f)
+            {
+                _layers[i].enabled = false;
+                continue;
+            }
+
+            // 관절에서 스파크. 마디마다 1회만.
+            if (!_segFired[i])
+            {
+                _segFired[i] = true;
+                EffectSystem.Burst(SegmentWorldPos(i), Color.Lerp(_spec.color, Color.white, 0.75f),
+                    2, 4.5f, 0.16f, 0.2f, FxSprites.Spark);
+            }
+
+            // 마디마다 위상을 어긋내 일부가 순간적으로 흐려진다. 아크가 끊겼다 이어지는 느낌.
+            float blink = Mathf.Sin(_elapsed * 90f + i * 2.1f) > -0.75f ? 1f : 0.25f;
+
+            SetLayer(i,
+                _segAlong[i],
+                _segPerp[i],
+                _segLen[i],
+                _spec.width * _segWid[i] * (0.8f + 0.4f * pulse),
+                _segTilt[i],
+                // 0.85로 두니 순백에 가까워 강철청이 완전히 사라졌다(실측). 시대 구분이 색인데
+                // 전기만 무채색이면 중세로 안 읽힌다. 0.62가 "뜨겁다"와 "강철청"이 같이 남는 지점.
+                Color.Lerp(_spec.color, Color.white, 0.62f),
+                pulse * blink * fade);
+        }
+    }
+
+    /// <summary>
     /// 현대 — 한쪽 끝에서부터 **펑, 펑, 펑** 순서대로 터진다.
     /// 예전에는 시간차가 전체의 50%뿐이고 폭발 하나가 35%나 살아 있어서 거의 전부 겹쳐 보였다.
     /// 지금은 시간차를 85%로 늘리고 폭발 수명을 22%로 줄여 연쇄가 눈으로 세어진다.
@@ -614,7 +702,8 @@ public class HazardBeam : MonoBehaviour
             {
                 _segFired[i] = true;
                 Vector2 at = SegmentWorldPos(i);
-                EffectSystem.Burst(at, Color.Lerp(_spec.color, Color.white, 0.35f), 4, 6f, 0.26f, 0.28f);
+                EffectSystem.Burst(at, Color.Lerp(_spec.color, Color.white, 0.35f), 4, 6f, 0.26f, 0.28f,
+                    FxSprites.Flame);
                 CameraShake.Shake(0.22f, 0.09f);
             }
 
