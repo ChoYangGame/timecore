@@ -296,7 +296,9 @@ public class EraManager : MonoBehaviour
 
     private void PushConfigToWaveManager(EraConfig cfg)
     {
-        waveManager.ConfigureBoss(cfg.bossName, cfg.bossColor, cfg.bossHpMultiplier);
+        // 패턴 세트 인덱스는 CurrentEra를 그대로 넘긴다 — 호출 시점 둘 다(Awake / ApplyEra 직후)
+        // CurrentEra가 cfg와 같은 시대를 가리킨다.
+        waveManager.ConfigureBoss(cfg.bossName, cfg.bossColor, cfg.bossHpMultiplier, (int)CurrentEra);
         waveManager.ConfigureEnemyScaling(cfg.enemyHpMultiplier, cfg.enemyColor);
     }
 

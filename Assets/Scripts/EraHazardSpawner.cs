@@ -96,6 +96,13 @@ public class EraHazardSpawner : MonoBehaviour
     [SerializeField] private EnemySpawner enemySpawner;
     [SerializeField] private EraManager eraManager;
 
+    // Boss가 자기 기믹에 같은 프리팹을 빌려 쓴다. 보스 프리팹에 같은 참조를 또 꽂으면
+    // 프리팹을 외부에서 편집해야 하는데(모달 위험) 그럴 이유가 없다 — 씬에 이미 하나뿐인 참조다.
+    public HazardBeam BeamPrefab => beamPrefab;
+    public HomingHazard HomingPrefab => homingPrefab;
+    public RiftVent VentPrefab => ventPrefab;
+    public BossProjectile VentProjectilePrefab => ventProjectilePrefab;
+
     [Header("시대별 패턴 — 배열 인덱스 = EraManager.Era enum 값")]
     [SerializeField]
     private PatternConfig[] patterns =
@@ -332,6 +339,7 @@ public class EraHazardSpawner : MonoBehaviour
                 fireDuration = cfg.fireDuration,
                 playerDamage = cfg.playerDamage,
                 enemyDamage = cfg.enemyDamage,
+                style = CurrentBeamStyle(),
             });
 
             if (beamStagger > 0f && i < count - 1) yield return new WaitForSeconds(beamStagger);
@@ -404,6 +412,23 @@ public class EraHazardSpawner : MonoBehaviour
         return vertical
             ? new Vector2(value, arena.center.y)
             : new Vector2(arena.center.x, value);
+    }
+
+    /// <summary>
+    /// 시대별 빔 생김새. PatternConfig의 필드로 두지 않고 시대 인덱스에서 뽑는다 —
+    /// 씬의 patterns 배열 4칸은 이미 직렬화돼 있어서, 지금 새 필드를 넣으면 네 칸 모두
+    /// enum 기본값(Fissure)으로 역직렬화된다. 씬을 편집하지 않고 올바른 값을 넣는 방법이 이것뿐이다.
+    /// </summary>
+    private HazardBeam.BeamStyle CurrentBeamStyle()
+    {
+        EraManager.Era era = eraManager != null ? eraManager.CurrentEra : EraManager.Era.Primitive;
+        switch (era)
+        {
+            case EraManager.Era.Medieval: return HazardBeam.BeamStyle.Volley;        // 화살 세례
+            case EraManager.Era.Modern: return HazardBeam.BeamStyle.Bombardment;     // 십자 폭격
+            case EraManager.Era.Future: return HazardBeam.BeamStyle.Laser;           // 레이저 격자
+            default: return HazardBeam.BeamStyle.Fissure;                            // 지면 균열
+        }
     }
 
     /// <summary>시대 보스 색을 그대로 쓴다. 새 아트 없이 시대마다 다른 색으로 읽히게 하려는 것.</summary>

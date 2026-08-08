@@ -35,8 +35,15 @@ public class Health : MonoBehaviour
     /// <summary>사망 시 1회만 호출된다.</summary>
     public event Action<Health> OnDeath;
 
-    /// <summary>피격 시 호출된다. (현재 체력, 최대 체력)</summary>
+    /// <summary>체력이 바뀔 때 호출된다. (현재 체력, 최대 체력) — 회복·최대체력 증가도 포함된다.</summary>
     public event Action<float, float> OnDamaged;
+
+    /// <summary>
+    /// 실제로 피해를 입었을 때만 호출된다. (피해량)
+    /// OnDamaged는 Heal()과 IncreaseMaxHp()에서도 나가기 때문에 타격 연출을 거기 걸면
+    /// 회복 코어를 먹을 때도 화면이 흔들린다. 맞은 순간만 필요한 쪽은 이걸 쓴다.
+    /// </summary>
+    public event Action<float> OnHit;
 
     private Color _baseColor = Color.white;
     private Coroutine _flashRoutine;
@@ -58,6 +65,7 @@ public class Health : MonoBehaviour
 
         CurrentHp = Mathf.Max(0f, CurrentHp - amount);
         OnDamaged?.Invoke(CurrentHp, maxHp);
+        OnHit?.Invoke(amount);
 
         if (flashRenderer != null && isActiveAndEnabled)
         {

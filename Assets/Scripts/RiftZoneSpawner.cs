@@ -23,6 +23,9 @@ public class RiftZoneSpawner : MonoBehaviour
     [Tooltip("비워두면 Player 태그를 가진 오브젝트를 자동으로 찾는다")]
     [SerializeField] private Transform player;
 
+    /// <summary>미래 보스의 "시간 정지 영역" 기믹이 빌려 쓴다. EraHazardSpawner의 프리팹 공개와 같은 이유.</summary>
+    public RiftZone ZonePrefab => riftZonePrefab;
+
     [Header("상시 스폰")]
     [Tooltip("시대가 시작되고 이 시간이 지나야 첫 지대가 뜬다. 시대 전환 직후 배너와 겹치지 않게 하는 여유")]
     [SerializeField] private float firstSpawnDelay = 12f;

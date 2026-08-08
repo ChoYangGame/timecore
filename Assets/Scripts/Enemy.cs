@@ -67,7 +67,17 @@ public class Enemy : MonoBehaviour
         if (GameManager.Instance != null) GameManager.Instance.RegisterKill();
 
         // 피격 플래시 중이면 SpriteRenderer는 흰색이라 BaseColor를 쓴다.
-        EffectSystem.Burst(transform.position, _health.BaseColor, 5, 4.5f, 0.3f, 0.35f);
+        // 총알은 항상 플레이어 쪽에서 오므로, 플레이어 반대 방향으로 조각을 뿜으면
+        // 맞아서 밀려난 것처럼 읽힌다. 피격 방향을 따로 넘겨받는 배선 없이 같은 효과를 낸다.
+        if (_player != null)
+        {
+            Vector2 away = (Vector2)(transform.position - _player.position);
+            EffectSystem.Spray(transform.position, away, _health.BaseColor, 5, 85f, 6.5f, 0.3f, 0.35f);
+        }
+        else
+        {
+            EffectSystem.Burst(transform.position, _health.BaseColor, 5, 4.5f, 0.3f, 0.35f);
+        }
 
         if (expOrbPrefab != null) Instantiate(expOrbPrefab, transform.position, Quaternion.identity);
         Destroy(gameObject);

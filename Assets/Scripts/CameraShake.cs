@@ -41,18 +41,29 @@ public class CameraShake : MonoBehaviour
     {
         GameObject p = GameObject.FindGameObjectWithTag("Player");
         if (p != null) _playerHealth = p.GetComponent<Health>();
-        if (_playerHealth != null) _playerHealth.OnDamaged += HandlePlayerDamaged;
+        // OnDamaged가 아니라 OnHit이다. OnDamaged는 회복·최대체력 증가에서도 나가서
+        // 회복 코어를 먹을 때마다 화면이 흔들렸다.
+        if (_playerHealth != null) _playerHealth.OnHit += HandlePlayerHit;
     }
 
     private void OnDestroy()
     {
-        if (_playerHealth != null) _playerHealth.OnDamaged -= HandlePlayerDamaged;
+        if (_playerHealth != null) _playerHealth.OnHit -= HandlePlayerHit;
         if (_instance == this) _instance = null;
     }
 
-    private void HandlePlayerDamaged(float current, float max)
+    private void HandlePlayerHit(float amount)
     {
         Shake(playerHitStrength, playerHitDuration);
+
+        // 화면 가장자리가 붉게 물들고 한 박자 멎는다. 세기는 맞은 양에 비례한다 —
+        // 잡몹 접촉(8)과 보스 레이저(20)가 같은 무게로 오면 큰 피해가 안 무섭다.
+        float severity = Mathf.Clamp01(amount / 25f);
+
+        ScreenFlash.Edges(new Color(0.85f, 0.12f, 0.16f, 1f),
+            0.35f + 0.35f * severity, 0.28f + 0.12f * severity);
+
+        Hitstop.Do(0.04f + 0.05f * severity);
     }
 
     /// <summary>

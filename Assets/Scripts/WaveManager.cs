@@ -37,6 +37,9 @@ public class WaveManager : MonoBehaviour
     [Tooltip("보스 최대 체력 배율. EraManager가 시대 전환 시 갱신한다 (프리팹 HP는 그대로 두고 시대별로만 곱한다).")]
     [SerializeField] private float bossHpMultiplier = 1f;
 
+    [Tooltip("보스 패턴 세트 인덱스(= EraManager.Era enum 값). EraManager가 시대 전환 시 갱신한다.")]
+    [SerializeField] private int bossEraIndex;
+
     [Tooltip("적 최대 체력 배율. EraManager가 시대 전환 시 갱신한다. 웨이브 가산과 곱해진다.")]
     [SerializeField] private float enemyHpMultiplier = 1f;
 
@@ -118,6 +121,9 @@ public class WaveManager : MonoBehaviour
         Health bossHealth = boss.GetComponent<Health>();
         bossHealth.OnDeath += HandleBossDeath;
 
+        // 패턴 세트는 Boss.Start()가 읽는다. Instantiate 직후 = Start 전이라 여기서 정해주면 된다.
+        boss.ConfigureEra(bossEraIndex);
+
         // HP는 UI에 넘기기 전에 확정해야 한다. Show()가 그 시점의 MaxHp를 게이지 기준으로 잡는다.
         if (!Mathf.Approximately(bossHpMultiplier, 1f)) bossHealth.SetMaxHp(bossHealth.MaxHp * bossHpMultiplier);
 
@@ -129,12 +135,13 @@ public class WaveManager : MonoBehaviour
         ShowOrDeferBanner($"WAVE {bossWave} — BOSS");
     }
 
-    /// <summary>시대 전환 시 EraManager가 다음 보스의 이름/색/체력 배율을 갱신한다 (프리팹은 재사용).</summary>
-    public void ConfigureBoss(string name, Color color, float hpMultiplier)
+    /// <summary>시대 전환 시 EraManager가 다음 보스의 이름/색/체력 배율/패턴 세트를 갱신한다 (프리팹은 재사용).</summary>
+    public void ConfigureBoss(string name, Color color, float hpMultiplier, int eraIndex)
     {
         bossName = name;
         bossColor = color;
         bossHpMultiplier = Mathf.Max(0.01f, hpMultiplier);
+        bossEraIndex = Mathf.Max(0, eraIndex);
     }
 
     /// <summary>시대 전환 시 EraManager가 이후 스폰될 적의 체력 배율과 색을 갱신한다.</summary>
