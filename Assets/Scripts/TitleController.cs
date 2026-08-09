@@ -24,6 +24,9 @@ public class TitleController : MonoBehaviour
     [Tooltip("순위표 본문. 폰트는 LiberationSans여야 한다 — Pretendard 서브셋에 없는 글자가 많다")]
     [SerializeField] private TMP_Text rankingText;
 
+    [Tooltip("직업 선택 화면. 연결돼 있으면 '파견 시작'이 바로 시작하지 않고 이걸 먼저 띄운다")]
+    [SerializeField] private ClassSelectController classSelect;
+
     [Tooltip("랭킹을 여는 버튼")]
     [SerializeField] private Button rankingButton;
 
@@ -43,7 +46,7 @@ public class TitleController : MonoBehaviour
 
     private void Start()
     {
-        if (startButton != null) startButton.onClick.AddListener(StartRun);
+        if (startButton != null) startButton.onClick.AddListener(HandleStartPressed);
 
         if (nameInput != null)
         {
@@ -87,7 +90,7 @@ public class TitleController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (startButton != null) startButton.onClick.RemoveListener(StartRun);
+        if (startButton != null) startButton.onClick.RemoveListener(HandleStartPressed);
         if (nameInput != null) nameInput.onValueChanged.RemoveListener(HandleNameChanged);
         if (rankingButton != null) rankingButton.onClick.RemoveListener(OpenRanking);
         if (rankingCloseButton != null) rankingCloseButton.onClick.RemoveListener(CloseRanking);
@@ -107,6 +110,36 @@ public class TitleController : MonoBehaviour
         nameInput.caretPosition = clean.Length;
     }
 
+    /// <summary>
+    /// "파견 시작" 버튼. 직업 선택이 연결돼 있으면 그 화면을 먼저 띄우고,
+    /// 실제 시작은 직업을 고른 뒤 ClassSelectController가 StartRun()을 부른다.
+    ///
+    /// 이름은 여기서 확정한다 — 직업 화면으로 넘어가면 타이틀 패널이 꺼져
+    /// InputField 참조가 위태로워진다.
+    /// </summary>
+    public void HandleStartPressed()
+    {
+        if (!IsWaitingToStart) return;
+
+        if (nameInput != null) Leaderboard.PlayerName = nameInput.text;
+
+        if (classSelect != null)
+        {
+            CloseRanking();
+            // 타이틀을 내리고 직업 화면만 남긴다. 직업 카드 배경이 반투명이라
+            // 켜 둔 채로는 TIMECORE 로고와 버튼이 카드 너머로 비쳐 보인다(실측).
+            if (panelRoot != null) panelRoot.SetActive(false);
+            classSelect.Show();
+            return;
+        }
+
+        StartRun();
+    }
+
+    /// <summary>
+    /// 실제로 판을 시작한다. 직업 선택을 거치지 않고 바로 불려도(테스트 스크립트 등)
+    /// GameManager.SelectedClass 기본값이 Gunner라 기존 동작 그대로다.
+    /// </summary>
     public void StartRun()
     {
         if (!IsWaitingToStart) return;

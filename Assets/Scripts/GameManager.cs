@@ -21,6 +21,15 @@ public class GameManager : MonoBehaviour
     public float ExpAbsorbRadiusMultiplier { get; private set; } = 1f;
 
     /// <summary>
+    /// 시작 화면에서 고른 직업. 증강 풀을 거르는 기준이고, 판 내내 바뀌지 않는다.
+    /// 기본값이 Gunner인 이유: 직업 선택을 건너뛰고 StartRun()이 바로 불려도
+    /// (테스트 스크립트 등) 기존 동작 그대로 돌아가야 한다.
+    /// </summary>
+    public PlayerClass SelectedClass { get; private set; } = PlayerClass.Gunner;
+
+    public void SetSelectedClass(PlayerClass cls) => SelectedClass = cls;
+
+    /// <summary>
     /// 플레이어 사망 후 true. 생존 시간 누적을 멈추고, AugmentManager가 카드 표시와
     /// timeScale 복구를 건너뛰는 기준이 된다 (사망과 레벨업이 겹칠 때의 방어).
     /// </summary>

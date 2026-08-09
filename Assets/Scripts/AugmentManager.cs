@@ -22,6 +22,31 @@ public class AugmentManager : MonoBehaviour
 
     public bool IsShowing { get; private set; }
 
+    private PlayerWeapon _weapon;
+
+    /// <summary>
+    /// 지금 켜져 있는 무기. 직업 선택이 Start 이후에 일어나므로 미리 잡아두면 안 되고,
+    /// 필요할 때 찾아서 캐시한다.
+    /// </summary>
+    private PlayerWeapon ActiveWeapon
+    {
+        get
+        {
+            if (_weapon != null && _weapon.enabled) return _weapon;
+
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player == null) return null;
+
+            foreach (PlayerWeapon w in player.GetComponents<PlayerWeapon>())
+            {
+                if (!w.enabled) continue;
+                _weapon = w;
+                return _weapon;
+            }
+            return null;
+        }
+    }
+
     /// <summary>카드 선택 후 재개될 때 발행. 대기 중이던 보스 배너를 여기서 띄운다.</summary>
     public event System.Action OnPanelClosed;
 
@@ -69,9 +94,24 @@ public class AugmentManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 고른 직업에게 허용된 증강만 남겨 뽑는다.
+    /// 거르지 않으면 칼잡이가 "총알 관통"을 뽑고 아무 일도 안 일어난다 —
+    /// 효과가 없는 선택지는 버그로 읽힌다.
+    /// </summary>
     private List<AugmentData> PickRandom(int count)
     {
-        List<AugmentData> pool = new List<AugmentData>(allAugments);
+        PlayerClass cls = GameManager.Instance != null
+            ? GameManager.Instance.SelectedClass
+            : PlayerClass.Gunner;
+
+        List<AugmentData> pool = new List<AugmentData>();
+        for (int i = 0; i < allAugments.Length; i++)
+        {
+            AugmentData a = allAugments[i];
+            if (a != null && a.AllowedFor(cls)) pool.Add(a);
+        }
+
         List<AugmentData> picked = new List<AugmentData>();
 
         int take = Mathf.Min(count, pool.Count);
@@ -115,11 +155,12 @@ public class AugmentManager : MonoBehaviour
             case AugmentType.MoveSpeed:
                 if (playerMove != null) playerMove.MoveSpeed *= 1f + data.Value;
                 break;
+            // 공격속도·데미지는 세 직업 모두에게 같은 의미다. 켜져 있는 무기에 건다.
             case AugmentType.FireRate:
-                if (playerShooter != null) playerShooter.FireInterval *= 1f - data.Value;
+                if (ActiveWeapon != null) ActiveWeapon.FireInterval *= 1f - data.Value;
                 break;
             case AugmentType.Damage:
-                if (playerShooter != null) playerShooter.DamageMultiplier *= 1f + data.Value;
+                if (ActiveWeapon != null) ActiveWeapon.DamageMultiplier *= 1f + data.Value;
                 break;
             case AugmentType.ExpRadius:
                 if (GameManager.Instance != null) GameManager.Instance.MultiplyExpAbsorbRadius(1f + data.Value);
@@ -136,6 +177,22 @@ public class AugmentManager : MonoBehaviour
             case AugmentType.PhaseShift:
                 if (playerMove != null) playerMove.MoveSpeed *= 1f + data.Value;
                 if (playerHealth != null) playerHealth.EnableHitInvincibility(phaseShiftInvincibility);
+                break;
+
+            // ── 칼잡이 전용 ──
+            case AugmentType.BladeReach:
+                if (ActiveWeapon is BladeWeapon br) br.ReachMultiplier *= 1f + data.Value;
+                break;
+            case AugmentType.BladeArc:
+                if (ActiveWeapon is BladeWeapon ba) ba.BonusArcDegrees += data.Value;
+                break;
+
+            // ── 매지션 전용 ──
+            case AugmentType.OrbCount:
+                if (ActiveWeapon is OrbitWeapon oc) oc.ExtraOrbs += Mathf.Max(1, Mathf.RoundToInt(data.Value));
+                break;
+            case AugmentType.OrbRadius:
+                if (ActiveWeapon is OrbitWeapon orr) orr.RadiusMultiplier *= 1f + data.Value;
                 break;
         }
     }

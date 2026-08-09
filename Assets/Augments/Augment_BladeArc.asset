@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
-  m_Name: Augment_Pierce
+  m_Name: Augment_BladeArc
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: pierce_1
-  displayName: "\uAD00\uD1B5 \uCF54\uC5B4"
-  description: "\uCD1D\uC54C\uC774 \uC801 1\uBA85 \uAD00\uD1B5"
-  type: 5
-  classFilter: 1
-  value: 1
+  id: blade_arc
+  displayName: "\uD68C\uC804 \uACA9\uD30C"
+  description: "\uB3D9\uC2DC \uACF5\uACA9 \uC801 \uC218 \uC99D\uAC00"
+  type: 9
+  classFilter: 2
+  value: 40

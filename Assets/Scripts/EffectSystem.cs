@@ -163,6 +163,17 @@ public class EffectSystem : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 방향이 있는 조각 하나. 칼잡이의 참격처럼 "어느 쪽으로 벴는지"가 보여야 할 때 쓴다.
+    /// 제자리에서 조금 줄면서 사라진다 — 날아가면 베기가 아니라 발사체로 읽힌다.
+    /// </summary>
+    public static void Slash(Vector2 position, float rotationDeg, Color color,
+        float size, float lifetime, Sprite shape)
+    {
+        if (_instance == null) return;
+        _instance.Emit(position, Vector2.zero, color, size, lifetime, 0f, 0.25f, shape, rotationDeg);
+    }
+
     /// <summary>제자리에서 알파만 빠지는 조각 하나. 잔상·그을음처럼 "지나간 자국"에 쓴다.</summary>
     public static void Linger(Vector2 position, Color color, float size = 0.5f, float lifetime = 0.5f,
         Sprite shape = null)
@@ -178,7 +189,8 @@ public class EffectSystem : MonoBehaviour
     }
 
     private void Emit(Vector2 position, Vector2 velocity, Color color,
-        float size, float lifetime, float dragValue, float shrink, Sprite shape = null)
+        float size, float lifetime, float dragValue, float shrink, Sprite shape = null,
+        float rotationDeg = 0f)
     {
         if (_tf == null || _tf.Length == 0) return;
 
@@ -201,6 +213,9 @@ public class EffectSystem : MonoBehaviour
 
         _tf[slot].position = position;
         _tf[slot].localScale = Vector3.one * (size / _spriteWidth);
+        // 대부분의 조각은 방향이 없지만 참격처럼 방향이 있는 모양은 눕혀야 한다.
+        // 회전을 매번 초기화하는 이유: 풀을 돌려 쓰므로 이전 조각의 각도가 남는다.
+        _tf[slot].localRotation = Quaternion.Euler(0f, 0f, rotationDeg);
 
         _sr[slot].color = color;
         _sr[slot].enabled = true;

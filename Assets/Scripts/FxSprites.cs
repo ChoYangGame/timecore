@@ -19,7 +19,13 @@ public static class FxSprites
 {
     private const string Root = "FX/";
 
-    private static Sprite _spark, _smoke, _flame, _twirl, _scorch;
+    private static Sprite _spark, _smoke, _flame, _twirl, _scorch, _slash, _orb;
+
+    /// <summary>참격 호(弧). 칼잡이의 휘두르기에 쓴다 — 막대로는 "벤다"가 안 나온다.</summary>
+    public static Sprite Slash => _slash != null ? _slash : (_slash = Load("kenney_slash_03"));
+
+    /// <summary>마법 오브. 매지션의 궤도 코어에 쓴다.</summary>
+    public static Sprite Orb => _orb != null ? _orb : (_orb = Load("kenney_magic_05"));
 
     /// <summary>불규칙한 스파크. 전기 방전, 적 사망 파편, 레이저 발사구에 쓴다.</summary>
     public static Sprite Spark => _spark != null ? _spark : (_spark = Load("kenney_spark_04"));

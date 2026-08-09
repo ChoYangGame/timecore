@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
-  m_Name: Augment_Pierce
+  m_Name: Augment_OrbRadius
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: pierce_1
-  displayName: "\uAD00\uD1B5 \uCF54\uC5B4"
-  description: "\uCD1D\uC54C\uC774 \uC801 1\uBA85 \uAD00\uD1B5"
-  type: 5
-  classFilter: 1
-  value: 1
+  id: orb_radius
+  displayName: "\uCF54\uC5B4 \uC774\uACA9"
+  description: "\uCF54\uC5B4 \uD68C\uC804 \uBC18\uACBD +25%"
+  type: 11
+  classFilter: 3
+  value: 0.25

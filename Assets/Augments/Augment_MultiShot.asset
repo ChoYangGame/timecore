@@ -16,4 +16,5 @@ MonoBehaviour:
   displayName: "\uB2E4\uC911 \uC0AC\uCD9C"
   description: "\uCD1D\uC54C \uBC1C\uC0AC \uC218 +1 (\uCD5C\uB300 5\uBC1C)"
   type: 6
+  classFilter: 1
   value: 1
