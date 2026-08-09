@@ -20,10 +20,13 @@ public enum AugmentType
     BladeReach,
     /// <summary>칼잡이 — 호의 폭 증가 (동시에 맞는 적이 늘어난다)</summary>
     BladeArc,
-    /// <summary>매지션 — 궤도 코어 수 증가</summary>
-    OrbCount,
-    /// <summary>매지션 — 공전 반경 증가</summary>
-    OrbRadius,
+    // 매지션은 2026-08-10에 궤도 코어에서 지속 지대로 바뀌었다.
+    // 이름만 새 동작에 맞게 갈았고 **순서는 건드리지 않았다** —
+    // 위치가 밀리면 이미 만들어 둔 .asset의 type 인덱스가 전부 어긋난다.
+    /// <summary>매지션 — 주기마다 가장 가까운 적 하나에게 추가 피해 (구 OrbCount)</summary>
+    FieldFocus,
+    /// <summary>매지션 — 지대 반경 증가 (구 OrbRadius)</summary>
+    FieldRadius,
 
     // ── 2차 확장. 여기도 끝에만 붙인다.
     /// <summary>총잡이 — 탄속 증가</summary>
@@ -38,12 +41,12 @@ public enum AugmentType
     BladeKnockback,
     /// <summary>칼잡이 — 참격으로 처치 시 회복</summary>
     BladeLifesteal,
-    /// <summary>매지션 — 공전 속도 증가</summary>
-    OrbSpeed,
-    /// <summary>매지션 — 코어 타격 반경 증가</summary>
-    OrbHitRadius,
-    /// <summary>매지션 — 코어 타격 시 주위에도 절반 피해</summary>
-    OrbBlast,
+    /// <summary>매지션 — 지대 피해 주기 단축 (구 OrbSpeed)</summary>
+    FieldTickRate,
+    /// <summary>매지션 — 지대 안 적 감속 (구 OrbHitRadius)</summary>
+    FieldSlow,
+    /// <summary>매지션 — 지대 바깥 링에도 절반 피해 (구 OrbBlast)</summary>
+    FieldOuterRing,
 }
 
 /// <summary>증강이 어느 직업에게 뜨는지. Any면 모든 직업 공용이다.</summary>

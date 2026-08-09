@@ -8205,16 +8205,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1dd04ddfa7994894eaf8c1775b6b8d5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OrbitWeapon
-  fireInterval: 0.4
-  damage: 9
-  baseOrbCount: 2
-  maxOrbCount: 6
-  orbitRadius: 1.7
-  orbitSpeed: 150
-  hitRadius: 0.7
-  blastRadius: 1.6
-  orbColor: {r: 0.435, g: 0.847, b: 0.878, a: 1}
-  trailInterval: 0.06
+  fireInterval: 0.5
+  damage: 10
+  fieldRadius: 2.6
+  outerRingBonus: 1.6
+  slowPerStack: 0.22
+  minSlowMultiplier: 0.4
+  fieldColor: {r: 0.435, g: 0.847, b: 0.878, a: 1}
+  fillAlpha: 0.13
+  ringAlpha: 0.9
+  spinSpeed: 22
 --- !u!114 &1366259213
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10002,7 +10002,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC8FC\uC704 \uD68C\uC804 \uCF54\uC5B4 \xB7 \uC9C0\uC18D \uACF5\uACA9"
+  m_text: "\uC8FC\uC704 \uC9C0\uB300 \uC9C0\uC18D \uACF5\uACA9"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b7211051d5df0514d8d6be306e8b7476, type: 2}
   m_sharedMaterial: {fileID: -5968447903981291345, guid: b7211051d5df0514d8d6be306e8b7476, type: 2}

@@ -194,11 +194,11 @@ public class AugmentManager : MonoBehaviour
                 break;
 
             // ── 매지션 전용 ──
-            case AugmentType.OrbCount:
-                if (ActiveWeapon is OrbitWeapon oc) oc.ExtraOrbs += Mathf.Max(1, Mathf.RoundToInt(data.Value));
+            case AugmentType.FieldFocus:
+                if (ActiveWeapon is FieldWeapon ff) ff.FocusDamage += data.Value;
                 break;
-            case AugmentType.OrbRadius:
-                if (ActiveWeapon is OrbitWeapon orr) orr.RadiusMultiplier *= 1f + data.Value;
+            case AugmentType.FieldRadius:
+                if (ActiveWeapon is FieldWeapon fr) fr.RadiusMultiplier *= 1f + data.Value;
                 break;
 
             // ── 총잡이 2차 ──
@@ -224,14 +224,15 @@ public class AugmentManager : MonoBehaviour
                 break;
 
             // ── 매지션 2차 ──
-            case AugmentType.OrbSpeed:
-                if (ActiveWeapon is OrbitWeapon os) os.SpeedMultiplier *= 1f + data.Value;
+            case AugmentType.FieldTickRate:
+                // 주기를 줄이는 것이라 공용 '크로노 오버클럭'과 같은 계산이다.
+                if (ActiveWeapon != null) ActiveWeapon.FireInterval *= 1f - data.Value;
                 break;
-            case AugmentType.OrbHitRadius:
-                if (ActiveWeapon is OrbitWeapon oh) oh.HitRadiusMultiplier *= 1f + data.Value;
+            case AugmentType.FieldSlow:
+                if (ActiveWeapon is FieldWeapon fs) fs.SlowStacks += Mathf.Max(1, Mathf.RoundToInt(data.Value));
                 break;
-            case AugmentType.OrbBlast:
-                if (ActiveWeapon is OrbitWeapon ob) ob.Blast = true;
+            case AugmentType.FieldOuterRing:
+                if (ActiveWeapon is FieldWeapon fo) fo.OuterRing = true;
                 break;
         }
     }

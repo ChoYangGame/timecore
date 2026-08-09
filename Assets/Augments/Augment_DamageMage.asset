@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Augment_DamageMage
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
   id: dmg_mage
-  displayName: "\uCF54\uC5B4 \uC99D\uD3ED"
+  displayName: "\uCD9C\uB825 \uC99D\uD3ED"
   description: "\uACF5\uACA9\uB825 +25%"
   type: 2
   classFilter: 3

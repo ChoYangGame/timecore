@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
   m_Name: Augment_OrbHit
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: orbhit
-  displayName: "\uCF54\uC5B4 \uACFC\uC5F4"
-  description: "\uCF54\uC5B4 \uACF5\uACA9 \uBC18\uACBD +35%"
+  id: fldslow
+  displayName: "\uC2DC\uAC04 \uC815\uCCB4"
+  description: "\uC9C0\uB300 \uC548 \uC801 \uAC10\uC18D"
   type: 19
   classFilter: 3
   unique: 0
-  value: 0.35
+  value: 1

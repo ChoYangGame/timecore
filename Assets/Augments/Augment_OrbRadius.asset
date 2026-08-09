@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
   m_Name: Augment_OrbRadius
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: orb_radius
-  displayName: "\uCF54\uC5B4 \uC774\uACA9"
-  description: "\uCF54\uC5B4 \uD68C\uC804 \uBC18\uACBD +25%"
+  id: fldrad
+  displayName: "\uC9C0\uB300 \uC99D\uB300"
+  description: "\uC9C0\uB300 \uBC18\uACBD +25%"
   type: 11
   classFilter: 3
+  unique: 0
   value: 0.25

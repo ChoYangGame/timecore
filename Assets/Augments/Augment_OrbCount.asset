@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
   m_Name: Augment_OrbCount
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: orb_count
-  displayName: "\uCF54\uC5B4 \uC99D\uC2DD"
-  description: "\uD68C\uC804 \uCF54\uC5B4 +1 (\uCD5C\uB300 6\uAC1C)"
+  id: fldfocus
+  displayName: "\uC911\uC2EC \uBD95\uAD34"
+  description: "\uC911\uC2EC \uC801 \uACF5\uACA9 \uC99D\uB300"
   type: 10
   classFilter: 3
-  value: 1
+  unique: 0
+  value: 8

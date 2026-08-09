@@ -56,7 +56,11 @@ public class Enemy : MonoBehaviour
         if (sqr < 0.0001f) return;
 
         Vector3 dir = toPlayer / Mathf.Sqrt(sqr);
-        float speed = moveSpeed * RiftZone.SpeedMultiplierAt(transform.position);
+        // 감속 지대와 매지션 지대는 서로 곱해진다. 둘 다 "시간이 늦게 간다"는 같은 문법이고,
+        // 각자 하한이 걸려 있어 겹쳐도 완전히 멈추지는 않는다.
+        float speed = moveSpeed
+            * RiftZone.SpeedMultiplierAt(transform.position)
+            * FieldWeapon.SlowMultiplierAt(transform.position);
         transform.position += dir * (speed * Time.deltaTime);
     }
 

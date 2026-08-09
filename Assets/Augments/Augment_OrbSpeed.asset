@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
   m_Name: Augment_OrbSpeed
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: orbspd
-  displayName: "\uACE0\uC18D \uD68C\uC804"
-  description: "\uD68C\uC804 \uC18D\uB3C4 +40%"
+  id: fldtick
+  displayName: "\uACE0\uC18D \uC804\uAC1C"
+  description: "\uACF5\uACA9 \uC8FC\uAE30 -20%"
   type: 18
   classFilter: 3
   unique: 0
-  value: 0.4
+  value: 0.2

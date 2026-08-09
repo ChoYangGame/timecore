@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
   m_Name: Augment_OrbBlast
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: orbblast
-  displayName: "\uBD95\uAD34 \uD30C\uB3D9"
-  description: "\uC8FC\uC704 \uC801 \uB3D9\uC2DC \uACF5\uACA9"
+  id: fldouter
+  displayName: "\uC8FC\uC704 \uD30C\uB3D9"
+  description: "\uC9C0\uB300 \uC8FC\uC704\uB3C4 \uACF5\uACA9"
   type: 20
   classFilter: 3
   unique: 1
