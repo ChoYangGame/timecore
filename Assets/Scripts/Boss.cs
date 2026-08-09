@@ -38,6 +38,18 @@ public class Boss : MonoBehaviour
         SlowField,
         /// <summary>순간이동 후 즉시 방사. 반복</summary>
         BlinkStrike,
+
+        // ── 보스별 서명 기믹. 확정 아트에 맞춰 2026-08-10에 새로 만든 것들이라
+        //    **반드시 끝에 추가한다** — 중간에 끼우면 프리팹에 직렬화된 kind 인덱스가 전부 밀린다.
+
+        /// <summary>원시 — 꼬리가 보스 주위를 부채꼴로 훑는다. 방향으로 피하는 근접기</summary>
+        TailSweep,
+        /// <summary>중세 — 대검을 내려찍어 충격파 링이 퍼진다. 거리로 피하는 기술</summary>
+        ShockSlam,
+        /// <summary>현대 — 포탑이 플레이어를 따라 돌다 고정하고 굵은 직사를 쏜다</summary>
+        AimedCannon,
+        /// <summary>미래 — 위성 레이저가 보스를 중심으로 선회한다</summary>
+        OrbitSweep,
     }
 
     public enum BeamShape
@@ -132,6 +144,49 @@ public class Boss : MonoBehaviour
         [Tooltip("순간이동 후 플레이어와 유지할 거리")]
         public float blinkDistance = 4.5f;
         public float blinkGap = 0.5f;
+
+        [Header("TailSweep — 꼬리 휩쓸기")]
+        [Tooltip("훑는 각도(도). 360이면 한 바퀴 다 돈다")]
+        public float sweepArc = 260f;
+        public float sweepDuration = 0.7f;
+        [Tooltip("꼬리가 닿는 거리")]
+        public float sweepRadius = 5.5f;
+        [Tooltip("꼬리 자체의 두께(도). 이 폭 안에 있으면 맞는다")]
+        public float sweepBand = 55f;
+        public float sweepDamage = 20f;
+        [Tooltip("2면 왕복한다. 한 번 피한 자리에 그대로 서 있지 못하게 한다")]
+        public int sweepPasses = 1;
+
+        [Header("ShockSlam — 충격파")]
+        public int slamWaves = 2;
+        [Tooltip("링이 퍼지는 속도(유닛/초). 플레이어 이동속도 6보다 빨라야 긴장이 산다")]
+        public float slamSpeed = 9f;
+        public float slamMaxRadius = 10f;
+        [Tooltip("링의 두께. 이 안에 들어와 있으면 맞는다")]
+        public float slamBand = 1.1f;
+        public float slamDamage = 22f;
+        public float slamWaveDelay = 0.55f;
+
+        [Header("AimedCannon — 주포 직사")]
+        [Tooltip("포탑이 플레이어를 따라 도는 시간. 이 동안은 조준선이 따라온다")]
+        public float cannonTrack = 0.9f;
+        [Tooltip("고정 후 발사까지의 정지 시간. 여기서 도망칠 여지를 준다")]
+        public float cannonLock = 0.35f;
+        public float cannonFire = 0.4f;
+        public float cannonWidth = 2.8f;
+        public float cannonDamage = 26f;
+        public int cannonShots = 1;
+
+        [Header("OrbitSweep — 선회 레이저")]
+        [Tooltip("동시에 도는 갈래 수. 막대가 양방향이라 화면에는 2배로 보인다")]
+        public int orbitBeams = 2;
+        [Tooltip("훑는 총 각도(도)")]
+        public float orbitArc = 200f;
+        [Tooltip("몇 단계로 끊어 도는지. 많을수록 매끄럽지만 막대가 늘어난다")]
+        public int orbitSteps = 8;
+        public float orbitStepTime = 0.13f;
+        public float orbitWidth = 1.5f;
+        public float orbitDamage = 16f;
     }
 
     [Serializable]
@@ -494,6 +549,10 @@ public class Boss : MonoBehaviour
             case PatternKind.VentDeploy: return PatternVentDeploy(p);
             case PatternKind.SlowField: return PatternSlowField(p);
             case PatternKind.BlinkStrike: return PatternBlinkStrike(p);
+            case PatternKind.TailSweep: return PatternTailSweep(p);
+            case PatternKind.ShockSlam: return PatternShockSlam(p);
+            case PatternKind.AimedCannon: return PatternAimedCannon(p);
+            case PatternKind.OrbitSweep: return PatternOrbitSweep(p);
             default: return PatternRadialBurst(p);
         }
     }
@@ -824,6 +883,307 @@ public class Boss : MonoBehaviour
 
             if (i < count - 1) yield return new WaitForSeconds(p.blinkGap);
         }
+    }
+
+    // ─────────────────── 보스별 서명 기믹 (2026-08-10 신규) ───────────────────
+
+    /// <summary>플레이어 Health. 새 패턴들은 콜라이더 없이 직접 판정하므로 여기서 한 번만 잡는다.</summary>
+    private Health PlayerHealth
+    {
+        get
+        {
+            if (_playerHealth != null) return _playerHealth;
+            if (_player == null) return null;
+            _playerHealth = _player.GetComponent<Health>();
+            return _playerHealth;
+        }
+    }
+    private Health _playerHealth;
+
+    private static float AngleOf(Vector2 v) => Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
+
+    /// <summary>
+    /// 원시 — 꼬리 휩쓸기. 부채꼴 한 조각이 보스 주위를 돌며 훑는다.
+    ///
+    /// 기존 방사 탄막과 다른 점은 **피하는 방법**이다. 탄막은 틈으로 비집고 들어가는 것이고,
+    /// 이건 꼬리가 오는 반대쪽으로 돌거나 사거리 밖으로 빠지는 것이다.
+    /// 근접 보스에게 "가까이 붙으면 위험하다"를 주는 기술이라 T-Rex의 긴 꼬리 조형과 맞는다.
+    ///
+    /// 판정은 콜라이더 없이 각도·거리 비교다. 한 번 훑을 때 플레이어는 최대 1대만 맞는다 —
+    /// 매 프레임 판정하면 부채꼴 안에 있는 동안 계속 맞아 즉사한다.
+    /// </summary>
+    private IEnumerator PatternTailSweep(Pattern p)
+    {
+        int passes = Mathf.Max(1, p.sweepPasses);
+        float radius = Mathf.Max(1f, p.sweepRadius);
+        float half = Mathf.Max(5f, p.sweepBand) * 0.5f;
+
+        // 초승달 크기를 판정에서 역산한다(칼잡이 참격과 같은 규칙).
+        // 눈대중으로 키우면 그림이 사거리 밖까지 나가 "닿았는데 안 맞는다"가 된다.
+        float chord = 2f * radius * Mathf.Sin(Mathf.Min(half, 89f) * Mathf.Deg2Rad);
+        float fxSize = chord / FxSprites.SlashOpaqueAcross;
+        float fxAt = radius - fxSize * FxSprites.SlashOpaqueAlong * 0.5f;
+
+        for (int pass = 0; pass < passes; pass++)
+        {
+            if (_health.IsDead || _player == null) yield break;
+
+            // 플레이어를 한가운데 두고 시작해 훑어 나간다. 왕복할 때는 방향을 뒤집는다.
+            float toPlayer = AngleOf((Vector2)(_player.position - transform.position));
+            float dir = (pass % 2 == 0) ? 1f : -1f;
+            float start = toPlayer - p.sweepArc * 0.5f * dir;
+
+            _isCasting = true;
+            CameraShake.Shake(0.2f, 0.1f);
+
+            bool hitThisPass = false;
+            float t = 0f;
+            float fxTimer = 0f;
+
+            while (t < p.sweepDuration && !_health.IsDead)
+            {
+                t += Time.deltaTime;
+                float k = Mathf.Clamp01(t / Mathf.Max(0.0001f, p.sweepDuration));
+                float cur = start + p.sweepArc * k * dir;
+
+                // 연출: 꼬리 끝을 따라 초승달을 뿌린다. 매 프레임 뿌리면 조각 풀이 마른다.
+                fxTimer -= Time.deltaTime;
+                if (fxTimer <= 0f)
+                {
+                    fxTimer = 0.045f;
+                    float rad = cur * Mathf.Deg2Rad;
+                    Vector2 tip = (Vector2)transform.position
+                        + new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * fxAt;
+                    EffectSystem.Slash(tip, cur, Color.Lerp(_health.AccentColor, Color.white, 0.35f),
+                        fxSize, 0.22f, FxSprites.Slash);
+                }
+
+                if (!hitThisPass && PlayerHealth != null && !PlayerHealth.IsDead)
+                {
+                    Vector2 to = (Vector2)(_player.position - transform.position);
+                    if (to.magnitude <= radius && Mathf.Abs(Mathf.DeltaAngle(cur, AngleOf(to))) <= half)
+                    {
+                        PlayerHealth.TakeDamage(p.sweepDamage);
+                        hitThisPass = true;
+                        CameraShake.Shake(0.3f, 0.14f);
+                        EffectSystem.Spray(_player.position, to.normalized, _health.AccentColor,
+                            6, 70f, 7f, 0.28f, 0.3f, FxSprites.Spark);
+                    }
+                }
+
+                yield return null;
+            }
+
+            _isCasting = false;
+            if (pass < passes - 1) yield return new WaitForSeconds(0.25f);
+        }
+    }
+
+    /// <summary>
+    /// 중세 — 대검 강타. 내려찍은 자리에서 충격파 링이 퍼진다.
+    ///
+    /// 이 게임의 다른 기술은 전부 "어느 쪽으로 피하느냐"인데 이것만 **"어느 거리에 있느냐"** 다.
+    /// 링이 지나갈 때만 맞으므로 안쪽으로 파고들거나 바깥으로 빠져야 한다 —
+    /// 보스에게 붙어 있던 근접 직업이 한 번은 판단을 강요당한다.
+    /// </summary>
+    private IEnumerator PatternShockSlam(Pattern p)
+    {
+        int waves = Mathf.Max(1, p.slamWaves);
+        float band = Mathf.Max(0.3f, p.slamBand);
+
+        for (int w = 0; w < waves; w++)
+        {
+            if (_health.IsDead) yield break;
+
+            _isCasting = true;
+            CameraShake.Shake(0.5f, 0.2f);
+            EffectSystem.Burst(transform.position, Color.Lerp(_health.AccentColor, Color.white, 0.5f),
+                10, 8f, 0.34f, 0.35f, FxSprites.Spark);
+
+            Vector2 origin = transform.position;   // 링은 내려찍은 자리에 고정된다
+            bool hitThisWave = false;
+            float r = 0f;
+
+            while (r < p.slamMaxRadius && !_health.IsDead)
+            {
+                r += p.slamSpeed * Time.deltaTime;
+
+                // 퍼지는 링 자체가 예고이자 판정이다. 링 굵기 = 판정 굵기.
+                EffectSystem.Ring(origin, Color.Lerp(_health.AccentColor, Color.white, 0.25f),
+                    r * 2f, r * 2f + band, 0.12f);
+
+                if (!hitThisWave && PlayerHealth != null && !PlayerHealth.IsDead)
+                {
+                    float d = Vector2.Distance(origin, _player.position);
+                    if (Mathf.Abs(d - r) <= band)
+                    {
+                        PlayerHealth.TakeDamage(p.slamDamage);
+                        hitThisWave = true;
+                        CameraShake.Shake(0.35f, 0.15f);
+                    }
+                }
+
+                yield return null;
+            }
+
+            _isCasting = false;
+            if (w < waves - 1) yield return new WaitForSeconds(p.slamWaveDelay);
+        }
+    }
+
+    /// <summary>
+    /// 현대 — 주포 직사. 포탑이 플레이어를 따라 돌다가 **고정**되고, 그 선으로 쏜다.
+    ///
+    /// 기존 BeamStrike는 화면 축에 나란히 깔려 "어디서 오는지"가 없었다.
+    /// 이건 보스에서 뻗어 나가는 한 줄이라 전차의 굵은 포신 하나와 그림이 맞는다.
+    /// 조준선이 따라오는 동안은 피해도 소용없고, **고정된 뒤에 움직여야** 산다 —
+    /// 예고를 읽는 방식 자체가 다른 기술이다.
+    /// </summary>
+    private IEnumerator PatternAimedCannon(Pattern p)
+    {
+        int shots = Mathf.Max(1, p.cannonShots);
+        Rect arena = ArenaBounds.Instance.Rect;
+        float length = Mathf.Sqrt(arena.width * arena.width + arena.height * arena.height);
+
+        for (int s = 0; s < shots; s++)
+        {
+            if (_health.IsDead || _player == null) yield break;
+
+            _isCasting = true;
+            float angle = AngleOf((Vector2)(_player.position - transform.position));
+
+            // ── 추적: 조준선이 플레이어를 따라 돈다
+            float t = 0f;
+            float fx = 0f;
+            while (t < p.cannonTrack && !_health.IsDead && _player != null)
+            {
+                t += Time.deltaTime;
+                angle = AngleOf((Vector2)(_player.position - transform.position));
+                fx -= Time.deltaTime;
+                if (fx <= 0f) { fx = 0.05f; DrawAimLine(angle, length, 0.35f); }
+                yield return null;
+            }
+
+            // ── 고정: 조준선이 굳는다. 여기서부터 도망쳐야 한다
+            float t2 = 0f;
+            while (t2 < p.cannonLock && !_health.IsDead)
+            {
+                t2 += Time.deltaTime;
+                fx -= Time.deltaTime;
+                if (fx <= 0f) { fx = 0.04f; DrawAimLine(angle, length, 0.9f); }
+                yield return null;
+            }
+
+            if (_health.IsDead) yield break;
+
+            // ── 발사: 고정된 각도로 보스에서 뻗는 한 줄
+            float rad = angle * Mathf.Deg2Rad;
+            Vector2 dirV = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+            Vector2 center = (Vector2)transform.position + dirV * (length * 0.5f);
+
+            HazardBeam beam = Instantiate(_beamPrefab, center, Quaternion.identity);
+            beam.Configure(new HazardBeam.Spec
+            {
+                center = center,
+                angleDeg = angle,
+                length = length,
+                width = p.cannonWidth,
+                color = _health.AccentColor,
+                warnDuration = 0.12f,      // 예고는 이미 조준선이 다 했다
+                fireDuration = p.cannonFire,
+                playerDamage = p.cannonDamage,
+                enemyDamage = 0f,
+                style = p.beamStyle,
+            });
+
+            // 포구 화염 + 반동
+            CameraShake.Shake(0.6f, 0.22f);
+            EffectSystem.Spray(transform.position, dirV, Color.Lerp(_health.AccentColor, Color.white, 0.6f),
+                10, 30f, 11f, 0.4f, 0.3f, FxSprites.Flame);
+            EffectSystem.Spray(transform.position, -dirV, _health.AccentColor,
+                6, 60f, 6f, 0.3f, 0.35f, FxSprites.Smoke);
+
+            _isCasting = false;
+            yield return new WaitForSeconds(0.12f + p.cannonFire);
+        }
+    }
+
+    /// <summary>조준선. 보스에서 뻗는 점선으로 그린다 — 굳으면 알파가 올라간다.</summary>
+    private void DrawAimLine(float angleDeg, float length, float alpha)
+    {
+        float rad = angleDeg * Mathf.Deg2Rad;
+        Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+        Color c = _health.AccentColor;
+        c.a = alpha;
+
+        // 점 8개면 선으로 읽히면서 조각 풀도 아낀다(0.05초마다 8개 → 동시 12개 남짓).
+        for (int i = 1; i <= 8; i++)
+        {
+            Vector2 pos = (Vector2)transform.position + dir * (length * 0.5f * (i / 8f));
+            EffectSystem.Linger(pos, c, 0.3f, 0.08f, FxSprites.Spark);
+        }
+    }
+
+    /// <summary>
+    /// 미래 — 선회 레이저. 보스에서 뻗은 갈래가 각도를 돌아가며 훑는다.
+    ///
+    /// 고정 4갈래(기존 BeamStrike/RadialFromSelf)는 갈래 사이에 서면 끝이라
+    /// 한 번 자리를 잡으면 무시할 수 있었다. 이건 그 안전지대가 **돌아온다** —
+    /// 계속 같은 방향으로 이동하게 만드는 기술이라, 부유하는 위성 조형과 맞는다.
+    ///
+    /// 매끄러운 회전 대신 단계로 끊는 이유: 검증된 HazardBeam을 그대로 쓰기 위해서다.
+    /// 단계마다 짧은 막대를 새로 깔면 회전으로 읽히면서 판정 코드는 하나로 유지된다.
+    /// </summary>
+    private IEnumerator PatternOrbitSweep(Pattern p)
+    {
+        Rect arena = ArenaBounds.Instance.Rect;
+        float length = Mathf.Sqrt(arena.width * arena.width + arena.height * arena.height);
+
+        int steps = Mathf.Max(2, p.orbitSteps);
+        int beams = Mathf.Max(1, p.orbitBeams);
+        float spin = (UnityEngine.Random.value < 0.5f) ? 1f : -1f;
+        float start = UnityEngine.Random.Range(0f, 180f);
+
+        _isCasting = true;
+
+        for (int s = 0; s < steps; s++)
+        {
+            if (_health.IsDead) yield break;
+
+            float baseAngle = start + spin * (p.orbitArc * s / steps);
+
+            for (int b = 0; b < beams; b++)
+            {
+                float angle = baseAngle + (180f / beams) * b;
+                float rad = angle * Mathf.Deg2Rad;
+                Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+
+                // 막대는 중심에서 양방향으로 뻗으므로 보스를 중심에 둔다.
+                HazardBeam beam = Instantiate(_beamPrefab, transform.position, Quaternion.identity);
+                beam.Configure(new HazardBeam.Spec
+                {
+                    center = transform.position,
+                    angleDeg = angle,
+                    length = length,
+                    width = p.orbitWidth,
+                    color = _health.AccentColor,
+                    // 예고를 짧게 두는 대신 각도가 조금씩만 움직인다 — 다음 위치가 눈으로 읽힌다.
+                    warnDuration = p.orbitStepTime * 0.9f,
+                    fireDuration = p.orbitStepTime * 0.8f,
+                    playerDamage = p.orbitDamage,
+                    enemyDamage = 0f,
+                    style = HazardBeam.BeamStyle.Laser,
+                });
+
+                EffectSystem.Linger((Vector2)transform.position + dir * 1.2f,
+                    Color.Lerp(_health.AccentColor, Color.white, 0.5f), 0.5f, 0.15f, FxSprites.Orb);
+            }
+
+            yield return new WaitForSeconds(p.orbitStepTime);
+        }
+
+        _isCasting = false;
+        yield return new WaitForSeconds(p.orbitStepTime);
     }
 
     // ────────────────────────────── 탄 발사 ──────────────────────────────

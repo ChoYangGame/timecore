@@ -28,13 +28,6 @@ public class BladeWeapon : PlayerWeapon
     [Tooltip("적을 찾는 거리. 이 안에 적이 없으면 휘두르지 않는다")]
     [SerializeField] private float searchRange = 6f;
 
-    // kenney_slash_03의 그려지는 영역(픽셀 실측). 가장자리가 부드럽게 빠져서
-    // 임계값에 따라 다르다 — 세로 기준 알파 16 → 0.77 / 알파 64 → 0.66 / 알파 128 → 0.55.
-    // 눈에 확실히 보이는 경계인 알파 64를 쓴다. 알파 16으로 맞추면
-    // 실제로는 안 보이는 여백까지 판정으로 치게 돼 칼날이 짧아 보인다.
-    // 스프라이트를 베는 방향으로 눕히므로 가로가 칼날 두께, 세로가 호의 폭이 된다.
-    private const float SlashOpaqueAlong = 0.14f;
-    private const float SlashOpaqueAcross = 0.66f;
 
     [Header("연출")]
     [SerializeField] private float slashLifetime = 0.18f;
@@ -156,8 +149,8 @@ public class BladeWeapon : PlayerWeapon
         float across = 2f * r * Mathf.Sin(Mathf.Min(halfArc, 90f) * Mathf.Deg2Rad);
 
         // 스프라이트 한 변을 size로 놓으면 실제로 그려지는 건 불투명 비율만큼이다.
-        float size = across / SlashOpaqueAcross;
-        float thickness = size * SlashOpaqueAlong;
+        float size = across / FxSprites.SlashOpaqueAcross;
+        float thickness = size * FxSprites.SlashOpaqueAlong;
 
         // 칼날의 바깥 끝을 사거리에 맞춘다.
         Vector2 center = (Vector2)transform.position + dir * (r - thickness * 0.5f);

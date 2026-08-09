@@ -21,8 +21,15 @@ public static class FxSprites
 
     private static Sprite _spark, _smoke, _flame, _twirl, _scorch, _slash, _orb;
 
-    /// <summary>참격 호(弧). 칼잡이의 휘두르기에 쓴다 — 막대로는 "벤다"가 안 나온다.</summary>
+    /// <summary>참격 호(弧). 칼잡이의 휘두르기와 보스 꼬리 휩쓸기에 쓴다 — 막대로는 "벤다"가 안 나온다.</summary>
     public static Sprite Slash => _slash != null ? _slash : (_slash = Load("kenney_slash_03"));
+
+    // Slash 스프라이트가 1유닛 중 실제로 그려지는 비율(픽셀 실측, 알파 64 기준).
+    // 눕혀서 쓰므로 Along = 칼날 두께, Across = 호의 폭이다.
+    // 이 값이 있어야 "보이는 칼날 = 판정"을 크기에서 역산할 수 있다 —
+    // 칼잡이 참격과 보스 꼬리가 같은 규칙을 쓰라고 여기(스프라이트 쪽)에 둔다.
+    public const float SlashOpaqueAlong = 0.14f;
+    public const float SlashOpaqueAcross = 0.66f;
 
     /// <summary>마법 오브. 매지션의 궤도 코어에 쓴다.</summary>
     public static Sprite Orb => _orb != null ? _orb : (_orb = Load("kenney_magic_05"));

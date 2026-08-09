@@ -257,6 +257,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uADE0\uC5F4 \uBD84\uCD9C"
       kind: 3
       telegraph: 0.7
@@ -301,10 +325,34 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uAF2C\uB9AC \uD729\uC4F8\uAE30"
-      kind: 1
-      telegraph: 0.5
-      recover: 1.4
+      kind: 8
+      telegraph: 0.6
+      recover: 1.5
       followUpRadial: 0
       dashCount: 1
       dashDuration: 0.8
@@ -345,6 +393,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 280
+      sweepDuration: 0.75
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 2
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uD3EC\uC2DD\uC790\uC758 \uCD94\uACA9"
       kind: 4
       telegraph: 0.6
@@ -389,11 +461,35 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
   - bossLabel: "\uAC15\uCCA0\uC758 \uC2EC\uBB38\uAD00"
     patterns:
     - label: "\uB300\uAC80 \uAC15\uD0C0"
-      kind: 3
-      telegraph: 0.75
+      kind: 9
+      telegraph: 0.8
       recover: 1.5
       followUpRadial: 0
       dashCount: 1
@@ -435,6 +531,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uB9DD\uB839 \uC18C\uD658"
       kind: 5
       telegraph: 0.8
@@ -479,6 +599,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uCC98\uD615 \uB3CC\uACA9"
       kind: 0
       telegraph: 0.6
@@ -523,6 +667,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uCC98\uD615 \uB099\uC778"
       kind: 4
       telegraph: 0.7
@@ -567,11 +735,35 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
   - bossLabel: "\uAC15\uD654 \uBCD1\uAE30"
     patterns:
     - label: "\uC8FC\uD3EC \uC9C1\uC0AC"
-      kind: 3
-      telegraph: 0.9
+      kind: 10
+      telegraph: 0.5
       recover: 1.6
       followUpRadial: 0
       dashCount: 1
@@ -613,6 +805,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.4
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 2
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uBBF8\uC0AC\uC77C \uC77C\uC81C\uC0AC"
       kind: 4
       telegraph: 0.7
@@ -657,6 +873,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uAE30\uAD00\uD3EC \uC18C\uC0AC"
       kind: 2
       telegraph: 0.6
@@ -701,6 +941,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uCE90\uD130\uD544\uB7EC \uB3CC\uC9C4"
       kind: 0
       telegraph: 0.6
@@ -745,10 +1009,34 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
   - bossLabel: "\uC2DC\uAC04\uC758 \uC9C0\uBC30\uC790"
     patterns:
-    - label: "\uC704\uC131 \uB808\uC774\uC800"
-      kind: 3
+    - label: "\uC704\uC131 \uC120\uD68C"
+      kind: 11
       telegraph: 0.7
       recover: 1.6
       followUpRadial: 0
@@ -791,6 +1079,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uC2DC\uAC04 \uC815\uC9C0 \uC601\uC5ED"
       kind: 6
       telegraph: 0.8
@@ -835,6 +1147,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uC704\uC0C1 \uB3C4\uC57D"
       kind: 7
       telegraph: 0.5
@@ -879,6 +1215,30 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
     - label: "\uADA4\uB3C4 \uD30C\uD3B8"
       kind: 1
       telegraph: 0.6
@@ -923,3 +1283,27 @@ MonoBehaviour:
       blinkCount: 3
       blinkDistance: 4.5
       blinkGap: 0.5
+      sweepArc: 260
+      sweepDuration: 0.7
+      sweepRadius: 5.5
+      sweepBand: 55
+      sweepDamage: 20
+      sweepPasses: 1
+      slamWaves: 2
+      slamSpeed: 9
+      slamMaxRadius: 10
+      slamBand: 1.1
+      slamDamage: 22
+      slamWaveDelay: 0.55
+      cannonTrack: 0.9
+      cannonLock: 0.35
+      cannonFire: 0.4
+      cannonWidth: 2.8
+      cannonDamage: 26
+      cannonShots: 1
+      orbitBeams: 2
+      orbitArc: 200
+      orbitSteps: 8
+      orbitStepTime: 0.13
+      orbitWidth: 1.5
+      orbitDamage: 16
