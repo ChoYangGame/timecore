@@ -43,7 +43,8 @@ public class HudController : MonoBehaviour
 
         if (timerText != null) timerText.text = FormatTime(gm.SurvivalTime);
         if (killText != null) killText.text = $"{gm.KillCount}";
-        if (levelText != null) levelText.text = $"Lv.{gm.Level}";
+        // 숫자만 찍는다. "LV"는 배지 안에 따로 붙은 라벨이 담당한다.
+        if (levelText != null) levelText.text = gm.Level.ToString();
         if (expFillImage != null) expFillImage.fillAmount = gm.ExpRatio;
 
         if (waveManager == null) return;
