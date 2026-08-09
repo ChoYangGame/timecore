@@ -4492,8 +4492,14 @@ MonoBehaviour:
     eraShortName: "\uC911\uC138"
     backgroundColor: {r: 0.18, g: 0.165, b: 0.22, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
-    enemySprite: {fileID: 0}
-    enemyWalkFrames: []
+    enemySprite: {fileID: 21300000, guid: 35d8bd77e01176548a0906d2d32a7028, type: 3}
+    enemyWalkFrames:
+    - {fileID: 21300000, guid: 35d8bd77e01176548a0906d2d32a7028, type: 3}
+    - {fileID: 21300000, guid: 9ce136ef2f0390c448bf8ce396d240b9, type: 3}
+    - {fileID: 21300000, guid: 1f608b97c82691047b709d9e2c620394, type: 3}
+    - {fileID: 21300000, guid: 483bada8b7ace394f87d9c29271e7c89, type: 3}
+    - {fileID: 21300000, guid: 0a3a8f0aa67922347bff09d31690e6de, type: 3}
+    - {fileID: 21300000, guid: 86e40c79227d98e4eab4a41789fea10f, type: 3}
     enemyColor: {r: 0.18, g: 0.29, b: 0.42, a: 1}
     enemyHpMultiplier: 1.4
     enemySpeedMultiplier: 0.85
