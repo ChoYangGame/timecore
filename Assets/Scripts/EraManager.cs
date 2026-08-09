@@ -36,8 +36,13 @@ public class EraManager : MonoBehaviour
 
         [Tooltip("이 시대 적의 걷기 프레임. 2장 이상이면 순서대로 돌아간다.\n" +
                  "비워두면 위 enemySprite가 정지 그림으로 남는다.\n" +
-                 "원본은 오른쪽을 보는 그림만 넣는다 — 왼쪽은 flipX로 뒤집는다")]
+                 "한쪽 방향 그림만 넣는다 — 반대쪽은 flipX로 뒤집는다")]
         public Sprite[] enemyWalkFrames;
+
+        [Tooltip("이 시대 아트가 **왼쪽**을 보고 그려졌으면 켠다.\n" +
+                 "시대마다 아트 담당·구도가 달라 방향이 통일된다는 보장이 없어 세트별로 지정한다.\n" +
+                 "게임에서 적이 진행 방향과 반대로 보이면 이 값만 뒤집으면 된다")]
+        public bool enemyArtFacesLeft;
 
         [Tooltip("이 시대 적의 색. enemySprite가 있으면 틴트가 아니라 파편·스폰 표식의 강조색으로만 쓰인다")]
         public Color enemyColor = Color.white;

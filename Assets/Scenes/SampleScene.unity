@@ -4479,6 +4479,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 70abd241bf9162541a2e54a252eb089e, type: 3}
     - {fileID: 21300000, guid: 6bba3b43da0e6ef41b83dedde87d635c, type: 3}
     - {fileID: 21300000, guid: 4dca8afc977fbab45a5f2c64ed67f6fb, type: 3}
+    enemyArtFacesLeft: 0
     enemyColor: {r: 0.769, g: 0.271, b: 0.165, a: 1}
     enemyHpMultiplier: 0.7
     enemySpeedMultiplier: 1.1
@@ -4500,6 +4501,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 483bada8b7ace394f87d9c29271e7c89, type: 3}
     - {fileID: 21300000, guid: 0a3a8f0aa67922347bff09d31690e6de, type: 3}
     - {fileID: 21300000, guid: 86e40c79227d98e4eab4a41789fea10f, type: 3}
+    enemyArtFacesLeft: 0
     enemyColor: {r: 0.18, g: 0.29, b: 0.42, a: 1}
     enemyHpMultiplier: 1.4
     enemySpeedMultiplier: 0.85
@@ -4521,6 +4523,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 2ae61a586fcccd341a387315f9542666, type: 3}
     - {fileID: 21300000, guid: e29af9468a993d340a69efc85d534ba7, type: 3}
     - {fileID: 21300000, guid: 5a2cf6e96e27d134bb558319b4b752c9, type: 3}
+    enemyArtFacesLeft: 1
     enemyColor: {r: 0.624, g: 0.749, b: 0.18, a: 1}
     enemyHpMultiplier: 1.35
     enemySpeedMultiplier: 1.15
@@ -4542,6 +4545,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 42896c01cd12f854594c583d381435d2, type: 3}
     - {fileID: 21300000, guid: da411c0de9f59b24083bc254301ea62d, type: 3}
     - {fileID: 21300000, guid: a484559ff80beb94bb1cca088d28ab47, type: 3}
+    enemyArtFacesLeft: 0
     enemyColor: {r: 0.612, g: 0.114, b: 0.451, a: 1}
     enemyHpMultiplier: 2.3
     enemySpeedMultiplier: 1.25
@@ -8006,6 +8010,7 @@ GameObject:
   - component: {fileID: 1366259205}
   - component: {fileID: 1366259213}
   - component: {fileID: 1366259212}
+  - component: {fileID: 1366259214}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -8252,6 +8257,19 @@ MonoBehaviour:
   searchRange: 6
   slashLifetime: 0.18
   slashColor: {r: 0.435, g: 0.847, b: 0.878, a: 1}
+--- !u!114 &1366259214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1366259204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d930d66d172ff54aab5e96d33b078a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelHealthGrowth
+  hpPerLevel: 4
 --- !u!1 &1371558010
 GameObject:
   m_ObjectHideFlags: 0

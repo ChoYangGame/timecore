@@ -25,12 +25,25 @@ public class SpriteWalkAnimator : MonoBehaviour
              "감속 지대에서 미세하게 떨 때 좌우로 파닥이는 것을 막는다")]
     [SerializeField] private float turnThreshold = 0.002f;
 
+    /// <summary>
+    /// 원본 그림이 왼쪽을 보고 있는지. 시대마다 아트가 달라 이 방향이 통일된다는 보장이 없어
+    /// 코드에 박지 않고 EraConfig에서 세트별로 지정한다 — 한 시대만 어긋나도 값 하나로 고친다.
+    /// </summary>
+    public bool ArtFacesLeft { get; set; }
+
     private SpriteRenderer _sr;
     private Sprite[] _frames;
     private float _timer;
     private int _index;
     private Vector3 _lastPos;
     private bool _facingLeft;
+
+    /// <summary>
+    /// flipX를 한 번이라도 실제로 써 봤는지. ArtFacesLeft가 스폰 직후에 설정되는데
+    /// 그 전에 _facingLeft가 이미 맞아떨어져 있으면 갱신을 건너뛰어,
+    /// 뒤집혀야 할 개체가 원본 방향 그대로 남는 경우가 생긴다.
+    /// </summary>
+    private bool _flipApplied;
 
     private void Awake()
     {
@@ -65,10 +78,12 @@ public class SpriteWalkAnimator : MonoBehaviour
         if (Mathf.Abs(dx) > turnThreshold)
         {
             bool left = dx < 0f;
-            if (left != _facingLeft)
+            if (left != _facingLeft || !_flipApplied)
             {
                 _facingLeft = left;
-                _sr.flipX = left;      // 원본이 오른쪽을 보므로 왼쪽으로 갈 때만 뒤집는다
+                _flipApplied = true;
+                // 원본이 오른쪽을 보면 왼쪽으로 갈 때 뒤집고, 왼쪽을 보면 그 반대다.
+                _sr.flipX = ArtFacesLeft ? !left : left;
             }
         }
 

@@ -52,6 +52,7 @@ public class WaveManager : MonoBehaviour
     private Sprite bossSprite;
     private Sprite enemySprite;
     private Sprite[] enemyWalkFrames;
+    private bool enemyArtFacesLeft;
 
     // 시대별 적 이동속도 배율. 스폰 직후 1회만 곱한다 (Update에서 매 프레임 곱하면 공짜가 아니다).
     private float enemySpeedMultiplier = 1f;
@@ -237,6 +238,7 @@ public class WaveManager : MonoBehaviour
         enemyColor = cfg.enemyColor;
         enemySprite = cfg.enemySprite;
         enemyWalkFrames = cfg.enemyWalkFrames;
+        enemyArtFacesLeft = cfg.enemyArtFacesLeft;
 
         if (enemySpawner == null) return;
         if (cfg.spawnInterval > 0f) enemySpawner.SpawnInterval = cfg.spawnInterval;
@@ -323,7 +325,11 @@ public class WaveManager : MonoBehaviour
 
         // SetAppearance가 sprite를 덮어쓰므로 반드시 그 뒤에 프레임을 넘긴다.
         SpriteWalkAnimator walk = enemy.GetComponent<SpriteWalkAnimator>();
-        if (walk != null) walk.SetFrames(enemyWalkFrames);
+        if (walk != null)
+        {
+            walk.ArtFacesLeft = enemyArtFacesLeft;   // SetFrames보다 먼저 — 첫 방향 판정에 쓰인다
+            walk.SetFrames(enemyWalkFrames);
+        }
     }
 
     /// <summary>기획서 상 보스 출현 지점: 아레나 오른쪽 끝.</summary>
