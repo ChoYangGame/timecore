@@ -119,6 +119,44 @@ public class Leaderboard : MonoBehaviour
         return sb.ToString();
     }
 
+    /// <summary>
+    /// 순위표 한 덩어리를 문자열로 만든다. 타이틀 화면과 결과 화면이 같은 표를 그려야 해서
+    /// 여기 한 곳에만 둔다.
+    ///
+    /// 문구가 전부 영문인 이유: Pretendard 서브셋 159자에 "불러오는 중 / 기록 없음 / 연결 실패"의
+    /// 글자가 거의 없어(불 러 는 록 없 음 연 결 실 패 전부 미포함) 한글로 쓰면 통째로 □가 된다.
+    /// 그래서 이 카드만 TMP 내장 LiberationSans를 쓴다.
+    /// </summary>
+    /// <param name="entries">null이면 통신 실패. 빈 배열이면 기록 없음.</param>
+    /// <param name="highlight">굵게 표시할 이름 (보통 내 이름). 비어 있으면 강조 없음.</param>
+    public static string BuildTable(Entry[] entries, string highlight)
+    {
+        if (entries == null) return "RANKING\n\nOFFLINE";
+        if (entries.Length == 0) return "RANKING\n\nNO RECORDS YET";
+
+        // mspace로 강제 고정폭을 준다. LiberationSans는 가변폭이라 이게 없으면 자릿수가 안 맞아
+        // 순위표가 계단처럼 어긋난다. 한 줄은 " 1. NAME1234 CLR 05:32.1" = 24칸이다.
+        var sb = new System.Text.StringBuilder("RANKING\n\n<mspace=0.58em>");
+
+        for (int i = 0; i < entries.Length; i++)
+        {
+            Entry e = entries[i];
+            bool mine = !string.IsNullOrEmpty(highlight) && e.name == highlight;
+
+            // 내 기록은 굵게. 10줄 중 어디에 있는지 바로 찾게 하려는 것.
+            if (mine) sb.Append("<b>");
+            sb.Append($"{i + 1,2}. {e.name,-8} {EraTag(e.era, e.cleared)} {Format(e.ms)}");
+            if (mine) sb.Append("</b>");
+            if (i < entries.Length - 1) sb.Append('\n');
+        }
+
+        sb.Append("</mspace>");
+        return sb.ToString();
+    }
+
+    /// <summary>불러오는 동안 띄울 문구. 두 화면이 같은 것을 쓰게 여기 둔다.</summary>
+    public const string LoadingText = "RANKING\n\nLOADING...";
+
     /// <summary>ms → "12:34.5". 랭킹 표와 결과 화면이 같은 형식을 쓰게 한다.</summary>
     public static string Format(long ms)
     {

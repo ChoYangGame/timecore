@@ -180,11 +180,7 @@ public class GameOverController : MonoBehaviour
         if (gm == null) return;
 
         rankingText.gameObject.SetActive(true);
-
-        // 이 카드의 문구는 전부 영문이다. 폰트가 LiberationSans라서가 아니라,
-        // Pretendard 서브셋 159자에 "불러오는 중 / 기록 없음 / 연결 실패"의 글자가 거의 없어
-        // 한글로 쓰면 통째로 □가 된다 (불 러 는 록 없 음 연 결 실 패 전부 미포함).
-        rankingText.text = "RANKING\n\nLOADING...";
+        rankingText.text = Leaderboard.LoadingText;
 
         long ms = (long)(gm.SurvivalTime * 1000f);
         string playerName = Leaderboard.PlayerName;
@@ -203,38 +199,7 @@ public class GameOverController : MonoBehaviour
     private void RenderRanking(Leaderboard.Entry[] entries)
     {
         if (rankingText == null) return;
-
-        if (entries == null)
-        {
-            rankingText.text = "RANKING\n\nOFFLINE";
-            return;
-        }
-
-        if (entries.Length == 0)
-        {
-            rankingText.text = "RANKING\n\nNO RECORDS YET";
-            return;
-        }
-
-        string me = Leaderboard.PlayerName;
-
-        // mspace로 강제 고정폭을 준다. LiberationSans는 가변폭이라 이게 없으면 자릿수가 안 맞아
-        // 순위표가 계단처럼 어긋난다. 한 줄은 " 1. NAME1234 CLR 05:32.1" = 24칸이다.
-        var sb = new System.Text.StringBuilder("RANKING\n\n<mspace=0.58em>");
-        for (int i = 0; i < entries.Length; i++)
-        {
-            Leaderboard.Entry e = entries[i];
-            bool mine = !string.IsNullOrEmpty(me) && e.name == me;
-
-            // 내 기록은 굵게. 10줄 중 어디에 있는지 바로 찾게 하려는 것.
-            if (mine) sb.Append("<b>");
-            sb.Append($"{i + 1,2}. {e.name,-8} {Leaderboard.EraTag(e.era, e.cleared)} {Leaderboard.Format(e.ms)}");
-            if (mine) sb.Append("</b>");
-            if (i < entries.Length - 1) sb.Append('\n');
-        }
-        sb.Append("</mspace>");
-
-        rankingText.text = sb.ToString();
+        rankingText.text = Leaderboard.BuildTable(entries, Leaderboard.PlayerName);
     }
 
     /// <summary>씬을 다시 로드한다. timeScale은 로드 전에 반드시 되돌려야 한다.</summary>
