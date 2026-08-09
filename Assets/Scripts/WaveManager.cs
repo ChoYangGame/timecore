@@ -67,10 +67,47 @@ public class WaveManager : MonoBehaviour
     /// <summary>보스 처치 시 발행. EraManager가 구독해 다음 시대 전환(또는 게임 클리어)을 처리한다.</summary>
     public event Action OnBossDefeated;
 
+    [Header("웨이브 전환 연출")]
+    [Tooltip("웨이브 배너 색. 보스 배너와 확실히 갈려야 무슨 일이 일어났는지 읽힌다")]
+    [SerializeField] private Color waveBannerColor = new Color(0.435f, 0.847f, 0.878f, 1f);
+    [SerializeField] private float waveBannerSize = 44f;
+    [SerializeField] private float waveBannerHold = 0.9f;
+
+    [Tooltip("보스 배너는 크고 붉고 오래 남는다 + 화면 섬광·흔들림이 붙는다")]
+    [SerializeField] private Color bossBannerColor = new Color(0.941f, 0.463f, 0.290f, 1f);
+    [SerializeField] private float bossBannerSize = 64f;
+    [SerializeField] private float bossBannerHold = 1.8f;
+
     private float _waveTimer;
     private bool _bossSpawned;
     private string _pendingBannerText;
+    private Color _pendingBannerColor;
+    private float _pendingBannerSize;
+    private float _pendingBannerHold;
     private float _initialSpawnInterval;
+
+    // 이번 웨이브에서 잡은 수 = 전체 처치 - 웨이브 시작 시점의 전체 처치.
+    // 별도 이벤트를 걸지 않고 스냅샷 차이로 낸다.
+    private int _killsAtWaveStart;
+
+    /// <summary>이번 웨이브에서 잡은 적 수. HUD가 읽는다.</summary>
+    public int KillsThisWave
+    {
+        get
+        {
+            GameManager gm = GameManager.Instance;
+            return gm == null ? 0 : Mathf.Max(0, gm.KillCount - _killsAtWaveStart);
+        }
+    }
+
+    /// <summary>다음 웨이브까지 남은 시간(초). 보스전 동안에는 0이다.</summary>
+    public float TimeToNextWave => _bossSpawned ? 0f : Mathf.Max(0f, waveDuration - _waveTimer);
+
+    /// <summary>보스가 나오는 웨이브. HUD가 "5웨이브에 보스"를 보여줄 때 쓴다.</summary>
+    public int BossWave => bossWave;
+
+    /// <summary>웨이브 1회 길이(초). HUD가 진행도 막대를 채울 때 쓴다.</summary>
+    public float WaveDuration => waveDuration;
 
     private void Awake()
     {
@@ -110,12 +147,24 @@ public class WaveManager : MonoBehaviour
     {
         CurrentWave++;
 
+        GameManager gm = GameManager.Instance;
+        if (gm != null) _killsAtWaveStart = gm.KillCount;
+
         if (enemySpawner != null)
         {
             enemySpawner.SpawnInterval = Mathf.Max(minSpawnInterval, enemySpawner.SpawnInterval * spawnIntervalMultiplier);
         }
 
-        if (CurrentWave >= bossWave) SpawnBoss();
+        if (CurrentWave >= bossWave)
+        {
+            SpawnBoss();
+            return;
+        }
+
+        // 웨이브가 올라간 것을 알린다. 이게 없어서 플레이어가 웨이브의 존재 자체를 몰랐다.
+        // 보스 배너와 달리 작고 짧게 — 흐름을 끊지 않으면서 "단계가 올라갔다"만 전달한다.
+        ShowOrDeferBanner($"WAVE {CurrentWave}", waveBannerColor, waveBannerSize, waveBannerHold);
+        CameraShake.Shake(0.18f, 0.08f);
     }
 
     [ContextMenu("즉시 보스 소환")]
@@ -151,7 +200,12 @@ public class WaveManager : MonoBehaviour
         bossHealth.SetAppearance(bossSprite, bossColor);
 
         if (bossHpUI != null) bossHpUI.Show(bossHealth, bossName);
-        ShowOrDeferBanner($"WAVE {bossWave} — BOSS");
+
+        // 보스는 웨이브 전환과 확실히 갈려야 한다 — 크고, 붉고, 오래 남고,
+        // 화면 섬광과 흔들림이 같이 붙는다.
+        ShowOrDeferBanner(bossName, bossBannerColor, bossBannerSize, bossBannerHold);
+        ScreenFlash.Full(bossBannerColor, 0.22f, 0.3f);
+        CameraShake.Shake(0.7f, 0.35f);
     }
 
     /// <summary>시대 전환 시 EraManager가 다음 보스의 이름/색/체력 배율/패턴 세트를 갱신한다 (프리팹은 재사용).</summary>
@@ -195,6 +249,10 @@ public class WaveManager : MonoBehaviour
         BossActive = false;
         _waveTimer = 0f;
 
+        // 시대가 바뀌면 웨이브도 1로 돌아가므로 이번 웨이브 처치 기준점도 다시 잡는다.
+        GameManager gm = GameManager.Instance;
+        _killsAtWaveStart = gm != null ? gm.KillCount : 0;
+
         if (enemySpawner != null)
         {
             enemySpawner.SpawnInterval = _initialSpawnInterval;
@@ -203,17 +261,20 @@ public class WaveManager : MonoBehaviour
     }
 
     /// <summary>증강 카드가 떠 있으면 배너를 미루고, 아니면 바로 띄운다.</summary>
-    private void ShowOrDeferBanner(string text)
+    private void ShowOrDeferBanner(string text, Color color, float size, float hold)
     {
         if (bossBanner == null) return;
 
         if (augmentManager != null && augmentManager.IsShowing)
         {
             _pendingBannerText = text;
+            _pendingBannerColor = color;
+            _pendingBannerSize = size;
+            _pendingBannerHold = hold;
         }
         else
         {
-            bossBanner.Show(text);
+            bossBanner.Show(text, color, size, hold);
         }
     }
 
@@ -221,7 +282,7 @@ public class WaveManager : MonoBehaviour
     {
         if (_pendingBannerText == null || bossBanner == null) return;
 
-        bossBanner.Show(_pendingBannerText);
+        bossBanner.Show(_pendingBannerText, _pendingBannerColor, _pendingBannerSize, _pendingBannerHold);
         _pendingBannerText = null;
     }
 

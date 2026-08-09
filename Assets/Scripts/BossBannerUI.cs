@@ -13,18 +13,31 @@ public class BossBannerUI : MonoBehaviour
     [SerializeField] private float displayDuration = 2f;
     [SerializeField] private float fadeDuration = 0.6f;
 
+    [Header("기본 스타일 (보스 등장)")]
+    [SerializeField] private float baseFontSize = 56f;
+    [SerializeField] private Color baseColor = Color.white;
+
     public bool IsShowing => gameObject.activeSelf;
 
-    public void Show(string text)
+    public void Show(string text) => Show(text, baseColor, baseFontSize, displayDuration);
+
+    /// <summary>
+    /// 스타일을 지정해 띄운다. 웨이브 전환과 보스 등장이 같은 배너를 쓰되
+    /// 색·크기·체류 시간으로 확실히 갈리게 하려는 것 — 둘이 똑같이 뜨면
+    /// "방금 뭐가 일어난 건지"가 안 읽힌다.
+    /// </summary>
+    public void Show(string text, Color color, float fontSize, float hold)
     {
         if (label == null) return;
 
         gameObject.SetActive(true);
         label.text = text;
+        label.color = color;
+        label.fontSize = fontSize;
         label.alpha = 1f;
 
         StopAllCoroutines();
-        StartCoroutine(DisplayThenFade());
+        StartCoroutine(DisplayThenFade(hold));
     }
 
     /// <summary>더 우선순위가 높은 UI(증강 카드 등)가 끼어들 때 즉시 숨긴다.</summary>
@@ -37,9 +50,9 @@ public class BossBannerUI : MonoBehaviour
 
     // Time.timeScale이 0이어도(증강 카드가 게임을 멈춘 동안) 배너 자체의 표시/페이드 타이머는
     // 끊기지 않고 흘러야 하므로 unscaledDeltaTime 기반으로 돈다.
-    private IEnumerator DisplayThenFade()
+    private IEnumerator DisplayThenFade(float hold)
     {
-        yield return new WaitForSecondsRealtime(displayDuration);
+        yield return new WaitForSecondsRealtime(hold);
 
         float t = 0f;
         while (t < fadeDuration)
