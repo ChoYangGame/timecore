@@ -34,6 +34,11 @@ public class EraManager : MonoBehaviour
         [Tooltip("이 시대 적의 컬러 아트. 비워두면 아래 enemyColor로 흰 사각형을 물들이는 기존 방식으로 떨어진다")]
         public Sprite enemySprite;
 
+        [Tooltip("이 시대 적의 걷기 프레임. 2장 이상이면 순서대로 돌아간다.\n" +
+                 "비워두면 위 enemySprite가 정지 그림으로 남는다.\n" +
+                 "원본은 오른쪽을 보는 그림만 넣는다 — 왼쪽은 flipX로 뒤집는다")]
+        public Sprite[] enemyWalkFrames;
+
         [Tooltip("이 시대 적의 색. enemySprite가 있으면 틴트가 아니라 파편·스폰 표식의 강조색으로만 쓰인다")]
         public Color enemyColor = Color.white;
 

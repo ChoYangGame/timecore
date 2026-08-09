@@ -395,24 +395,30 @@ public class AnomalyDirector : MonoBehaviour
         // "다른 시대에서 왔다"는 신호는 색보다 스프라이트 자체가 더 분명하게 준다.
         Sprite intruderSprite = intruderEra.enemySprite;
 
+        // 걷기 프레임도 같이 넘긴다. 안 넘기면 난입한 놈만 멈춰 선 그림이라
+        // "저건 왜 안 움직이지"로 읽힌다.
+        Sprite[] intruderFrames = intruderEra.enemyWalkFrames;
+
         for (int i = 0; i < count; i++)
         {
             Vector3 pos = enemySpawner.GetInFieldSpawnPoint();
 
             // 일반 스폰과 같은 예고 표식을 쓴다. 난입은 한 번에 4마리가 나오므로
             // 예고 없이 필드 안에서 터지면 피할 방법이 없다.
-            if (!enemySpawner.SpawnWithPortal(prefab, pos, tinted, e => Dress(e, tinted, hpMultiplier, intruderSprite, speedMultiplier)))
+            if (!enemySpawner.SpawnWithPortal(prefab, pos, tinted,
+                    e => Dress(e, tinted, hpMultiplier, intruderSprite, intruderFrames, speedMultiplier)))
             {
                 // 표식 프리팹이 없으면 예전처럼 가장자리에서 즉시 스폰한다.
                 Enemy e = Instantiate(prefab, enemySpawner.GetArenaEdgeSpawnPoint(), Quaternion.identity);
-                Dress(e, tinted, hpMultiplier, intruderSprite, speedMultiplier);
+                Dress(e, tinted, hpMultiplier, intruderSprite, intruderFrames, speedMultiplier);
             }
         }
         return count;
     }
 
     /// <summary>난입 적의 외형·체력·추적 목록 등록. 표식이 열린 뒤에 불릴 수 있어 따로 뺐다.</summary>
-    private void Dress(Enemy e, Color tinted, float hpMultiplier, Sprite sprite, float speedMultiplier)
+    private void Dress(Enemy e, Color tinted, float hpMultiplier, Sprite sprite, Sprite[] frames,
+        float speedMultiplier)
     {
         if (e == null) return;
 
@@ -424,9 +430,15 @@ public class AnomalyDirector : MonoBehaviour
         if (h != null)
         {
             // SetAppearance를 써야 첫 피격 플래시 후 프리팹 색으로 되돌아가지 않는다.
-            h.SetAppearance(sprite, tinted);
+            Sprite still = sprite != null ? sprite
+                : (frames != null && frames.Length > 0 ? frames[0] : null);
+            h.SetAppearance(still, tinted);
             if (!Mathf.Approximately(hpMultiplier, 1f)) h.SetMaxHp(h.MaxHp * hpMultiplier);
         }
+
+        // SetAppearance가 sprite를 덮어쓰므로 반드시 그 뒤에 넘긴다.
+        SpriteWalkAnimator walk = e.GetComponent<SpriteWalkAnimator>();
+        if (walk != null) walk.SetFrames(frames);
 
         e.transform.localScale *= intruderScale;
 

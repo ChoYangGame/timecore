@@ -51,6 +51,7 @@ public class WaveManager : MonoBehaviour
     // 직렬화하면 씬에 빈 슬롯 두 개가 더 생겨 EraConfig 쪽과 어느 쪽이 진짜인지 헷갈린다.
     private Sprite bossSprite;
     private Sprite enemySprite;
+    private Sprite[] enemyWalkFrames;
 
     // 시대별 적 이동속도 배율. 스폰 직후 1회만 곱한다 (Update에서 매 프레임 곱하면 공짜가 아니다).
     private float enemySpeedMultiplier = 1f;
@@ -235,6 +236,7 @@ public class WaveManager : MonoBehaviour
         enemySpeedMultiplier = cfg.enemySpeedMultiplier > 0f ? cfg.enemySpeedMultiplier : 1f;
         enemyColor = cfg.enemyColor;
         enemySprite = cfg.enemySprite;
+        enemyWalkFrames = cfg.enemyWalkFrames;
 
         if (enemySpawner == null) return;
         if (cfg.spawnInterval > 0f) enemySpawner.SpawnInterval = cfg.spawnInterval;
@@ -312,7 +314,16 @@ public class WaveManager : MonoBehaviour
         float multiplier = (1f + enemyHealthStepBonus * (CurrentWave - 1)) * enemyHpMultiplier;
         h.SetMaxHp(h.MaxHp * multiplier);
 
-        h.SetAppearance(enemySprite, enemyColor);
+        // 걷기 프레임만 넣고 enemySprite를 비워 둔 경우에도 아트로 인정돼야 한다.
+        // 아니면 SetAppearance가 "아트 없음"으로 보고 시대 색을 곱해, 애써 그린 공룡이 물든다.
+        Sprite still = enemySprite != null ? enemySprite
+            : (enemyWalkFrames != null && enemyWalkFrames.Length > 0 ? enemyWalkFrames[0] : null);
+
+        h.SetAppearance(still, enemyColor);
+
+        // SetAppearance가 sprite를 덮어쓰므로 반드시 그 뒤에 프레임을 넘긴다.
+        SpriteWalkAnimator walk = enemy.GetComponent<SpriteWalkAnimator>();
+        if (walk != null) walk.SetFrames(enemyWalkFrames);
     }
 
     /// <summary>기획서 상 보스 출현 지점: 아레나 오른쪽 끝.</summary>

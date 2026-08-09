@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1617993696921039059}
   - component: {fileID: 5123154356287959232}
   - component: {fileID: 7272301557060868570}
+  - component: {fileID: 3546148895039136602}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -182,6 +183,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHp: 25
   flashDuration: 0.08
+  artHitTint: {r: 1, g: 0.32, b: 0.28, a: 1}
   flashRenderer: {fileID: 0}
   onDeathEvent:
     m_PersistentCalls:
@@ -203,3 +205,17 @@ MonoBehaviour:
   contactDamage: 8
   expOrbPrefab: {fileID: 7890621601468930963, guid: 3cb5f082c2b31e04e95ddf3431b109e4, type: 3}
   contactCooldown: 0.7
+--- !u!114 &3546148895039136602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6282935421812285609}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a06ee73a20f68594f8807a1dc3d2276b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteWalkAnimator
+  framesPerSecond: 10
+  turnThreshold: 0.002
