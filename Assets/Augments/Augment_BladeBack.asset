@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
-  m_Name: Augment_Damage
+  m_Name: Augment_BladeBack
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: dmg_gun
-  displayName: "\uD654\uB825 \uC99D\uD3ED"
-  description: "\uACF5\uACA9\uB825 +25%"
-  type: 2
-  classFilter: 1
-  unique: 0
-  value: 0.25
+  id: blback
+  displayName: "\uBC18\uC804 \uACA9\uD30C"
+  description: "\uBC18\uB300 \uC704\uCE58 \uB3D9\uC2DC \uACF5\uACA9"
+  type: 15
+  classFilter: 2
+  unique: 1
+  value: 0

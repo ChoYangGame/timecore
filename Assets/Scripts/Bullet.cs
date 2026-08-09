@@ -17,6 +17,13 @@ public class Bullet : MonoBehaviour
         set => damage = value;
     }
 
+    /// <summary>탄속. AutoAimShooter가 발사 시점에 증강 배율을 곱해 넣는다.</summary>
+    public float Speed
+    {
+        get => speed;
+        set => speed = value;
+    }
+
     /// <summary>남은 관통 횟수. 0이면 첫 타격에 파괴(기존 동작). AutoAimShooter가 발사 시점에 채운다.</summary>
     public int PierceRemaining { get; set; }
 

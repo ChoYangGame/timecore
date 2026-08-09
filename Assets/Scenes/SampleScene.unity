@@ -6249,6 +6249,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8de3ce475176ba84ba65fc06b99fdf5a, type: 2}
   - {fileID: 11400000, guid: 44e7766fdc6793e4a871566e0014506a, type: 2}
   - {fileID: 11400000, guid: 78853ec9ff4b2ef4d8068cce5f6a0ab7, type: 2}
+  - {fileID: 11400000, guid: edfc8d26fc46a9746b48cb28d741b6d8, type: 2}
+  - {fileID: 11400000, guid: dfbbde2a4900d96449728fbb65fbce44, type: 2}
+  - {fileID: 11400000, guid: f589cb2904bde414faa32a9431be405c, type: 2}
+  - {fileID: 11400000, guid: 3c3565c2897bf8b44a27d04379ce3f25, type: 2}
+  - {fileID: 11400000, guid: 640e9b5608e48114d99d266058786169, type: 2}
+  - {fileID: 11400000, guid: 142bce6141eb15e418519b2c1da65f8b, type: 2}
+  - {fileID: 11400000, guid: df8ec47c565fb9d49827e1e0bce97d1a, type: 2}
+  - {fileID: 11400000, guid: 99624608208b38043837e99fcae597dd, type: 2}
+  - {fileID: 11400000, guid: b555c794ccfffb04db73d698db7801f5, type: 2}
+  - {fileID: 11400000, guid: f13051d4e912ad14f8273695536fba12, type: 2}
+  - {fileID: 11400000, guid: b0a22970cd58e0a4ea8346675abff5d4, type: 2}
   panelRoot: {fileID: 211120013}
   cards:
   - {fileID: 1857663356}
@@ -8190,7 +8201,8 @@ MonoBehaviour:
   maxOrbCount: 6
   orbitRadius: 1.7
   orbitSpeed: 150
-  hitRadius: 0.55
+  hitRadius: 0.85
+  blastRadius: 1.6
   orbSize: 0.95
   orbColor: {r: 0.435, g: 0.847, b: 0.878, a: 1}
   trailInterval: 0.06

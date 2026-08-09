@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6b4cc22dc70b1a49aa8e41e75c29f9c, type: 3}
-  m_Name: Augment_Damage
+  m_Name: Augment_Range
   m_EditorClassIdentifier: Assembly-CSharp::AugmentData
-  id: dmg_gun
-  displayName: "\uD654\uB825 \uC99D\uD3ED"
-  description: "\uACF5\uACA9\uB825 +25%"
-  type: 2
+  id: range
+  displayName: "\uC0AC\uC815 \uC99D\uB300"
+  description: "\uACF5\uACA9 \uBC18\uACBD +35%"
+  type: 14
   classFilter: 1
   unique: 0
-  value: 0.25
+  value: 0.35

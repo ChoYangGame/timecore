@@ -24,6 +24,26 @@ public enum AugmentType
     OrbCount,
     /// <summary>매지션 — 공전 반경 증가</summary>
     OrbRadius,
+
+    // ── 2차 확장. 여기도 끝에만 붙인다.
+    /// <summary>총잡이 — 탄속 증가</summary>
+    BulletSpeed,
+    /// <summary>총잡이 — 총알 크기 증가 (콜라이더가 같이 커져 판정도 넓어진다)</summary>
+    BulletSize,
+    /// <summary>총잡이 — 사거리 증가</summary>
+    Range,
+    /// <summary>칼잡이 — 반대쪽에도 동시 참격</summary>
+    BladeBackSwing,
+    /// <summary>칼잡이 — 참격에 밀어내기 부여</summary>
+    BladeKnockback,
+    /// <summary>칼잡이 — 참격으로 처치 시 회복</summary>
+    BladeLifesteal,
+    /// <summary>매지션 — 공전 속도 증가</summary>
+    OrbSpeed,
+    /// <summary>매지션 — 코어 타격 반경 증가</summary>
+    OrbHitRadius,
+    /// <summary>매지션 — 코어 타격 시 주위에도 절반 피해</summary>
+    OrbBlast,
 }
 
 /// <summary>증강이 어느 직업에게 뜨는지. Any면 모든 직업 공용이다.</summary>
@@ -49,6 +69,14 @@ public class AugmentData : ScriptableObject
     [SerializeField] private AugmentClassFilter classFilter = AugmentClassFilter.Any;
 
     public AugmentClassFilter ClassFilter => classFilter;
+
+    [Tooltip("한 번 먹으면 다시 뜨지 않는 증강. 후방 참격·연쇄 붕괴처럼 켜고 끄는 방식이라\n" +
+             "두 번째로 뽑히면 아무 일도 일어나지 않는 것들에 켠다.\n" +
+             "배율이 누적되는 증강은 꺼 둔다 — 반복해서 먹는 게 정상 성장이다")]
+    [SerializeField] private bool unique;
+
+    /// <summary>한 번 획득하면 풀에서 빠지는 증강인지.</summary>
+    public bool Unique => unique;
 
     /// <summary>이 증강이 주어진 직업에게 떠도 되는지.</summary>
     public bool AllowedFor(PlayerClass cls)

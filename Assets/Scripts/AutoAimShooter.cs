@@ -41,6 +41,18 @@ public class AutoAimShooter : PlayerWeapon
     /// <summary>증강으로 누적되는 추가 발사 수. 실제 발사 수는 maxBulletCount로 상한이 걸린다.</summary>
     public int ExtraShots { get; set; }
 
+    /// <summary>증강으로 누적되는 탄속 배율.</summary>
+    public float BulletSpeedMultiplier { get; set; } = 1f;
+
+    /// <summary>
+    /// 증강으로 누적되는 총알 크기 배율. 총알 콜라이더가 스케일을 따라가므로
+    /// 크기를 키우면 명중 판정도 같이 넓어진다.
+    /// </summary>
+    public float BulletSizeMultiplier { get; set; } = 1f;
+
+    /// <summary>증강으로 누적되는 사거리 배율.</summary>
+    public float RangeMultiplier { get; set; } = 1f;
+
     private float _timer;
 
     private void Update()
@@ -52,7 +64,7 @@ public class AutoAimShooter : PlayerWeapon
         if (_timer < fireInterval) return;
         _timer = 0f;
 
-        Transform target = FindNearestEnemy(range);
+        Transform target = FindNearestEnemy(range * RangeMultiplier);
         if (target == null) return;
 
         Vector2 dir = (Vector2)(target.position - transform.position);
@@ -69,7 +81,14 @@ public class AutoAimShooter : PlayerWeapon
             Vector3 spawnPos = transform.position + (Vector3)(shotDir * muzzleOffset);
             Bullet bullet = Instantiate(bulletPrefab, spawnPos, Quaternion.identity);
             bullet.Damage = bulletPrefab.Damage * DamageMultiplier;
+            bullet.Speed = bulletPrefab.Speed * BulletSpeedMultiplier;
             bullet.PierceRemaining = PierceCount;
+
+            // 프리팹 스케일을 기준으로 곱한다. 생성된 총알의 스케일을 다시 곱하면
+            // 증강이 아니라 발사 횟수에 비례해 커진다.
+            if (BulletSizeMultiplier != 1f)
+                bullet.transform.localScale = bulletPrefab.transform.localScale * BulletSizeMultiplier;
+
             bullet.Launch(shotDir);
         }
     }

@@ -46,6 +46,15 @@ public class BladeWeapon : PlayerWeapon
     /// <summary>증강으로 늘어나는 호의 폭(도). 동시에 맞는 적 수가 늘어난다.</summary>
     public float BonusArcDegrees { get; set; }
 
+    /// <summary>반대쪽에도 같이 벤다. 파고드는 직업이라 등 뒤가 늘 비어 있는 것을 메운다.</summary>
+    public bool BackSwing { get; set; }
+
+    /// <summary>참격에 맞은 적을 밀어내는 거리(월드 유닛). 0이면 밀지 않는다.</summary>
+    public float Knockback { get; set; }
+
+    /// <summary>참격으로 적을 죽였을 때 회복하는 HP. 0이면 회복하지 않는다.</summary>
+    public float LifestealPerKill { get; set; }
+
     private float _timer;
 
     private void Update()
@@ -73,6 +82,7 @@ public class BladeWeapon : PlayerWeapon
 
         Vector3 origin = transform.position;
         int hits = 0;
+        int kills = 0;
 
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         for (int i = 0; i < enemies.Length; i++)
@@ -84,16 +94,31 @@ public class BladeWeapon : PlayerWeapon
             if (to.sqrMagnitude > r * r) continue;
 
             // 정면 기준 각도가 호의 절반 안이어야 맞는다.
-            if (Vector2.Angle(dir, to) > halfArc) continue;
+            // 후방 참격 증강을 먹었으면 반대쪽 호도 같은 조건으로 인정한다.
+            bool inFront = Vector2.Angle(dir, to) <= halfArc;
+            bool inBack = BackSwing && Vector2.Angle(-dir, to) <= halfArc;
+            if (!inFront && !inBack) continue;
 
             Health h = e.GetComponent<Health>();
             if (h == null || h.IsDead) continue;
 
             h.TakeDamage(dmg);
             hits++;
+
+            // 죽은 뒤에 미는 것은 의미가 없으니 살아 있을 때만 민다.
+            if (!h.IsDead)
+            {
+                if (Knockback > 0f && to.sqrMagnitude > 0.0001f)
+                    e.transform.position += (Vector3)(to.normalized * Knockback);
+            }
+            else kills++;
         }
 
+        if (kills > 0 && LifestealPerKill > 0f && OwnerHealth != null)
+            OwnerHealth.Heal(LifestealPerKill * kills);
+
         PlaySlashFx(dir, r, hits);
+        if (BackSwing) PlaySlashFx(-dir, r, 0);   // 뒤쪽 연출. 타격 연출은 앞쪽에서 이미 냈다
     }
 
     /// <summary>

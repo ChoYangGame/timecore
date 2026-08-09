@@ -24,6 +24,9 @@ public class AugmentManager : MonoBehaviour
 
     private PlayerWeapon _weapon;
 
+    /// <summary>이미 획득한 1회성 증강. 두 번째로 뽑히면 효과가 없어 죽은 카드가 되므로 풀에서 뺀다.</summary>
+    private readonly HashSet<AugmentData> _takenUnique = new HashSet<AugmentData>();
+
     /// <summary>
     /// 지금 켜져 있는 무기. 직업 선택이 Start 이후에 일어나므로 미리 잡아두면 안 되고,
     /// 필요할 때 찾아서 캐시한다.
@@ -109,7 +112,9 @@ public class AugmentManager : MonoBehaviour
         for (int i = 0; i < allAugments.Length; i++)
         {
             AugmentData a = allAugments[i];
-            if (a != null && a.AllowedFor(cls)) pool.Add(a);
+            if (a == null || !a.AllowedFor(cls)) continue;
+            if (a.Unique && _takenUnique.Contains(a)) continue;   // 이미 켠 스위치는 다시 안 뜬다
+            pool.Add(a);
         }
 
         List<AugmentData> picked = new List<AugmentData>();
@@ -128,6 +133,7 @@ public class AugmentManager : MonoBehaviour
     private void Choose(AugmentData data)
     {
         Apply(data);
+        if (data.Unique) _takenUnique.Add(data);
 
         if (panelRoot != null) panelRoot.SetActive(false);
         IsShowing = false;
@@ -193,6 +199,39 @@ public class AugmentManager : MonoBehaviour
                 break;
             case AugmentType.OrbRadius:
                 if (ActiveWeapon is OrbitWeapon orr) orr.RadiusMultiplier *= 1f + data.Value;
+                break;
+
+            // ── 총잡이 2차 ──
+            case AugmentType.BulletSpeed:
+                if (playerShooter != null) playerShooter.BulletSpeedMultiplier *= 1f + data.Value;
+                break;
+            case AugmentType.BulletSize:
+                if (playerShooter != null) playerShooter.BulletSizeMultiplier *= 1f + data.Value;
+                break;
+            case AugmentType.Range:
+                if (playerShooter != null) playerShooter.RangeMultiplier *= 1f + data.Value;
+                break;
+
+            // ── 칼잡이 2차 ──
+            case AugmentType.BladeBackSwing:
+                if (ActiveWeapon is BladeWeapon bb) bb.BackSwing = true;
+                break;
+            case AugmentType.BladeKnockback:
+                if (ActiveWeapon is BladeWeapon bk) bk.Knockback += data.Value;
+                break;
+            case AugmentType.BladeLifesteal:
+                if (ActiveWeapon is BladeWeapon bl) bl.LifestealPerKill += data.Value;
+                break;
+
+            // ── 매지션 2차 ──
+            case AugmentType.OrbSpeed:
+                if (ActiveWeapon is OrbitWeapon os) os.SpeedMultiplier *= 1f + data.Value;
+                break;
+            case AugmentType.OrbHitRadius:
+                if (ActiveWeapon is OrbitWeapon oh) oh.HitRadiusMultiplier *= 1f + data.Value;
+                break;
+            case AugmentType.OrbBlast:
+                if (ActiveWeapon is OrbitWeapon ob) ob.Blast = true;
                 break;
         }
     }
