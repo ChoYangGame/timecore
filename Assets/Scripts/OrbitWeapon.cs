@@ -34,15 +34,31 @@ public class OrbitWeapon : PlayerWeapon
     [Tooltip("공전 속도(도/초)")]
     [SerializeField] private float orbitSpeed = 150f;
 
-    [Tooltip("코어 하나가 적을 때리는 반경. 코어는 스쳐 지나가는 판정이라\n" +
-             "보이는 코어(orbSize)보다 넉넉해야 '닿았는데 안 맞는' 느낌이 안 난다")]
-    [SerializeField] private float hitRadius = 0.85f;
+    [Tooltip("코어 하나가 적을 때리는 반경. **보이는 코어 크기가 이 값에서 역산된다** —\n" +
+             "따로 조절하는 값이 아니라 이것만 바꾸면 그림도 같이 커진다")]
+    [SerializeField] private float hitRadius = 0.7f;
 
     [Tooltip("연쇄 붕괴 증강이 켜는 광역 피해 반경. 0이면 꺼진 상태")]
     [SerializeField] private float blastRadius = 1.6f;
 
-    [SerializeField] private float orbSize = 0.95f;
     [SerializeField] private Color orbColor = new Color(0.435f, 0.847f, 0.878f, 1f);
+
+    // kenney_magic_05는 부드러운 글로우라 임계값에 따라 크기가 크게 달라진다(픽셀 실측):
+    //   알파 16 → 0.81 / 알파 64 → 0.63 / 알파 128 → 0.42
+    // 알파 16은 거의 안 보이는 헤일로까지 포함해서, 그 기준으로 맞추면
+    // "눈에는 안 닿았는데 피해가 들어간다"가 그대로 남는다.
+    // 눈에 확실히 보이는 경계인 알파 64를 쓴다.
+    private const float OrbOpaqueRatio = 0.63f;
+
+    /// <summary>
+    /// 보이는 코어가 판정 반경과 정확히 같아지는 스케일.
+    ///
+    /// 예전에는 orbSize(0.95)와 hitRadius(0.85)가 따로 놀아서
+    /// 보이는 반지름 0.385 대 판정 반지름 0.85 — **2.2배** 차이가 났다.
+    /// "구체에 안 닿았는데 피해가 들어간다"의 정체가 이것이다.
+    /// 이제 판정을 바꾸면 그림이 따라오므로 둘이 어긋날 수가 없다.
+    /// </summary>
+    private float OrbVisualScale => hitRadius * HitRadiusMultiplier * 2f / OrbOpaqueRatio;
 
     [Tooltip("코어가 잔상을 남기는 간격(초). 코어만으로는 배경에 묻혀 '뭐가 돌고 있는지' 안 읽힌다.\n" +
              "0으로 두면 잔상을 끈다")]
@@ -81,6 +97,7 @@ public class OrbitWeapon : PlayerWeapon
     private float _angle;
     private int _activeCount = -1;
     private float _trailTimer;
+    private float _appliedScale = -1f;
 
     protected override void Awake()
     {
@@ -139,8 +156,6 @@ public class OrbitWeapon : PlayerWeapon
             sr.sortingOrder = 1;          // 플레이어(0)보다 위에 그려 코어가 보이게
             sr.enabled = false;
 
-            go.transform.localScale = Vector3.one * orbSize;
-
             _orbTf[i] = go.transform;
             _orbSr[i] = sr;
 
@@ -158,6 +173,14 @@ public class OrbitWeapon : PlayerWeapon
         {
             for (int i = 0; i < maxOrbCount; i++) _orbSr[i].enabled = i < want;
             _activeCount = want;
+        }
+
+        // 판정 반경이 바뀌면(코어 과열 증강) 그림도 같이 커진다. 값이 그대로면 건드리지 않는다.
+        float scale = OrbVisualScale;
+        if (!Mathf.Approximately(scale, _appliedScale))
+        {
+            for (int i = 0; i < maxOrbCount; i++) _orbTf[i].localScale = Vector3.one * scale;
+            _appliedScale = scale;
         }
 
         // 죽으면 코어를 멈추고 숨긴다.
@@ -200,7 +223,7 @@ public class OrbitWeapon : PlayerWeapon
                 // 제자리에서 알파만 빠지게 둔다 — 코어가 지나간 자리가 그대로 궤도선이 된다.
                 EffectSystem.Linger(_orbTf[i].position,
                     new Color(orbColor.r, orbColor.g, orbColor.b, 0.5f),
-                    orbSize * 0.55f, 0.18f, FxSprites.Orb);
+                    scale * 0.55f, 0.18f, FxSprites.Orb);
             }
 
             _hitTimer[i] -= dt;
@@ -253,12 +276,16 @@ public class OrbitWeapon : PlayerWeapon
             Vector3 to = e.transform.position - center;
             float dist = to.magnitude;
 
+            // 적의 몸 크기를 판정에 더한다. 중심점만 보면 보스(스케일 3)는
+            // 코어가 몸통 위를 지나가도 중심이 띠 밖이라 안 맞는다.
+            float reach = hitR + TargetRadius(e);
+
             bool direct = false;
-            if (dist > 0.0001f && Mathf.Abs(dist - orbitR) <= hitR)
+            if (dist > 0.0001f && Mathf.Abs(dist - orbitR) <= reach)
             {
                 // 호의 양 끝에서도 판정 반경만큼은 더 닿아야 한다(끝단 마감).
-                // 반지름 띠가 dist >= orbitR - hitR 을 보장하므로 pad가 발산하지 않는다.
-                float pad = Mathf.Rad2Deg * (hitR / dist);
+                // 반지름 띠가 dist >= orbitR - reach 를 보장하므로 pad가 발산하지 않는다.
+                float pad = Mathf.Rad2Deg * Mathf.Min(reach / dist, Mathf.PI);
                 float delta = Mathf.DeltaAngle(fromDeg, Mathf.Atan2(to.y, to.x) * Mathf.Rad2Deg);
                 direct = delta >= lo - pad && delta <= hi + pad;
             }

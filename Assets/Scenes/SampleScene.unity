@@ -8201,9 +8201,8 @@ MonoBehaviour:
   maxOrbCount: 6
   orbitRadius: 1.7
   orbitSpeed: 150
-  hitRadius: 0.85
+  hitRadius: 0.7
   blastRadius: 1.6
-  orbSize: 0.95
   orbColor: {r: 0.435, g: 0.847, b: 0.878, a: 1}
   trailInterval: 0.06
 --- !u!114 &1366259213

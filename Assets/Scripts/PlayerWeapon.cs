@@ -42,6 +42,35 @@ public abstract class PlayerWeapon : MonoBehaviour
     }
 
     /// <summary>
+    /// 적의 몸 반지름(월드 단위). 판정 거리에 더해 쓴다.
+    ///
+    /// 이게 없으면 판정이 적의 **중심점**만 보게 된다. 일반 적(스케일 1)은 티가 안 나지만
+    /// 보스는 스케일이 3이라 몸통 가장자리와 중심이 1.5유닛이나 벌어져,
+    /// 참격 이펙트가 보스 몸에 뻔히 겹쳐도 중심이 사거리 밖이면 피해가 0이었다.
+    ///
+    /// bounds는 월드 공간이라 스케일이 이미 반영돼 있다.
+    /// 사각형을 원으로 근사하므로 모서리 쪽은 약간 손해지만, 큰 적이 안 맞는 것보다 낫다.
+    /// </summary>
+    protected static float TargetRadius(GameObject e)
+    {
+        Collider2D c = e.GetComponent<Collider2D>();
+        if (c != null)
+        {
+            Vector3 ext = c.bounds.extents;
+            return Mathf.Max(ext.x, ext.y);
+        }
+
+        SpriteRenderer sr = e.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            Vector3 ext = sr.bounds.extents;
+            return Mathf.Max(ext.x, ext.y);
+        }
+
+        return 0f;
+    }
+
+    /// <summary>
     /// 사거리 안에서 가장 가까운 적. 세 무기가 같은 탐색을 쓴다.
     /// 물리 쿼리 대신 태그 검색 + 제곱거리 비교다 — 프로젝트 전반이 콜라이더를 피하는 것과 같은 이유고,
     /// 공격 주기당 1회만 도므로 저사양에서도 부담이 없다.

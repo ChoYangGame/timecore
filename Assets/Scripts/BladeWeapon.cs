@@ -28,6 +28,14 @@ public class BladeWeapon : PlayerWeapon
     [Tooltip("적을 찾는 거리. 이 안에 적이 없으면 휘두르지 않는다")]
     [SerializeField] private float searchRange = 6f;
 
+    // kenney_slash_03의 그려지는 영역(픽셀 실측). 가장자리가 부드럽게 빠져서
+    // 임계값에 따라 다르다 — 세로 기준 알파 16 → 0.77 / 알파 64 → 0.66 / 알파 128 → 0.55.
+    // 눈에 확실히 보이는 경계인 알파 64를 쓴다. 알파 16으로 맞추면
+    // 실제로는 안 보이는 여백까지 판정으로 치게 돼 칼날이 짧아 보인다.
+    // 스프라이트를 베는 방향으로 눕히므로 가로가 칼날 두께, 세로가 호의 폭이 된다.
+    private const float SlashOpaqueAlong = 0.14f;
+    private const float SlashOpaqueAcross = 0.66f;
+
     [Header("연출")]
     [SerializeField] private float slashLifetime = 0.18f;
     [SerializeField] private Color slashColor = new Color(0.435f, 0.847f, 0.878f, 1f);
@@ -91,12 +99,22 @@ public class BladeWeapon : PlayerWeapon
             if (e == null) continue;
 
             Vector2 to = (Vector2)(e.transform.position - origin);
-            if (to.sqrMagnitude > r * r) continue;
+
+            // 적의 몸 크기를 사거리에 더한다. 중심점만 보면 보스(스케일 3)는
+            // 참격이 몸통을 지나가도 중심이 밖이라 안 맞는다.
+            float rad = TargetRadius(e);
+            float dist = to.magnitude;
+            if (dist > r + rad) continue;
+
+            // 각도도 몸 크기만큼 넓혀 준다. 큰 적은 중심이 호 밖이어도 몸이 호 안에 걸친다.
+            float arcPad = dist > 0.0001f
+                ? Mathf.Asin(Mathf.Clamp01(rad / dist)) * Mathf.Rad2Deg
+                : 180f;
 
             // 정면 기준 각도가 호의 절반 안이어야 맞는다.
             // 후방 참격 증강을 먹었으면 반대쪽 호도 같은 조건으로 인정한다.
-            bool inFront = Vector2.Angle(dir, to) <= halfArc;
-            bool inBack = BackSwing && Vector2.Angle(-dir, to) <= halfArc;
+            bool inFront = Vector2.Angle(dir, to) <= halfArc + arcPad;
+            bool inBack = BackSwing && Vector2.Angle(-dir, to) <= halfArc + arcPad;
             if (!inFront && !inBack) continue;
 
             Health h = e.GetComponent<Health>();
@@ -117,20 +135,34 @@ public class BladeWeapon : PlayerWeapon
         if (kills > 0 && LifestealPerKill > 0f && OwnerHealth != null)
             OwnerHealth.Heal(LifestealPerKill * kills);
 
-        PlaySlashFx(dir, r, hits);
-        if (BackSwing) PlaySlashFx(-dir, r, 0);   // 뒤쪽 연출. 타격 연출은 앞쪽에서 이미 냈다
+        PlaySlashFx(dir, r, halfArc, hits);
+        if (BackSwing) PlaySlashFx(-dir, r, halfArc, 0);   // 뒤쪽 연출. 타격 연출은 앞쪽에서 이미 냈다
     }
 
     /// <summary>
     /// 참격 연출. 호 스프라이트 한 장을 베는 방향으로 눕혀 띄운다.
     /// 맞은 적이 있을 때만 불꽃을 더한다 — 허공을 갈랐는데 타격감이 나면 거짓말이 된다.
+    ///
+    /// 크기는 눈대중이 아니라 **실제 판정에서 역산한다.** 예전에는 r*1.5 크기를 r*0.55 지점에
+    /// 놓아서, 보이는 칼날은 1.0~1.7에 떠 있는데 판정은 2.4까지 닿았다 —
+    /// 눈에 안 걸린 적이 죽고 걸친 적이 안 죽는 것처럼 보였다.
+    /// 이제 칼날의 바깥 끝이 사거리와, 폭이 호의 현(弦) 길이와 일치한다.
     /// </summary>
-    private void PlaySlashFx(Vector2 dir, float r, int hits)
+    private void PlaySlashFx(Vector2 dir, float r, float halfArc, int hits)
     {
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        Vector2 center = (Vector2)transform.position + dir * (r * 0.55f);
 
-        EffectSystem.Slash(center, angle, slashColor, r * 1.5f, slashLifetime, FxSprites.Slash);
+        // 바깥 호의 현 길이 = 칼날이 덮어야 할 폭. 90도를 넘으면 지름이 최대다.
+        float across = 2f * r * Mathf.Sin(Mathf.Min(halfArc, 90f) * Mathf.Deg2Rad);
+
+        // 스프라이트 한 변을 size로 놓으면 실제로 그려지는 건 불투명 비율만큼이다.
+        float size = across / SlashOpaqueAcross;
+        float thickness = size * SlashOpaqueAlong;
+
+        // 칼날의 바깥 끝을 사거리에 맞춘다.
+        Vector2 center = (Vector2)transform.position + dir * (r - thickness * 0.5f);
+
+        EffectSystem.Slash(center, angle, slashColor, size, slashLifetime, FxSprites.Slash);
 
         if (hits <= 0) return;
 
