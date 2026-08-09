@@ -131,12 +131,12 @@ public class Leaderboard : MonoBehaviour
     /// <param name="highlight">굵게 표시할 이름 (보통 내 이름). 비어 있으면 강조 없음.</param>
     public static string BuildTable(Entry[] entries, string highlight)
     {
-        if (entries == null) return "RANKING\n\nOFFLINE";
-        if (entries.Length == 0) return "RANKING\n\nNO RECORDS YET";
+        if (entries == null) return Header + "OFFLINE";
+        if (entries.Length == 0) return Header + "NO RECORDS YET";
 
         // mspace로 강제 고정폭을 준다. LiberationSans는 가변폭이라 이게 없으면 자릿수가 안 맞아
         // 순위표가 계단처럼 어긋난다. 한 줄은 " 1. NAME1234 CLR 05:32.1" = 24칸이다.
-        var sb = new System.Text.StringBuilder("RANKING\n\n<mspace=0.58em>");
+        var sb = new System.Text.StringBuilder(Header + "<mspace=0.58em>");
 
         for (int i = 0; i < entries.Length; i++)
         {
@@ -155,7 +155,14 @@ public class Leaderboard : MonoBehaviour
     }
 
     /// <summary>불러오는 동안 띄울 문구. 두 화면이 같은 것을 쓰게 여기 둔다.</summary>
-    public const string LoadingText = "RANKING\n\nLOADING...";
+    /// <summary>
+    /// 표 제목. 본문보다 커야 제목으로 읽힌다. 본문은 mspace로 고정폭이라
+    /// 헤더까지 고정폭이 걸리면 글자가 벌어져 보여서, 헤더는 mspace 밖에 둔다.
+    /// </summary>
+    private const string Header = "<size=140%><b>RANKING</b></size>\n\n";
+
+    /// <summary>불러오는 동안 띄울 문구. 두 화면이 같은 것을 쓰게 여기 둔다.</summary>
+    public const string LoadingText = Header + "LOADING...";
 
     /// <summary>ms → "12:34.5". 랭킹 표와 결과 화면이 같은 형식을 쓰게 한다.</summary>
     public static string Format(long ms)

@@ -18,17 +18,17 @@ public class TitleController : MonoBehaviour
     [SerializeField] private TMP_InputField nameInput;
 
     [Header("랭킹")]
-    [Tooltip("랭킹 카드 전체(RankingWindow). 결과 화면과 같은 모양이다")]
+    [Tooltip("랭킹 카드 전체(RankingWindow). 버튼으로 여닫는 모달이라 기본은 꺼져 있다")]
     [SerializeField] private GameObject rankingRoot;
 
     [Tooltip("순위표 본문. 폰트는 LiberationSans여야 한다 — Pretendard 서브셋에 없는 글자가 많다")]
     [SerializeField] private TMP_Text rankingText;
 
-    [Tooltip("타이틀 창(Window). 랭킹 카드와 한 쌍으로 가운데 정렬하려고 왼쪽으로 민다")]
-    [SerializeField] private RectTransform titleWindow;
+    [Tooltip("랭킹을 여는 버튼")]
+    [SerializeField] private Button rankingButton;
 
-    [Tooltip("창을 밀 X 거리. 밀지 않으면 4:3 화면에서 카드 오른쪽이 잘린다(실측)")]
-    [SerializeField] private float windowShiftX = -230f;
+    [Tooltip("랭킹 카드를 닫는 버튼")]
+    [SerializeField] private Button rankingCloseButton;
 
     /// <summary>"파견 시작"을 누르기 전인지. 다른 시스템이 시작 전 상태를 물어볼 때 쓴다.</summary>
     public bool IsWaitingToStart { get; private set; }
@@ -54,42 +54,43 @@ public class TitleController : MonoBehaviour
             nameInput.onValueChanged.AddListener(HandleNameChanged);
         }
 
-        ShowRanking();
+        if (rankingButton != null) rankingButton.onClick.AddListener(OpenRanking);
+        if (rankingCloseButton != null) rankingCloseButton.onClick.AddListener(CloseRanking);
+        if (rankingRoot != null) rankingRoot.SetActive(false);
     }
 
     /// <summary>
-    /// 시작 전에도 순위표를 보여준다. 여기서는 조회만 하고 등록하지 않는다 — 올릴 기록이 아직 없다.
+    /// 랭킹 카드를 연다. 열 때마다 새로 받아온다 — 타이틀에 오래 머무는 동안
+    /// 다른 사람 기록이 올라갔을 수 있다.
     ///
-    /// timeScale=0인 상태에서 불리지만 UnityWebRequest는 timeScale과 무관하고,
-    /// Leaderboard가 코루틴을 자기 오브젝트에서 돌리므로 타이틀 패널이 꺼져도 콜백이 끊기지 않는다.
+    /// 여기서는 조회만 하고 등록하지 않는다(올릴 기록이 아직 없다).
+    /// timeScale=0에서 불리지만 UnityWebRequest는 timeScale과 무관하고,
+    /// Leaderboard가 코루틴을 자기 오브젝트에서 돌려 패널이 꺼져도 콜백이 끊기지 않는다.
     /// </summary>
-    private void ShowRanking()
+    public void OpenRanking()
     {
         if (rankingRoot != null) rankingRoot.SetActive(true);
-
-        // 카드가 붙었으니 창과 한 덩어리로 보고 왼쪽으로 민다.
-        if (titleWindow != null)
-        {
-            Vector2 p = titleWindow.anchoredPosition;
-            p.x = windowShiftX;
-            titleWindow.anchoredPosition = p;
-        }
-
         if (rankingText == null) return;
 
         rankingText.text = Leaderboard.LoadingText;
         Leaderboard.Fetch(entries =>
         {
-            // 응답이 늦게 와서 이미 게임이 시작됐을 수 있다. 그때는 그릴 필요가 없다.
             if (rankingText == null) return;
             rankingText.text = Leaderboard.BuildTable(entries, Leaderboard.PlayerName);
         });
+    }
+
+    public void CloseRanking()
+    {
+        if (rankingRoot != null) rankingRoot.SetActive(false);
     }
 
     private void OnDestroy()
     {
         if (startButton != null) startButton.onClick.RemoveListener(StartRun);
         if (nameInput != null) nameInput.onValueChanged.RemoveListener(HandleNameChanged);
+        if (rankingButton != null) rankingButton.onClick.RemoveListener(OpenRanking);
+        if (rankingCloseButton != null) rankingCloseButton.onClick.RemoveListener(CloseRanking);
     }
 
     /// <summary>

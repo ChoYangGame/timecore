@@ -45,6 +45,17 @@ public class GameOverController : MonoBehaviour
              "밀지 않으면 4:3 화면에서 카드 오른쪽이 잘린다 — 보이는 반폭이 831인데 끝이 840이었다(실측).")]
     [SerializeField] private float clearWindowShiftX = -230f;
 
+    [Header("결말별 강조색")]
+    [Tooltip("결과 창·랭킹 카드 테두리와 제목에 함께 쓴다. 사망은 붕괴의 빨강")]
+    [SerializeField] private Color deathAccent = new Color(0.659f, 0.196f, 0.176f, 1f);
+
+    [Tooltip("클리어는 복구의 시안. 같은 창을 두 결말이 공유하므로 색으로 갈라 준다")]
+    [SerializeField] private Color clearAccent = new Color(0.435f, 0.847f, 0.878f, 1f);
+
+    [Tooltip("테두리 색을 갈아끼울 이미지 2종 (결과 창 / 랭킹 카드)")]
+    [SerializeField] private UnityEngine.UI.Image resultWindowFrame;
+    [SerializeField] private UnityEngine.UI.Image rankingWindowFrame;
+
     [SerializeField] private Button restartButton;
 
     [Header("결말별 문구")]
@@ -116,6 +127,13 @@ public class GameOverController : MonoBehaviour
         Populate(title, labels, showEra);
 
         if (panelRoot != null) panelRoot.SetActive(true);
+
+        // 같은 창을 두 결말이 공유하므로 색으로 갈라 준다.
+        // 클리어인데 붕괴의 빨강이 나오면 "실패한 것 같은" 결과 화면이 된다.
+        Color accent = isClear ? clearAccent : deathAccent;
+        if (resultWindowFrame != null) resultWindowFrame.color = accent;
+        if (rankingWindowFrame != null) rankingWindowFrame.color = accent;
+        if (titleText != null) titleText.color = accent;
 
         // 사망도 순위에 올린다. 클리어만 받으면 아무도 4시대를 못 깬 동안
         // 순위표가 계속 비어 보여서 "기능이 고장난 것"처럼 읽힌다.
