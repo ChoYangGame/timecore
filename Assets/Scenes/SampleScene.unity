@@ -4513,8 +4513,14 @@ MonoBehaviour:
     eraShortName: "\uD604\uB300"
     backgroundColor: {r: 0.145, g: 0.165, b: 0.2, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
-    enemySprite: {fileID: 0}
-    enemyWalkFrames: []
+    enemySprite: {fileID: 21300000, guid: 5fecfa60f4acdf24aa109fe89c5572cd, type: 3}
+    enemyWalkFrames:
+    - {fileID: 21300000, guid: 5fecfa60f4acdf24aa109fe89c5572cd, type: 3}
+    - {fileID: 21300000, guid: 6cba8d26f6f9beb4092a41c6462c154d, type: 3}
+    - {fileID: 21300000, guid: 8cad89c181c41d14ea9ad84e26ced551, type: 3}
+    - {fileID: 21300000, guid: 2ae61a586fcccd341a387315f9542666, type: 3}
+    - {fileID: 21300000, guid: e29af9468a993d340a69efc85d534ba7, type: 3}
+    - {fileID: 21300000, guid: 5a2cf6e96e27d134bb558319b4b752c9, type: 3}
     enemyColor: {r: 0.624, g: 0.749, b: 0.18, a: 1}
     enemyHpMultiplier: 1.35
     enemySpeedMultiplier: 1.15
@@ -4528,8 +4534,14 @@ MonoBehaviour:
     eraShortName: "\uBBF8\uB798"
     backgroundColor: {r: 0.11, g: 0.18, b: 0.2, a: 1}
     enemyPrefab: {fileID: 7272301557060868570, guid: fe4798fe03698af478791078a25f64a2, type: 3}
-    enemySprite: {fileID: 0}
-    enemyWalkFrames: []
+    enemySprite: {fileID: 21300000, guid: 03bc14fbaa07082418824f843ed8f8d7, type: 3}
+    enemyWalkFrames:
+    - {fileID: 21300000, guid: 03bc14fbaa07082418824f843ed8f8d7, type: 3}
+    - {fileID: 21300000, guid: a9e27a19c60e62b40ae404b1a5bf2c87, type: 3}
+    - {fileID: 21300000, guid: 285e8451003c70a41bba62a478b7f360, type: 3}
+    - {fileID: 21300000, guid: 42896c01cd12f854594c583d381435d2, type: 3}
+    - {fileID: 21300000, guid: da411c0de9f59b24083bc254301ea62d, type: 3}
+    - {fileID: 21300000, guid: a484559ff80beb94bb1cca088d28ab47, type: 3}
     enemyColor: {r: 0.612, g: 0.114, b: 0.451, a: 1}
     enemyHpMultiplier: 2.3
     enemySpeedMultiplier: 1.25
