@@ -117,21 +117,23 @@ public class GameOverController : MonoBehaviour
 
         if (panelRoot != null) panelRoot.SetActive(true);
 
-        // 랭킹 카드는 클리어 때만. 사망 결과에 "클리어 타임 순위"를 붙이면 말이 안 된다.
-        if (rankingRoot != null) rankingRoot.SetActive(isClear);
+        // 사망도 순위에 올린다. 클리어만 받으면 아무도 4시대를 못 깬 동안
+        // 순위표가 계속 비어 보여서 "기능이 고장난 것"처럼 읽힌다.
+        if (rankingRoot != null) rankingRoot.SetActive(true);
 
-        // 창 하나만 있을 때는 가운데, 카드가 붙으면 둘을 한 덩어리로 보고 왼쪽으로 민다.
+        // 카드가 붙었으니 창과 한 덩어리로 보고 왼쪽으로 민다.
+        // 밀지 않으면 4:3 화면에서 카드 오른쪽이 잘린다(보이는 반폭 831 < 끝 840, 실측).
         if (resultWindow != null)
         {
             Vector2 p = resultWindow.anchoredPosition;
-            p.x = isClear ? clearWindowShiftX : 0f;
+            p.x = clearWindowShiftX;
             resultWindow.anchoredPosition = p;
         }
 
         // 패널을 켠 뒤에 부른다 — 비활성 오브젝트에서는 코루틴이 돌지 않는다.
         // 랭킹은 timeScale=0에서도 떠야 하는데, Leaderboard가 자기 오브젝트에서 코루틴을 돌리고
         // UnityWebRequest는 timeScale과 무관해서 문제없다.
-        if (isClear) HandleRanking();
+        HandleRanking(isClear);
 
         Time.timeScale = 0f;
     }
@@ -166,10 +168,11 @@ public class GameOverController : MonoBehaviour
     }
 
     /// <summary>
-    /// 클리어했을 때만 랭킹을 다룬다. 사망 기록까지 올리면 "클리어 타임 랭킹"이 성립하지 않는다.
+    /// 순위는 "도달 시대 → 시간"으로 매긴다. 클리어는 마지막 시대보다 한 칸 위 취급이라
+    /// 어떤 사망 기록보다도 항상 위에 온다.
     /// 이름을 안 적었으면 등록은 건너뛰고 조회만 한다 — 익명으로 순위표를 보는 것은 막을 이유가 없다.
     /// </summary>
-    private void HandleRanking()
+    private void HandleRanking(bool isClear)
     {
         if (rankingText == null) return;
 
@@ -186,8 +189,11 @@ public class GameOverController : MonoBehaviour
         long ms = (long)(gm.SurvivalTime * 1000f);
         string playerName = Leaderboard.PlayerName;
 
+        // 클리어는 마지막 시대에서 끝나므로 CurrentEra가 그대로 도달 시대다.
+        int era = eraManager != null ? (int)eraManager.CurrentEra : 0;
+
         if (string.IsNullOrEmpty(playerName)) Leaderboard.Fetch(RenderRanking);
-        else Leaderboard.Submit(playerName, ms, RenderRanking);
+        else Leaderboard.Submit(playerName, era, isClear, ms, RenderRanking);
     }
 
     /// <summary>
@@ -213,8 +219,8 @@ public class GameOverController : MonoBehaviour
         string me = Leaderboard.PlayerName;
 
         // mspace로 강제 고정폭을 준다. LiberationSans는 가변폭이라 이게 없으면 자릿수가 안 맞아
-        // 순위표가 계단처럼 어긋난다.
-        var sb = new System.Text.StringBuilder("RANKING\n<mspace=0.62em>");
+        // 순위표가 계단처럼 어긋난다. 한 줄은 " 1. NAME1234 CLR 05:32.1" = 24칸이다.
+        var sb = new System.Text.StringBuilder("RANKING\n\n<mspace=0.58em>");
         for (int i = 0; i < entries.Length; i++)
         {
             Leaderboard.Entry e = entries[i];
@@ -222,7 +228,7 @@ public class GameOverController : MonoBehaviour
 
             // 내 기록은 굵게. 10줄 중 어디에 있는지 바로 찾게 하려는 것.
             if (mine) sb.Append("<b>");
-            sb.Append($"{i + 1,2}. {e.name,-8} {Leaderboard.Format(e.ms)}");
+            sb.Append($"{i + 1,2}. {e.name,-8} {Leaderboard.EraTag(e.era, e.cleared)} {Leaderboard.Format(e.ms)}");
             if (mine) sb.Append("</b>");
             if (i < entries.Length - 1) sb.Append('\n');
         }

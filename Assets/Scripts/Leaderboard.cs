@@ -31,6 +31,10 @@ public class Leaderboard : MonoBehaviour
     public class Entry
     {
         public string name;
+        /// <summary>도달 시대 인덱스 0~3. 클리어면 3(마지막 시대)이 들어온다.</summary>
+        public int era;
+        public bool cleared;
+        /// <summary>클리어면 클리어 타임, 사망이면 생존 시간 (ms).</summary>
         public long ms;
     }
 
@@ -44,7 +48,25 @@ public class Leaderboard : MonoBehaviour
     private class SubmitBody
     {
         public string name;
+        public int era;
+        public bool cleared;
         public long ms;
+    }
+
+    /// <summary>
+    /// 순위표에 찍을 3글자 태그. 카드 폰트가 LiberationSans라 한글을 못 쓴다 —
+    /// 시대 이름(원시/중세/현대/미래)을 그대로 넣으면 통째로 □가 된다.
+    /// </summary>
+    public static string EraTag(int era, bool cleared)
+    {
+        if (cleared) return "CLR";
+        switch (era)
+        {
+            case 0: return "PRI";
+            case 1: return "MED";
+            case 2: return "MOD";
+            default: return "FUT";
+        }
     }
 
     private static Leaderboard _instance;
@@ -114,10 +136,13 @@ public class Leaderboard : MonoBehaviour
         Instance.StartCoroutine(Instance.FetchRoutine(onDone));
     }
 
-    /// <summary>기록을 올리고 갱신된 상위 10개를 받는다. 실패하면 null.</summary>
-    public static void Submit(string playerName, long ms, Action<Entry[]> onDone)
+    /// <summary>
+    /// 기록을 올리고 갱신된 상위 10개를 받는다. 실패하면 null.
+    /// 사망도 올린다 — 클리어만 받으면 아무도 못 깬 동안 순위표가 계속 비어 보인다.
+    /// </summary>
+    public static void Submit(string playerName, int era, bool cleared, long ms, Action<Entry[]> onDone)
     {
-        Instance.StartCoroutine(Instance.SubmitRoutine(Sanitize(playerName), ms, onDone));
+        Instance.StartCoroutine(Instance.SubmitRoutine(Sanitize(playerName), era, cleared, ms, onDone));
     }
 
     private IEnumerator FetchRoutine(Action<Entry[]> onDone)
@@ -130,9 +155,12 @@ public class Leaderboard : MonoBehaviour
         }
     }
 
-    private IEnumerator SubmitRoutine(string playerName, long ms, Action<Entry[]> onDone)
+    private IEnumerator SubmitRoutine(string playerName, int era, bool cleared, long ms, Action<Entry[]> onDone)
     {
-        string json = JsonUtility.ToJson(new SubmitBody { name = playerName, ms = ms });
+        string json = JsonUtility.ToJson(new SubmitBody
+        {
+            name = playerName, era = era, cleared = cleared, ms = ms,
+        });
 
         // UnityWebRequest.Post(string, string)은 폼 인코딩이라 JSON이 깨진다.
         // 반드시 raw 업로드 핸들러로 붙여야 한다.
