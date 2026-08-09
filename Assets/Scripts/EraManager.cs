@@ -323,7 +323,7 @@ public class EraManager : MonoBehaviour
             PushConfigToWaveManager(cfg);
         }
 
-        if (player != null) player.position = LeftEdgeSpawnPoint();
+        if (player != null) player.position = EraStartSpawnPoint();
     }
 
     private void PushConfigToWaveManager(EraConfig cfg)
@@ -350,26 +350,27 @@ public class EraManager : MonoBehaviour
         SpawnPortal.ClearAll();
     }
 
-    /// <summary>기획서 상 시간 균열 지점: 아레나 왼쪽 끝.</summary>
-    private Vector3 LeftEdgeSpawnPoint()
+    /// <summary>
+    /// 새 시대를 시작할 때 플레이어를 놓는 자리 = 아레나 한가운데.
+    ///
+    /// 원래는 기획서의 "시간 균열 지점"을 따라 왼쪽 끝(xMin + 1)에 놓았는데,
+    /// 실제로 해 보면 시대가 바뀔 때마다 화면 구석으로 튕겨 나간 것처럼 읽힌다.
+    /// 보스는 오른쪽 끝에서 나오지만 그건 60초 뒤 일이라 시작 위치와 무관하다.
+    /// </summary>
+    private Vector3 EraStartSpawnPoint()
     {
         if (ArenaBounds.Instance != null)
         {
-            const float inset = 1f;
             Rect r = ArenaBounds.Instance.Rect;
-            return new Vector3(r.xMin + inset, r.center.y, 0f);
+            return new Vector3(r.center.x, r.center.y, 0f);
         }
 
-        // ArenaBounds가 없을 때(씬에 배치 안 된 경우)의 폴백: 카메라 시야 왼쪽 안쪽.
+        // ArenaBounds가 없을 때(씬에 배치 안 된 경우)의 폴백: 카메라 정중앙.
         Camera cam = targetCamera != null ? targetCamera : Camera.main;
         if (cam == null) return Vector3.zero;
 
-        float halfHeight = cam.orthographicSize;
-        float halfWidth = halfHeight * cam.aspect;
-        const float camInset = 1.5f;
-
-        Vector3 center = cam.transform.position;
-        return new Vector3(center.x - halfWidth + camInset, center.y, 0f);
+        Vector3 c = cam.transform.position;
+        return new Vector3(c.x, c.y, 0f);
     }
 
     /// <summary>현재 시대의 설정. GameOverController가 도달 시대 이름을 찍을 때 쓴다.</summary>
