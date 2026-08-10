@@ -66,9 +66,7 @@
 
 ### 2.2 플레이 영상
 
-# ▶ (영상 링크 입력 예정)
-
-> `여기에 YouTube 링크를 넣어 주세요` — 예: `https://youtu.be/XXXXXXXXXXX`
+# ▶ https://youtu.be/T9eOBECL2EA?si=j1Isxh_nNrMWddb5
 
 | 항목 | 내용 |
 |---|---|
