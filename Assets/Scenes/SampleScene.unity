@@ -4480,6 +4480,8 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 6bba3b43da0e6ef41b83dedde87d635c, type: 3}
     - {fileID: 21300000, guid: 4dca8afc977fbab45a5f2c64ed67f6fb, type: 3}
     enemyArtFacesLeft: 0
+    ventSprite: {fileID: 21300000, guid: 973770bf3ff743b46889ceed3205aa09, type: 3}
+    ventProjectileSprite: {fileID: 21300000, guid: fa21373e82189924e81aeb1a8fbb154a, type: 3}
     enemyColor: {r: 0.769, g: 0.271, b: 0.165, a: 1}
     enemyHpMultiplier: 0.7
     enemySpeedMultiplier: 1.1
@@ -4502,6 +4504,8 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 0a3a8f0aa67922347bff09d31690e6de, type: 3}
     - {fileID: 21300000, guid: 86e40c79227d98e4eab4a41789fea10f, type: 3}
     enemyArtFacesLeft: 0
+    ventSprite: {fileID: 21300000, guid: ce74464d971829b4a89f7dee570bfa85, type: 3}
+    ventProjectileSprite: {fileID: 21300000, guid: 362629b470f6e9e46a0147d8cebcaf23, type: 3}
     enemyColor: {r: 0.18, g: 0.29, b: 0.42, a: 1}
     enemyHpMultiplier: 1.4
     enemySpeedMultiplier: 0.85
@@ -4524,6 +4528,8 @@ MonoBehaviour:
     - {fileID: 21300000, guid: e29af9468a993d340a69efc85d534ba7, type: 3}
     - {fileID: 21300000, guid: 5a2cf6e96e27d134bb558319b4b752c9, type: 3}
     enemyArtFacesLeft: 1
+    ventSprite: {fileID: 21300000, guid: c690924c3b3562e408f2a21019d949d2, type: 3}
+    ventProjectileSprite: {fileID: 21300000, guid: f44daad685d239042977723c5f95e489, type: 3}
     enemyColor: {r: 0.624, g: 0.749, b: 0.18, a: 1}
     enemyHpMultiplier: 1.35
     enemySpeedMultiplier: 1.15
@@ -4546,6 +4552,8 @@ MonoBehaviour:
     - {fileID: 21300000, guid: da411c0de9f59b24083bc254301ea62d, type: 3}
     - {fileID: 21300000, guid: a484559ff80beb94bb1cca088d28ab47, type: 3}
     enemyArtFacesLeft: 0
+    ventSprite: {fileID: 21300000, guid: 2d5fb840ade565249b3c387970361198, type: 3}
+    ventProjectileSprite: {fileID: 21300000, guid: 8b2e3de82a1418842b4f955ba558fcf2, type: 3}
     enemyColor: {r: 0.612, g: 0.114, b: 0.451, a: 1}
     enemyHpMultiplier: 2.3
     enemySpeedMultiplier: 1.25

@@ -27,6 +27,12 @@ public class RiftVent : MonoBehaviour
         public int burstCount;
         public float spinPerBurst;
         public Color color;
+
+        /// <summary>시대별 포탑 그림. 비워두면 프리팹의 흰 사각형에 color를 곱하는 기존 방식이다.</summary>
+        public Sprite ventSprite;
+
+        /// <summary>시대별 탄 그림. 비워두면 탄 프리팹 원본 그대로 나간다.</summary>
+        public Sprite projectileSprite;
     }
 
     [SerializeField] private BossProjectile projectilePrefab;
@@ -54,6 +60,8 @@ public class RiftVent : MonoBehaviour
     private float _nextBurstAt;
     private float _spin;
     private bool _configured;
+    private bool _hasArt;
+    private Transform _player;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics() => ActiveVents.Clear();
@@ -76,7 +84,36 @@ public class RiftVent : MonoBehaviour
         transform.position = spec.position;
         _nextBurstAt = spec.warnDuration;
 
+        if (_renderer == null) _renderer = GetComponent<SpriteRenderer>();
+        if (spec.ventSprite != null)
+        {
+            _renderer.sprite = spec.ventSprite;
+            _hasArt = true;   // 컬러 아트에는 시대 색을 곱하지 않는다. 곱하면 색이 죽는다
+        }
+
+        FacePlayer();
         ApplyVisual();
+    }
+
+    /// <summary>
+    /// 플레이어 쪽으로 고개를 돌린다. 몹과 같은 규약 — 원본 그림은 넷 다 오른쪽을 보므로
+    /// 플레이어가 왼쪽에 있을 때만 뒤집는다.
+    ///
+    /// 분출구는 제자리에 고정이라 이동 방향으로는 판단할 수 없다. 플레이어 위치를 직접 본다.
+    /// 스케일은 ApplyVisual이 매 프레임 덮어쓰므로 반전은 flipX로만 한다.
+    /// </summary>
+    private void FacePlayer()
+    {
+        if (_renderer == null || !_hasArt) return;
+
+        if (_player == null)
+        {
+            GameObject go = GameObject.FindGameObjectWithTag("Player");
+            if (go == null) return;
+            _player = go.transform;
+        }
+
+        _renderer.flipX = _player.position.x < transform.position.x;
     }
 
     public bool IsActive => _configured
@@ -112,6 +149,7 @@ public class RiftVent : MonoBehaviour
             _nextBurstAt = _elapsed + Mathf.Max(0.1f, _spec.burstInterval);
         }
 
+        FacePlayer();
         ApplyVisual();
     }
 
@@ -127,6 +165,14 @@ public class RiftVent : MonoBehaviour
             Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 
             BossProjectile p = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+
+            // 시대 탄 그림이 있으면 갈아 끼운다. 틴트는 흰색으로 — 컬러 아트에 색을 곱하면 죽는다.
+            if (_spec.projectileSprite != null)
+            {
+                var psr = p.GetComponent<SpriteRenderer>();
+                if (psr != null) { psr.sprite = _spec.projectileSprite; psr.color = Color.white; }
+            }
+
             p.Launch(dir);
             FiredCount++;
         }
@@ -169,7 +215,9 @@ public class RiftVent : MonoBehaviour
 
         transform.localScale = Vector3.one * (size / spriteWidth);
 
-        Color c = _spec.color;
+        // 컬러 아트에는 시대 색을 곱하지 않는다(곱하면 금·보라가 죽는다).
+        // 예고→활성→소멸의 알파 연출은 그대로 살린다.
+        Color c = _hasArt ? Color.white : _spec.color;
         c.a = Mathf.Clamp01(alpha);
         _renderer.color = c;
     }

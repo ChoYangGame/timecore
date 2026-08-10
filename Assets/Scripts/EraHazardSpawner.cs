@@ -289,6 +289,9 @@ public class EraHazardSpawner : MonoBehaviour
         Rect arena = ArenaBounds.Instance.Rect;
         Color color = BeamColor();
 
+        // 시대 아트(포탑·탄)를 그대로 넘긴다. 없으면 기존 흰 사각형 + 틴트로 떨어진다.
+        EraManager.EraConfig eraCfg = eraManager != null ? eraManager.CurrentConfig : null;
+
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
         Vector2 playerPos = playerGO != null ? (Vector2)playerGO.transform.position : arena.center;
 
@@ -316,6 +319,8 @@ public class EraHazardSpawner : MonoBehaviour
                 burstCount = cfg.ventBurstCount,
                 spinPerBurst = cfg.ventSpinPerBurst,
                 color = color,
+                ventSprite = eraCfg != null ? eraCfg.ventSprite : null,
+                projectileSprite = eraCfg != null ? eraCfg.ventProjectileSprite : null,
             }, ventProjectilePrefab);
         }
     }

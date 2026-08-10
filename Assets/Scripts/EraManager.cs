@@ -44,6 +44,13 @@ public class EraManager : MonoBehaviour
                  "게임에서 적이 진행 방향과 반대로 보이면 이 값만 뒤집으면 된다")]
         public bool enemyArtFacesLeft;
 
+        [Tooltip("이 시대 분출구(포탑) 그림. 비워두면 흰 사각형에 아래 색을 곱하는 기존 방식이다.\n" +
+                 "포탑은 플레이어 쪽으로 고개를 돌린다 — 원본은 오른쪽을 보는 그림으로 넣는다")]
+        public Sprite ventSprite;
+
+        [Tooltip("이 시대 분출구가 쏘는 탄 그림. 비워두면 탄 프리팹 원본이 그대로 나간다")]
+        public Sprite ventProjectileSprite;
+
         [Tooltip("이 시대 적의 색. enemySprite가 있으면 틴트가 아니라 파편·스폰 표식의 강조색으로만 쓰인다")]
         public Color enemyColor = Color.white;
 

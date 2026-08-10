@@ -403,8 +403,20 @@ public class Boss : MonoBehaviour
     /// 기믹 프리팹은 씬의 스포너가 이미 들고 있다. 보스 프리팹에 중복으로 꽂지 않는 이유는
     /// 프리팹 외부 편집을 피하기 위해서다(에디터 모달로 세션이 막힌 전례가 있다).
     /// </summary>
+    /// <summary>보스가 까는 분출구에 쓸 시대 아트. 기믹 프리팹과 같이 빌려 온다.</summary>
+    private Sprite _ventSprite;
+    private Sprite _ventShotSprite;
+
     private void BorrowGimmickPrefabs()
     {
+        // 보스의 시대 = 지금 시대다. 분출구가 시대마다 다른 포탑으로 보이게 아트를 같이 집어 온다.
+        var era = FindFirstObjectByType<EraManager>();
+        if (era != null)
+        {
+            EraManager.EraConfig c = era.GetConfig((EraManager.Era)_eraIndex);
+            if (c != null) { _ventSprite = c.ventSprite; _ventShotSprite = c.ventProjectileSprite; }
+        }
+
         EraHazardSpawner hazards = FindFirstObjectByType<EraHazardSpawner>();
         if (hazards != null)
         {
@@ -821,6 +833,8 @@ public class Boss : MonoBehaviour
                 burstCount = p.ventBurst,
                 spinPerBurst = p.ventSpin,
                 color = _health.AccentColor,
+                ventSprite = _ventSprite,
+                projectileSprite = _ventShotSprite,
             }, projectilePrefab);
         }
 
