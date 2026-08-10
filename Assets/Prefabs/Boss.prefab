@@ -1100,8 +1100,8 @@ MonoBehaviour:
       cannonShots: 1
       orbitBeams: 2
       orbitArc: 200
-      orbitSteps: 8
-      orbitStepTime: 0.13
+      orbitSteps: 10
+      orbitStepTime: 0.25
       orbitWidth: 1.5
       orbitDamage: 16
     - label: "\uC2DC\uAC04 \uC815\uC9C0 \uC601\uC5ED"

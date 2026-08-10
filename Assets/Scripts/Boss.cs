@@ -183,8 +183,9 @@ public class Boss : MonoBehaviour
         [Tooltip("훑는 총 각도(도)")]
         public float orbitArc = 200f;
         [Tooltip("몇 단계로 끊어 도는지. 많을수록 매끄럽지만 막대가 늘어난다")]
-        public int orbitSteps = 8;
-        public float orbitStepTime = 0.13f;
+        public int orbitSteps = 10;
+        [Tooltip("한 단계에 걸리는 시간. 회전 속도 = (orbitArc / orbitSteps) / 이 값 이다")]
+        public float orbitStepTime = 0.25f;
         public float orbitWidth = 1.5f;
         public float orbitDamage = 16f;
     }
@@ -1181,9 +1182,12 @@ public class Boss : MonoBehaviour
                     length = length,
                     width = p.orbitWidth,
                     color = _health.AccentColor,
-                    // 예고를 짧게 두는 대신 각도가 조금씩만 움직인다 — 다음 위치가 눈으로 읽힌다.
-                    warnDuration = p.orbitStepTime * 0.9f,
-                    fireDuration = p.orbitStepTime * 0.8f,
+                    // 예고를 한 단계보다 길게(1.6배) 잡는다. 그래야 다음 한두 단계의 막대가
+                    // 미리 깔려 **회전이 어디로 갈지**가 부채꼴로 보인다 —
+                    // 예고가 한 단계보다 짧으면 막대가 나타나는 즉시 발사돼 읽을 시간이 없다.
+                    // 반대로 실제 발사 창은 한 단계보다 짧게 둬서 스쳐도 여러 번 맞지 않게 한다.
+                    warnDuration = p.orbitStepTime * 1.6f,
+                    fireDuration = p.orbitStepTime * 0.7f,
                     playerDamage = p.orbitDamage,
                     enemyDamage = 0f,
                     style = HazardBeam.BeamStyle.Laser,

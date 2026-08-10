@@ -4527,7 +4527,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: d5d3f14513ab524419aaa1f4b68bc586, type: 3}
     - {fileID: 21300000, guid: 6de0d6eed367cbd4eb97a08420d701d0, type: 3}
     - {fileID: 21300000, guid: 8c8950cec4968f5409119fc494dd2f40, type: 3}
-    bossArtFacesLeft: 0
+    bossArtFacesLeft: 1
     bossColor: {r: 0.357, g: 0.541, b: 0.749, a: 1}
     bossName: "\uAC15\uCCA0\uC758 \uC2EC\uBB38\uAD00"
     bossHpMultiplier: 1.2
