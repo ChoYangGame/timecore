@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8407023103109711503}
   - component: {fileID: 6115519200144164521}
   - component: {fileID: 889936579431489696}
+  - component: {fileID: 3109609168397589247}
   m_Layer: 0
   m_Name: Boss
   m_TagString: Enemy
@@ -1307,3 +1308,18 @@ MonoBehaviour:
       orbitStepTime: 0.13
       orbitWidth: 1.5
       orbitDamage: 16
+--- !u!114 &3109609168397589247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3002797241479701067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a06ee73a20f68594f8807a1dc3d2276b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpriteWalkAnimator
+  framesPerSecond: 8
+  turnThreshold: 0.006
+  facePlayerWhenIdle: 1

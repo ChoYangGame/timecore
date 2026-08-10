@@ -4488,6 +4488,14 @@ MonoBehaviour:
     spawnInterval: 1.7
     maxAlive: 48
     bossSprite: {fileID: 0}
+    bossWalkFrames:
+    - {fileID: 21300000, guid: b224b70f01464894d8789b5fdc847ba6, type: 3}
+    - {fileID: 21300000, guid: 30092bff0cd217642baf84edb813fe4c, type: 3}
+    - {fileID: 21300000, guid: 59e7bfad4adc7124fae68c63218adbb0, type: 3}
+    - {fileID: 21300000, guid: 623d5bc6c16da9140934045ae6f58257, type: 3}
+    - {fileID: 21300000, guid: ba1b8523b0a3b864cb9041c4aa13a9d7, type: 3}
+    - {fileID: 21300000, guid: 478e22c0889dfb84a80e069876f72203, type: 3}
+    bossArtFacesLeft: 1
     bossColor: {r: 0.941, g: 0.463, b: 0.29, a: 1}
     bossName: "\uACE0\uB300\uC758 \uD3EC\uC2DD\uC790"
     bossHpMultiplier: 1
@@ -4512,6 +4520,14 @@ MonoBehaviour:
     spawnInterval: 2.4
     maxAlive: 30
     bossSprite: {fileID: 0}
+    bossWalkFrames:
+    - {fileID: 21300000, guid: fb03df609ebe83148b93dd09e14c824e, type: 3}
+    - {fileID: 21300000, guid: 8676f746b9267d543b728c5a63f533d3, type: 3}
+    - {fileID: 21300000, guid: c21f91c0d98bb06408b632426d08bb79, type: 3}
+    - {fileID: 21300000, guid: d5d3f14513ab524419aaa1f4b68bc586, type: 3}
+    - {fileID: 21300000, guid: 6de0d6eed367cbd4eb97a08420d701d0, type: 3}
+    - {fileID: 21300000, guid: 8c8950cec4968f5409119fc494dd2f40, type: 3}
+    bossArtFacesLeft: 0
     bossColor: {r: 0.357, g: 0.541, b: 0.749, a: 1}
     bossName: "\uAC15\uCCA0\uC758 \uC2EC\uBB38\uAD00"
     bossHpMultiplier: 1.2
@@ -4536,6 +4552,14 @@ MonoBehaviour:
     spawnInterval: 1.6
     maxAlive: 46
     bossSprite: {fileID: 0}
+    bossWalkFrames:
+    - {fileID: 21300000, guid: cbb7854d6e8dbda49af8d3dc2384d729, type: 3}
+    - {fileID: 21300000, guid: 9013d65c8b32f344ab798955ae0a90ba, type: 3}
+    - {fileID: 21300000, guid: 67c52950406418d43b712520e8304907, type: 3}
+    - {fileID: 21300000, guid: b4aab9ecc7a338e45a45241b093c9d5e, type: 3}
+    - {fileID: 21300000, guid: 09810f3fba6e6ec4eaff5b6223b90acc, type: 3}
+    - {fileID: 21300000, guid: c0fe49e711ee40249b3012d979929475, type: 3}
+    bossArtFacesLeft: 1
     bossColor: {r: 0.831, g: 0.91, b: 0.361, a: 1}
     bossName: "\uAC15\uD654 \uBCD1\uAE30"
     bossHpMultiplier: 1.45
@@ -4560,6 +4584,16 @@ MonoBehaviour:
     spawnInterval: 2.2
     maxAlive: 34
     bossSprite: {fileID: 0}
+    bossWalkFrames:
+    - {fileID: 21300000, guid: fa8851539635c4b4da7ab20286af6373, type: 3}
+    - {fileID: 21300000, guid: 9afbae735e2ab5140a260c50e2bc1d47, type: 3}
+    - {fileID: 21300000, guid: 8357ab69ea3584640b17a3d1d3a28710, type: 3}
+    - {fileID: 21300000, guid: 8574278ea50f06a49b596a590e7f904b, type: 3}
+    - {fileID: 21300000, guid: 127a4147a108e754a92577732f72f24e, type: 3}
+    - {fileID: 21300000, guid: f43e47be16717124cb38496dad338f49, type: 3}
+    - {fileID: 21300000, guid: bedb35c5b571f204796ddbda86ed597d, type: 3}
+    - {fileID: 21300000, guid: dc30dac09cdc90349bd1990d472a6530, type: 3}
+    bossArtFacesLeft: 0
     bossColor: {r: 0.847, g: 0.322, b: 0.898, a: 1}
     bossName: "\uC2DC\uAC04\uC758 \uC9C0\uBC30\uC790"
     bossHpMultiplier: 1.75

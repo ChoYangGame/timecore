@@ -66,8 +66,17 @@ public class EraManager : MonoBehaviour
         [Tooltip("이 시대 동시 생존 적 상한. 0 이하면 기존 값을 유지한다")]
         public int maxAlive = 40;
 
-        [Tooltip("이 시대 보스의 컬러 아트. 비워두면 bossColor 틴트 방식으로 떨어진다")]
+        [Tooltip("이 시대 보스의 컬러 아트. 비워두면 bossColor 틴트 방식으로 떨어진다.\n" +
+                 "아래 bossWalkFrames가 있으면 그 0번이 이 자리를 대신하므로 비워 둬도 된다")]
         public Sprite bossSprite;
+
+        [Tooltip("이 시대 보스의 걷기 프레임. 시대마다 장수가 달라도 된다(미래는 8장).\n" +
+                 "적과 같은 규약 — 한쪽 방향 그림만 넣고 반대쪽은 flipX로 뒤집는다")]
+        public Sprite[] bossWalkFrames;
+
+        [Tooltip("보스 아트가 **왼쪽**을 보고 그려졌으면 켠다.\n" +
+                 "정면/대칭 그림(기사, 시계 코어)은 어느 쪽이든 결과가 같다")]
+        public bool bossArtFacesLeft;
 
         public Color bossColor = Color.white;
         public string bossName = "고대의 포식자";
@@ -347,7 +356,8 @@ public class EraManager : MonoBehaviour
     {
         // 패턴 세트 인덱스는 CurrentEra를 그대로 넘긴다 — 호출 시점 둘 다(Awake / ApplyEra 직후)
         // CurrentEra가 cfg와 같은 시대를 가리킨다.
-        waveManager.ConfigureBoss(cfg.bossName, cfg.bossColor, cfg.bossHpMultiplier, (int)CurrentEra, cfg.bossSprite);
+        waveManager.ConfigureBoss(cfg.bossName, cfg.bossColor, cfg.bossHpMultiplier, (int)CurrentEra,
+            cfg.bossSprite, cfg.bossWalkFrames, cfg.bossArtFacesLeft);
         waveManager.ConfigureEnemyScaling(cfg);
     }
 

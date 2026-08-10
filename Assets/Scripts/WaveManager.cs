@@ -50,6 +50,8 @@ public class WaveManager : MonoBehaviour
     // [SerializeField]를 붙이지 않은 이유: 인스펙터에서 채울 값이 아니라 EraConfig에서 흘러오는 값이고,
     // 직렬화하면 씬에 빈 슬롯 두 개가 더 생겨 EraConfig 쪽과 어느 쪽이 진짜인지 헷갈린다.
     private Sprite bossSprite;
+    private Sprite[] bossWalkFrames;
+    private bool bossArtFacesLeft;
     private Sprite enemySprite;
     private Sprite[] enemyWalkFrames;
     private bool enemyArtFacesLeft;
@@ -199,7 +201,19 @@ public class WaveManager : MonoBehaviour
 
         // sr.color/sr.sprite 직접 대입이 아니라 SetAppearance를 쓴다 — Health가 Awake에서 캐시한 프리팹 색으로
         // 첫 피격 플래시 직후 되돌아가는 것을 막는다. bossSprite가 null이면 기존 틴트 방식 그대로다.
-        bossHealth.SetAppearance(bossSprite, bossColor);
+        Sprite bossStill = bossSprite != null ? bossSprite
+            : (bossWalkFrames != null && bossWalkFrames.Length > 0 ? bossWalkFrames[0] : null);
+        bossHealth.SetAppearance(bossStill, bossColor);
+
+        // SetAppearance가 sprite를 덮어쓰므로 프레임 주입은 반드시 그 뒤다.
+        SpriteWalkAnimator bossWalk = boss.GetComponent<SpriteWalkAnimator>();
+        if (bossWalk != null)
+        {
+            bossWalk.ArtFacesLeft = bossArtFacesLeft;   // SetFrames보다 먼저 — 첫 방향 판정에 쓰인다
+            bossWalk.SetFrames(bossWalkFrames);
+        }
+
+        FitBossCollider(boss, bossStill);
 
         if (bossHpUI != null) bossHpUI.Show(bossHealth, bossName);
 
@@ -210,12 +224,38 @@ public class WaveManager : MonoBehaviour
         CameraShake.Shake(0.7f, 0.35f);
     }
 
+    /// <summary>
+    /// 보스 콜라이더를 그 시대 그림에 맞춰 늘린다.
+    ///
+    /// 프리팹 콜라이더는 흰 사각형 시절의 1×1(스케일 3 → 3×3)로 고정인데, 시대별 아트는
+    /// 티렉스 4.88 · 탱크 4.73처럼 훨씬 옆으로 길다. 그대로 두면 머리·꼬리·포신이 판정 밖이라
+    /// **칼날이 분명히 닿았는데 데미지가 안 들어가는** 상황이 그대로 재현된다
+    /// (PlayerWeapon.TargetRadius가 콜라이더 bounds를 읽는다).
+    ///
+    /// 꽉 채우지 않고 x 0.85 / y 0.90으로 줄인다 — 사각형 판정이라 꼬리 위 빈 공간까지
+    /// 몸으로 세는 것을 조금은 덜어내려는 것이다. 스케일 펄스(Telegraph)는 콜라이더에도
+    /// 같이 걸리므로 여기서는 로컬 크기만 만진다.
+    /// </summary>
+    private static void FitBossCollider(Boss boss, Sprite sprite)
+    {
+        if (sprite == null) return;
+        BoxCollider2D box = boss.GetComponent<BoxCollider2D>();
+        if (box == null) return;
+
+        Vector3 s = sprite.bounds.size;
+        box.size = new Vector2(s.x * 0.85f, s.y * 0.90f);
+        box.offset = Vector2.zero;
+    }
+
     /// <summary>시대 전환 시 EraManager가 다음 보스의 이름/색/체력 배율/패턴 세트를 갱신한다 (프리팹은 재사용).</summary>
-    public void ConfigureBoss(string name, Color color, float hpMultiplier, int eraIndex, Sprite sprite = null)
+    public void ConfigureBoss(string name, Color color, float hpMultiplier, int eraIndex, Sprite sprite = null,
+        Sprite[] walkFrames = null, bool artFacesLeft = false)
     {
         bossName = name;
         bossColor = color;
         bossSprite = sprite;
+        bossWalkFrames = walkFrames;
+        bossArtFacesLeft = artFacesLeft;
         bossHpMultiplier = Mathf.Max(0.01f, hpMultiplier);
         bossEraIndex = Mathf.Max(0, eraIndex);
     }

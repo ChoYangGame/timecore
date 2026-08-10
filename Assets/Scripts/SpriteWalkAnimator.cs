@@ -31,7 +31,14 @@ public class SpriteWalkAnimator : MonoBehaviour
     /// </summary>
     public bool ArtFacesLeft { get; set; }
 
+    [Tooltip("거의 멈춰 있을 때 플레이어 쪽으로 고개를 돌린다.\n" +
+             "잡몹은 쉬지 않고 달려들어 이동 방향만으로 충분하지만, 보스는 패턴 시전 중\n" +
+             "제자리에 오래 서 있어서 마지막으로 걷던 방향을 그대로 붙들고 등을 보인다.\n" +
+             "돌진 중에는 이동 방향이 이기므로 플레이어를 지나쳐도 미끄러지듯 뒤돌아보지 않는다")]
+    [SerializeField] private bool facePlayerWhenIdle;
+
     private SpriteRenderer _sr;
+    private Transform _player;
     private Sprite[] _frames;
     private float _timer;
     private int _index;
@@ -75,16 +82,31 @@ public class SpriteWalkAnimator : MonoBehaviour
         float dx = pos.x - _lastPos.x;
         _lastPos = pos;
 
-        if (Mathf.Abs(dx) > turnThreshold)
+        bool moving = Mathf.Abs(dx) > turnThreshold;
+        bool hasFacing = moving;
+        bool left = dx < 0f;
+
+        // 멈춰 있으면 플레이어 쪽을 본다. 이동 중에는 이동 방향이 항상 이긴다.
+        if (!moving && facePlayerWhenIdle)
         {
-            bool left = dx < 0f;
-            if (left != _facingLeft || !_flipApplied)
+            if (_player == null)
             {
-                _facingLeft = left;
-                _flipApplied = true;
-                // 원본이 오른쪽을 보면 왼쪽으로 갈 때 뒤집고, 왼쪽을 보면 그 반대다.
-                _sr.flipX = ArtFacesLeft ? !left : left;
+                GameObject go = GameObject.FindGameObjectWithTag("Player");
+                if (go != null) _player = go.transform;
             }
+            if (_player != null)
+            {
+                left = _player.position.x < pos.x;
+                hasFacing = true;
+            }
+        }
+
+        if (hasFacing && (left != _facingLeft || !_flipApplied))
+        {
+            _facingLeft = left;
+            _flipApplied = true;
+            // 원본이 오른쪽을 보면 왼쪽으로 갈 때 뒤집고, 왼쪽을 보면 그 반대다.
+            _sr.flipX = ArtFacesLeft ? !left : left;
         }
 
         if (_frames == null) return;
