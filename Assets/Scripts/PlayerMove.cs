@@ -16,6 +16,15 @@ public class PlayerMove : MonoBehaviour
         set => moveSpeed = value;
     }
 
+    /// <summary>
+    /// 이번 프레임에 눌린 방향키(정규화 전). 그림 쪽에서 바라보는 방향을 정할 때 읽는다.
+    ///
+    /// 실제 이동량(transform 변화)이 아니라 **입력**을 내보내는 이유: 아레나 경계에 붙어
+    /// 벽을 밀고 있으면 이동량이 0이라, 이동량으로 방향을 정하면 벽에 닿는 순간
+    /// 캐릭터가 엉뚱한 쪽을 본 채로 굳는다.
+    /// </summary>
+    public Vector2 LastInput { get; private set; }
+
     private Health _health;
 
     private void Awake()
@@ -25,9 +34,10 @@ public class PlayerMove : MonoBehaviour
 
     private void Update()
     {
-        if (_health != null && _health.IsDead) return;
+        if (_health != null && _health.IsDead) { LastInput = Vector2.zero; return; }
 
         Vector2 input = ReadInput();
+        LastInput = input;
         if (input == Vector2.zero) return;
 
         // 대각선이 빨라지지 않도록 정규화

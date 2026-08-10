@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -53,6 +54,13 @@ public class AutoAimShooter : PlayerWeapon
     /// <summary>증강으로 누적되는 사거리 배율.</summary>
     public float RangeMultiplier { get; set; } = 1f;
 
+    /// <summary>
+    /// 한 번 쏠 때마다 1회(총알 수와 무관하게) 조준 방향과 함께 발행된다.
+    /// GunVisual이 이걸 받아 발사 애니메이션을 재생하고 총구를 그쪽으로 돌린다 —
+    /// 그림 쪽이 발사 조건(사거리·쿨타임·사망)을 다시 판정하지 않게 하려는 것이다.
+    /// </summary>
+    public event Action<Vector2> OnFired;
+
     private float _timer;
 
     private void Update()
@@ -91,6 +99,8 @@ public class AutoAimShooter : PlayerWeapon
 
             bullet.Launch(shotDir);
         }
+
+        OnFired?.Invoke(dir);
     }
 
     private static Vector2 Rotate(Vector2 v, float degrees)
