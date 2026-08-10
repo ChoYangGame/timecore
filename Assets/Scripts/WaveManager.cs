@@ -189,6 +189,8 @@ public class WaveManager : MonoBehaviour
         // 간격을 늘린 채 계속 돈다 — 보스전 아레나가 텅 비어 보이지 않게 하려는 것.
         if (enemySpawner != null) enemySpawner.SpawningEnabled = false;
 
+        Sfx.Play(SfxId.BossSpawn);
+
         Boss boss = Instantiate(bossPrefab, RightEdgeSpawnPoint(), Quaternion.identity);
         Health bossHealth = boss.GetComponent<Health>();
         bossHealth.OnDeath += HandleBossDeath;

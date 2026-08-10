@@ -101,6 +101,8 @@ public class AutoAimShooter : PlayerWeapon
         }
 
         OnFired?.Invoke(dir);
+        // 산탄이 몇 발이든 소리는 한 번이다. 발당 재생하면 다중 사격 증강에서 소리가 뭉갠다.
+        Sfx.Play(SfxId.Shoot);
     }
 
     private static Vector2 Rotate(Vector2 v, float degrees)

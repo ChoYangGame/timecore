@@ -151,6 +151,8 @@ public class RecoveryCore : MonoBehaviour
 
         float healed = _playerHealth != null ? _playerHealth.Heal(healAmount) : 0f;
 
+        Sfx.Play(SfxId.Heal);
+
         // 확보 성공은 이 게임에서 유일한 "잘했다" 순간이라 조각을 넉넉히 쓴다.
         // 흔들림은 넣지 않는다 — 보상인데 피격과 같은 느낌이 나면 안 된다.
         Color c = baseColor;

@@ -184,6 +184,12 @@ public class EraManager : MonoBehaviour
     /// <summary>마지막 시대 보스 처치 시 발행. 지금은 이벤트만 나간다(게임 클리어 화면은 GameOverController가 받는다).</summary>
     public event Action OnGameClear;
 
+    /// <summary>
+    /// 시대가 실제로 바뀐 직후 발행(암전 한가운데). BgmManager가 곡을 갈아끼울 때 구독한다.
+    /// 시작 시대(원시)는 여기서 나가지 않는다 — 구독자가 Start에서 CurrentEra를 직접 읽는다.
+    /// </summary>
+    public event Action<Era> OnEraChanged;
+
     private bool _isTransitioning;
 
     private void Awake()
@@ -350,6 +356,8 @@ public class EraManager : MonoBehaviour
         }
 
         if (player != null) player.position = EraStartSpawnPoint();
+
+        OnEraChanged?.Invoke(era);
     }
 
     private void PushConfigToWaveManager(EraConfig cfg)

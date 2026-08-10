@@ -377,13 +377,21 @@ public class Boss : MonoBehaviour
     {
         _health = GetComponent<Health>();
         _health.OnDeath += HandleDeath;
+        _health.OnHit += HandleHit;
         _baseScale = transform.localScale;
     }
 
     private void OnDestroy()
     {
-        if (_health != null) _health.OnDeath -= HandleDeath;
+        if (_health != null)
+        {
+            _health.OnDeath -= HandleDeath;
+            _health.OnHit -= HandleHit;
+        }
     }
+
+    // 잡몹 피격음보다 낮고 둔탁한 소리를 쓴다. 같은 소리면 보스를 때리는 감각이 안 산다.
+    private void HandleHit(float _) => Sfx.Play(SfxId.BossHit);
 
     /// <summary>WaveManager가 Instantiate 직후(= Start 전에) 부른다. 어느 보스의 패턴을 쓸지 정한다.</summary>
     public void ConfigureEra(int eraIndex)
@@ -1247,6 +1255,8 @@ public class Boss : MonoBehaviour
         StopAllCoroutines();
         _isDashing = false;
         _isCasting = false;
+
+        Sfx.Play(SfxId.BossDeath);
 
         // 필드에 남은 기믹을 전부 걷어낸다. 죽은 보스의 예고 레이저에 맞아 죽는 것은
         // 어떤 설명으로도 방어가 안 된다. 보스전에는 시대 기믹도 같이 돌고 있으므로

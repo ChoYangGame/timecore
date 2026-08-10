@@ -10,9 +10,10 @@ using UnityEngine;
 /// 물리 연산이 0이다(아레나 경계를 위치 클램프로 처리한 것과 같은 원칙).
 /// 존은 동시 2~3개 상한이고 적은 maxAlive 40이라 최악에도 프레임당 수백 번의 좌표 비교뿐이다.
 ///
-/// 영역을 원이 아니라 사각으로 잡았다. 프로젝트의 모든 오브젝트가 내장 Square 스프라이트라
-/// 원형 스프라이트를 새로 들이지 않으려는 것이고(WebGL 용량), 보이는 사각형과 판정 영역이
-/// 정확히 일치하게 하려는 것이다(ArenaBounds가 시각적 벽과 논리적 벽을 일치시킨 것과 같은 이유).
+/// **판정은 원이다.** 예전에는 사각형이었는데, 그때는 내장 Square 스프라이트로 그려서
+/// 보이는 사각형과 판정이 정확히 일치했기 때문이다. 2026-08-10에 디자인 담당의 원형 장판 아트로
+/// 교체하면서 판정도 원으로 바꿨다 — 이 프로젝트의 규칙은 "보이는 것이 곧 판정"이고,
+/// 원을 그려 놓고 사각으로 맞히는 쪽이 훨씬 나쁜 거짓말이다.
 ///
 /// 부착 대상: RiftZone 프리팹 (SpriteRenderer만. 콜라이더 없음)
 /// </summary>
@@ -20,7 +21,7 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class RiftZone : MonoBehaviour
 {
-    [Tooltip("한 변의 길이(월드 유닛). 아레나 걷는 영역이 약 21.6 x 10.9라 6 근처면 화면의 한 구획을 덮는다")]
+    [Tooltip("지대의 지름(월드 유닛). 보이는 원의 지름이 곧 이 값이고, 판정도 같다")]
     [SerializeField] private float size = 6f;
 
     [Tooltip("지대 안에서의 이동속도 배율. 플레이어와 적에게 똑같이 적용된다")]
@@ -31,28 +32,15 @@ public class RiftZone : MonoBehaviour
     [SerializeField] private float fadeOutDuration = 1f;
 
     [Header("외형")]
-    [Tooltip("바닥 채움의 알파. 아주 낮게 둔다 — 시대 색이 맵과 같은 계열이라 조금만 진해도\n" +
-             "넓은 색 덩어리로 뭉개진다(실측). 존재감은 테두리와 소용돌이가 낸다")]
-    [SerializeField] private float maxAlpha = 0.15f;
+    [Tooltip("장판 알파. 아트 자체가 선 위주라 진하게 둬도 안의 적을 가리지 않는다")]
+    [SerializeField] private float maxAlpha = 0.9f;
+
     [SerializeField] private float pulseSpeed = 2.2f;
-    [SerializeField] private float pulseAmount = 0.15f;
+    [SerializeField] private float pulseAmount = 0.12f;
 
-    [Tooltip("판정 경계선의 두께 (한 변 대비 비율)")]
-    [SerializeField] private float borderThickness = 0.045f;
-
-    [Tooltip("경계선 알파. 채움보다 훨씬 진해야 '여기부터 느려진다'가 읽힌다")]
-    [SerializeField] private float borderAlpha = 0.95f;
-
-    [Tooltip("가운데 소용돌이 회전 속도(도/초). 정지한 그림은 화려한 맵 위에서 그냥 묻힌다 —\n" +
+    [Tooltip("장판 회전 속도(도/초). 정지한 그림은 화려한 맵 위에서 그냥 묻힌다 —\n" +
              "움직임이 가장 강한 시선 유도 장치다")]
-    [SerializeField] private float swirlSpinSpeed = 26f;
-
-    [SerializeField] private float swirlAlpha = 0.8f;
-
-    // 런타임에 만드는 자식 레이어. 프리팹을 건드리지 않으려는 것이다.
-    private SpriteRenderer[] _borders;   // 상·하·좌·우 4장 = 판정 사각형의 테두리
-    private SpriteRenderer _swirl;       // 가운데 소용돌이 (회전)
-    private Transform _swirlTf;
+    [SerializeField] private float spinSpeed = 14f;
 
     /// <summary>배경(-1000)보다는 위, 적·플레이어·탄(0)보다는 아래.</summary>
     [SerializeField] private int sortingOrder = -500;
@@ -62,9 +50,8 @@ public class RiftZone : MonoBehaviour
     public static int ActiveCount => ActiveZones.Count;
 
     private SpriteRenderer _renderer;
-    private Color _tint = Color.white;
     private float _elapsed;
-    private float _halfSize;
+    private float _radius;
 
     // 도메인 리로드를 끈 에디터에서 static 목록이 이전 판의 잔해를 물고 있는 것을 막는다.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -83,9 +70,11 @@ public class RiftZone : MonoBehaviour
             RiftZone zone = ActiveZones[i];
             if (zone == null) continue;
 
+            // 제곱 비교. sqrt를 매 프레임 적 40마리 × 존 3개만큼 돌 이유가 없다.
             Vector2 center = zone.transform.position;
-            if (Mathf.Abs(pos.x - center.x) > zone._halfSize) continue;
-            if (Mathf.Abs(pos.y - center.y) > zone._halfSize) continue;
+            float dx = pos.x - center.x;
+            float dy = pos.y - center.y;
+            if (dx * dx + dy * dy > zone._radius * zone._radius) continue;
 
             if (zone.slowMultiplier < result) result = zone.slowMultiplier;
         }
@@ -104,73 +93,27 @@ public class RiftZone : MonoBehaviour
         ActiveZones.Clear();
     }
 
-    /// <summary>스폰 직후 RiftZoneSpawner가 부른다.</summary>
+    /// <summary>
+    /// 스폰 직후 RiftZoneSpawner가 부른다.
+    /// tint는 더 이상 쓰지 않는다 — 장판 아트가 고유 색(보라)을 갖고 있고, 거기에 시대 색을 곱하면
+    /// 그림이 그 색조로 덮여 버린다(적·보스 컬러 아트에서 이미 겪은 문제와 같다).
+    /// 시대마다 색이 달라지는 것보다 "이 무늬 = 감속"이 항상 같은 편이 읽기 쉽다.
+    /// </summary>
     public void Configure(Color tint, float worldSize)
     {
         size = worldSize;
-        _tint = tint;
 
-        // 바닥 채움은 반드시 사각형이어야 한다. 한때 둥근 소용돌이로 바꿔 놨었는데,
-        // 판정은 사각형(Abs(dx) > halfSize)이라 보이는 것과 맞는 범위가 어긋났다.
-        if (_renderer == null) _renderer = GetComponent<SpriteRenderer>();
-        if (_renderer != null) _renderer.sprite = FxTextures.Solid;
-
-        BuildLayers();
+        ApplySprite();
         ApplySize();
         ApplyAlpha();
-    }
-
-    /// <summary>
-    /// 테두리 4장 + 가운데 소용돌이를 자식으로 만든다.
-    /// 자식은 루트의 1x1 로컬 공간에서 배치하므로 존 크기가 바뀌어도 비율이 유지된다.
-    /// </summary>
-    private void BuildLayers()
-    {
-        if (_borders != null) return;
-
-        _borders = new SpriteRenderer[4];
-        for (int i = 0; i < 4; i++)
-        {
-            var go = new GameObject("Border" + i);
-            go.transform.SetParent(transform, false);
-
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = FxTextures.Solid;
-            sr.sortingOrder = sortingOrder + 1;
-            _borders[i] = sr;
-
-            bool horizontal = i < 2;
-            float sign = (i % 2 == 0) ? 1f : -1f;
-            float t = borderThickness;
-
-            // 살짝(1.0 + t) 넘겨 그려 모서리에 틈이 생기지 않게 한다.
-            go.transform.localScale = horizontal
-                ? new Vector3(1f + t, t, 1f)
-                : new Vector3(t, 1f + t, 1f);
-            go.transform.localPosition = horizontal
-                ? new Vector3(0f, sign * 0.5f, 0f)
-                : new Vector3(sign * 0.5f, 0f, 0f);
-        }
-
-        var swirlGo = new GameObject("Swirl");
-        swirlGo.transform.SetParent(transform, false);
-        _swirlTf = swirlGo.transform;
-        _swirlTf.localScale = Vector3.one * 0.86f;
-
-        _swirl = swirlGo.AddComponent<SpriteRenderer>();
-        _swirl.sprite = FxSprites.Twirl != null ? FxSprites.Twirl : FxTextures.Ring;
-        _swirl.sortingOrder = sortingOrder + 2;
     }
 
     private void Awake()
     {
         _renderer = GetComponent<SpriteRenderer>();
-        _tint = _renderer.color;
         _renderer.sortingOrder = sortingOrder;
-        _renderer.sprite = FxTextures.Solid;
 
-        // Configure()를 거치지 않고 스폰되는 경로가 있어도 레이어는 있어야 한다.
-        BuildLayers();
+        ApplySprite();
         ApplySize();
         ApplyAlpha();
     }
@@ -189,36 +132,43 @@ public class RiftZone : MonoBehaviour
             return;
         }
 
-        // 소용돌이를 천천히 돌린다. 정지한 반투명 그림은 화려한 바닥 위에서 그냥 사라진다 —
-        // 존재를 알리는 것은 색이 아니라 움직임이다.
-        if (_swirlTf != null)
-            _swirlTf.localRotation = Quaternion.Euler(0f, 0f, -_elapsed * swirlSpinSpeed);
+        // 천천히 돌린다. 무늬가 원형이라 회전이 티가 나고, 그게 "시간이 휘었다"를 읽히게 한다.
+        transform.localRotation = Quaternion.Euler(0f, 0f, -_elapsed * spinSpeed);
 
         ApplyAlpha();
     }
 
+    private void ApplySprite()
+    {
+        if (_renderer == null) _renderer = GetComponent<SpriteRenderer>();
+        if (_renderer == null) return;
+
+        Sprite art = FxSprites.SlowField;
+        if (art != null) _renderer.sprite = art;
+    }
+
     /// <summary>
-    /// 스프라이트의 실제 월드 크기로 나눠 스케일을 낸다. Square의 PPU가 바뀌어도
-    /// 보이는 사각형이 판정과 어긋나지 않는다.
+    /// **그려진 원의 지름이 판정 지름과 같아지도록** 스케일을 낸다.
+    /// 아트 프레임에 여백이 붙어 있어(그림이 프레임의 68%) 스프라이트 크기를 그대로 쓰면
+    /// 보이는 원이 판정보다 32% 작아진다.
     /// </summary>
     private void ApplySize()
     {
-        _halfSize = size * 0.5f;
+        _radius = size * 0.5f;
 
         if (_renderer == null || _renderer.sprite == null) return;
 
-        float spriteWidth = _renderer.sprite.bounds.size.x;
-        if (spriteWidth <= 0.0001f) return;
+        float drawnWidth = _renderer.sprite.bounds.size.x * FxSprites.SlowFieldSpan;
+        if (drawnWidth <= 0.0001f) return;
 
-        transform.localScale = Vector3.one * (size / spriteWidth);
+        transform.localScale = Vector3.one * (size / drawnWidth);
     }
 
     private void ApplyAlpha()
     {
         if (_renderer == null) return;
 
-        // 등장·소멸·맥동을 하나의 배율로 계산해 세 레이어에 똑같이 곱한다.
-        float k = 1f;
+        float k;
 
         if (fadeInDuration > 0f && _elapsed < fadeInDuration)
         {
@@ -233,27 +183,7 @@ public class RiftZone : MonoBehaviour
             k = 1f + Mathf.Sin(_elapsed * pulseSpeed) * pulseAmount;
         }
 
-        // 바닥 채움 — 옅게. 안에 있는 적을 가리면 안 된다.
-        Color fill = _tint;
-        fill.a = Mathf.Clamp01(maxAlpha * k);
-        _renderer.color = fill;
-
-        // 테두리 — 흰색을 섞어 띄운다. 판정 경계가 어디인지는 이 선 하나로 전달된다.
-        if (_borders != null)
-        {
-            Color edge = Color.Lerp(_tint, Color.white, 0.55f);
-            edge.a = Mathf.Clamp01(borderAlpha * k);
-            for (int i = 0; i < _borders.Length; i++)
-                if (_borders[i] != null) _borders[i].color = edge;
-        }
-
-        // 소용돌이 — 밝게. 0.35만 섞으니 시대 색과 맵이 같은 계열이라 묻혔다(실측).
-        // 이게 "시간이 휘었다"를 전달하는 유일한 형태라 확실히 띄운다.
-        if (_swirl != null)
-        {
-            Color s = Color.Lerp(_tint, Color.white, 0.6f);
-            s.a = Mathf.Clamp01(swirlAlpha * k);
-            _swirl.color = s;
-        }
+        // 색은 건드리지 않는다(흰색 곱 = 원본 그대로). 알파만 등장·소멸·맥동으로 움직인다.
+        _renderer.color = new Color(1f, 1f, 1f, Mathf.Clamp01(maxAlpha * k));
     }
 }

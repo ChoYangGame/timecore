@@ -33,6 +33,11 @@ public class TitleController : MonoBehaviour
     [Tooltip("랭킹 카드를 닫는 버튼")]
     [SerializeField] private Button rankingCloseButton;
 
+    [Header("시작 전 숨길 인게임 HUD")]
+    [Tooltip("웨이브 패널·레벨 배지처럼 판이 시작돼야 의미가 있는 표시. " +
+             "HUD_Canvas에서 TitlePanel보다 뒤에 있어 끄지 않으면 타이틀 오버레이 위로 그려진다")]
+    [SerializeField] private GameObject[] gameplayHudRoots;
+
     /// <summary>"파견 시작"을 누르기 전인지. 다른 시스템이 시작 전 상태를 물어볼 때 쓴다.</summary>
     public bool IsWaitingToStart { get; private set; }
 
@@ -42,6 +47,19 @@ public class TitleController : MonoBehaviour
         IsWaitingToStart = true;
         Time.timeScale = 0f;
         if (panelRoot != null) panelRoot.SetActive(true);
+
+        // 직업 선택 화면까지 계속 꺼 둔다. StartRun()에서 한 번에 켠다.
+        SetGameplayHudVisible(false);
+    }
+
+    private void SetGameplayHudVisible(bool visible)
+    {
+        if (gameplayHudRoots == null) return;
+
+        foreach (GameObject go in gameplayHudRoots)
+        {
+            if (go != null) go.SetActive(visible);
+        }
     }
 
     private void Start()
@@ -152,8 +170,13 @@ public class TitleController : MonoBehaviour
 
         if (panelRoot != null) panelRoot.SetActive(false);
 
+        SetGameplayHudVisible(true);
+
         // 생존 시간은 여기서부터 센다. 타이틀 대기 시간이 기록에 섞이면 안 된다.
         if (GameManager.Instance != null) GameManager.Instance.ResetRunTimer();
+
+        // 시대 BGM은 판이 시작되는 지금부터다 (타이틀·직업 선택 화면은 무음).
+        if (BgmManager.Instance != null) BgmManager.Instance.BeginRun();
 
         Time.timeScale = 1f;
     }

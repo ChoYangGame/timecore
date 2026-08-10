@@ -114,6 +114,10 @@ public class GameOverController : MonoBehaviour
         // 카드 표시와 timeScale 복구를 건너뛴다 (레벨업이 같은 프레임에 겹치는 경우 방어).
         if (GameManager.Instance != null) GameManager.Instance.MarkGameOver();
 
+        // 판이 끝났으므로 음악을 걷어낸다. 결과 화면에서 전투 BGM이 계속 도는 것도 이상하고,
+        // 사망·클리어 효과음이 음악에 묻히면 결과가 안 읽힌다.
+        if (BgmManager.Instance != null) BgmManager.Instance.FadeOutAndStop();
+
         // 스폰을 끄기 전에 시대 전환을 먼저 중단해야 한다.
         // 전환 코루틴이 살아 있으면 ApplyEra()가 스폰을 도로 켜버린다.
         if (eraManager != null) eraManager.AbortTransition();

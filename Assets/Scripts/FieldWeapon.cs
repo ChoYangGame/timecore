@@ -40,14 +40,11 @@ public class FieldWeapon : PlayerWeapon
     [Header("연출")]
     [SerializeField] private Color fieldColor = new Color(0.435f, 0.847f, 0.878f, 1f);
 
-    [Tooltip("바닥 채움 알파. 낮게 둔다 — 진하면 지대 안의 적이 안 보인다")]
-    [SerializeField] private float fillAlpha = 0.13f;
+    [Tooltip("장판 알파. 아트가 선 위주라 진해도 안의 적을 가리지 않는다")]
+    [SerializeField] private float fieldAlpha = 0.95f;
 
-    [Tooltip("판정 경계를 알리는 테두리 알파. 여기가 1순위 정보라 진하게 둔다")]
-    [SerializeField] private float ringAlpha = 0.9f;
-
-    [Tooltip("안쪽 무늬 회전 속도(도/초). 멈춘 반투명 원은 화려한 바닥 위에서 그냥 사라진다")]
-    [SerializeField] private float spinSpeed = 22f;
+    [Tooltip("장판 회전 속도(도/초). 멈춘 반투명 원은 화려한 바닥 위에서 그냥 사라진다")]
+    [SerializeField] private float spinSpeed = 18f;
 
     public override PlayerClass Class => PlayerClass.Mage;
 
@@ -91,11 +88,10 @@ public class FieldWeapon : PlayerWeapon
     /// <summary>증강까지 반영한 실제 판정 반경.</summary>
     public float Radius => fieldRadius * RadiusMultiplier;
 
-    private Transform _fill;
-    private Transform _ring;
-    private Transform _swirl;
+    private Transform _field;
     private float _timer;
     private float _appliedRadius = -1f;
+    private float _spinDeg;
 
     protected override void Awake()
     {
@@ -116,47 +112,35 @@ public class FieldWeapon : PlayerWeapon
     }
 
     /// <summary>
-    /// 바닥 채움 + 테두리 링 + 회전 무늬 세 겹. RiftZone과 같은 구성이라
-    /// 플레이어가 "이건 지속 지대구나"를 이미 배운 문법으로 읽는다.
-    /// 프리팹을 건드리지 않으려고 런타임에 자식으로 만든다.
+    /// 장판 아트 한 장. 예전에는 채움·링·소용돌이 세 겹을 코드로 겹쳐 만들었는데,
+    /// 2026-08-10에 디자인 담당의 장판 아트로 교체하면서 한 장으로 줄였다.
+    /// 프리팹을 건드리지 않으려고 런타임에 자식으로 만드는 것은 그대로다.
     /// </summary>
     private void BuildVisual()
     {
-        if (_fill != null) return;
+        if (_field != null) return;
 
-        _fill = MakeLayer("FieldFill", FxTextures.Dot,
-            new Color(fieldColor.r, fieldColor.g, fieldColor.b, fillAlpha), -2);
-        _swirl = MakeLayer("FieldSwirl", FxSprites.Twirl != null ? FxSprites.Twirl : FxTextures.Ring,
-            new Color(fieldColor.r, fieldColor.g, fieldColor.b, 0.35f), -2);
-        _ring = MakeLayer("FieldRing", FxTextures.Ring,
-            new Color(fieldColor.r, fieldColor.g, fieldColor.b, ringAlpha), -1);
-
-        ShowVisual(false);
-    }
-
-    private Transform MakeLayer(string name, Sprite sprite, Color color, int order)
-    {
-        var go = new GameObject(name);
+        var go = new GameObject("FieldArt");
         go.transform.SetParent(transform, false);
 
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = sprite;
-        sr.color = color;
-        sr.sortingOrder = order;      // 플레이어(0)와 적보다 아래 — 지대가 적을 가리면 안 된다
-        return go.transform;
+        sr.sprite = FxSprites.TimeStopField != null ? FxSprites.TimeStopField : FxTextures.Ring;
+        sr.color = new Color(1f, 1f, 1f, fieldAlpha); // 아트 원본 색 그대로. 곱하면 그림이 그 색조로 덮인다
+        sr.sortingOrder = -2;   // 플레이어(0)와 적보다 아래 — 지대가 적을 가리면 안 된다
+
+        _field = go.transform;
+        ShowVisual(false);
     }
 
     private void ShowVisual(bool on)
     {
-        if (_fill == null) return;
-        _fill.gameObject.SetActive(on);
-        _ring.gameObject.SetActive(on);
-        _swirl.gameObject.SetActive(on);
+        if (_field == null) return;
+        _field.gameObject.SetActive(on);
     }
 
     private void Update()
     {
-        if (_fill == null) return;
+        if (_field == null) return;
 
         // 죽으면 지대를 끈다.
         if (!CanAct)
@@ -169,23 +153,47 @@ public class FieldWeapon : PlayerWeapon
 
         float r = Radius;
 
-        // 반경이 바뀌면(지대 증대 증강) 그림도 같이 커진다. 스프라이트가 1유닛이라 지름을 그대로 스케일로 쓴다.
+        // 반경이 바뀌면(지대 증대 증강) 그림도 같이 커진다.
         if (!Mathf.Approximately(r, _appliedRadius))
         {
-            float d = r * 2f;
-            _fill.localScale = Vector3.one * d;
-            _ring.localScale = Vector3.one * d;
-            _swirl.localScale = Vector3.one * (d * 0.72f);
+            ApplyFieldSize(r);
             _appliedRadius = r;
         }
 
-        _swirl.localRotation = Quaternion.Euler(0f, 0f, _swirl.localEulerAngles.z + spinSpeed * Time.deltaTime);
+        _spinDeg += spinSpeed * Time.deltaTime;
+        _field.localRotation = Quaternion.Euler(0f, 0f, _spinDeg);
 
         _timer -= Time.deltaTime;
         if (_timer > 0f) return;
         _timer = fireInterval;
 
         Tick(r);
+    }
+
+    /// <summary>
+    /// **보이는 링이 곧 판정 경계가 되도록** 장판 그림을 맞춘다.
+    ///
+    /// 원본 아트는 원근으로 눌린 타원이다(가로 53.5% / 세로 37.5% — 픽셀 실측).
+    /// 그대로 쓰면 세로 사거리가 실제의 절반처럼 보여서, "화면에서는 빗나갔는데 맞았다"가 난다.
+    /// 이 프로젝트가 참격·홀·감속 지대에서 계속 지켜 온 규칙이 "보이는 것이 곧 판정"이라
+    /// 세로를 늘려 정원으로 만든다 — 원근을 포기하고 판정 일치를 택한 것이다.
+    ///
+    /// 그림 중심이 프레임 중심보다 조금 아래인 것(-2.2%)은 **스프라이트 피벗**으로 잡아 뒀다.
+    /// 위치로 밀어 보정하면 장판이 회전할 때 그 오프셋만큼 원이 흔들린다(피벗이 곧 회전축이므로).
+    /// </summary>
+    private void ApplyFieldSize(float r)
+    {
+        Sprite sp = _field.GetComponent<SpriteRenderer>().sprite;
+        if (sp == null) return;
+
+        float d = r * 2f;
+        float drawnW = sp.bounds.size.x * FxSprites.TimeStopSpanX;
+        float drawnH = sp.bounds.size.y * FxSprites.TimeStopSpanY;
+        if (drawnW <= 0.0001f || drawnH <= 0.0001f) return;
+
+        float sx = d / drawnW;
+        float sy = d / drawnH;
+        _field.localScale = new Vector3(sx, sy, 1f);
     }
 
     private void Tick(float r)

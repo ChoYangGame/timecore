@@ -34,12 +34,21 @@ public class Enemy : MonoBehaviour
     {
         _health = GetComponent<Health>();
         _health.OnDeath += HandleDeath;
+        _health.OnHit += HandleHit;
     }
 
     private void OnDestroy()
     {
-        if (_health != null) _health.OnDeath -= HandleDeath;
+        if (_health != null)
+        {
+            _health.OnDeath -= HandleDeath;
+            _health.OnHit -= HandleHit;
+        }
     }
+
+    // 총알·홀·장판 어느 쪽에 맞아도 여기로 모인다. 무기마다 소리를 거는 것보다 누락이 없다.
+    // 동시에 수십 마리가 맞아도 SfxManager가 간격으로 걸러 한 번만 난다.
+    private void HandleHit(float _) => Sfx.Play(SfxId.EnemyHit);
 
     private void Start()
     {
@@ -80,6 +89,8 @@ public class Enemy : MonoBehaviour
     private void HandleDeath(Health _)
     {
         if (GameManager.Instance != null) GameManager.Instance.RegisterKill();
+
+        Sfx.Play(SfxId.EnemyDeath);
 
         // 피격 플래시 중이면 SpriteRenderer는 플래시 색이라 AccentColor를 쓴다.
         // (컬러 아트를 입으면 SpriteRenderer.color가 흰색이 되므로 그때도 시대 색이 필요하다.)

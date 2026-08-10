@@ -112,6 +112,8 @@ public class Hourglass : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
 
+        Sfx.Play(SfxId.Collect);
+
         OnCollected?.Invoke();
         Destroy(gameObject);
     }

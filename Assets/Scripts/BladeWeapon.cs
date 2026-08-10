@@ -29,8 +29,11 @@ public class BladeWeapon : PlayerWeapon
     [SerializeField] private float searchRange = 6f;
 
     [Header("홀 판정 — 그려진 홀이 곧 판정이다")]
-    [Tooltip("플레이어 중심에서 홀을 쥔 손(그림의 회전축)까지의 거리")]
-    [SerializeField] private float holdRadius = 0.45f;
+    [Tooltip("플레이어 중심에서 홀을 쥔 손(그림의 회전축)까지의 거리.\n" +
+             "플레이어 그림이 1.63×1.77유닛(반지름 약 0.8)이라 0.45로는 손이 몸 한가운데 있었고,\n" +
+             "자루가 0.61 뒤로 더 뻗으니 홀이 몸을 관통해 보였다. 팔을 뻗어 쥔 것처럼 밖으로 뺀다.\n" +
+             "부수 효과로 유효 사거리가 1.77 → 2.37이 되는데, 이는 홀 도입 전 참격 시절의 2.4와 거의 같다")]
+    [SerializeField] private float holdRadius = 1.05f;
 
     [Tooltip("회전축에서 홀 머리 끝까지. 원본 그림 실측 533px = 프레임 폭의 0.526")]
     [SerializeField] private float rodHead = 0.68f;
@@ -138,6 +141,8 @@ public class BladeWeapon : PlayerWeapon
         _swingT = 0f;
         IsSwinging = true;
         _hitThisSwing.Clear();
+
+        Sfx.Play(SfxId.BladeSwing);
 
         // 겨누는 방향은 휘두르는 내내 고정한다. 여기서 부드럽게 돌리면
         // 그리는 각도와 판정하는 각도가 프레임마다 어긋난다.

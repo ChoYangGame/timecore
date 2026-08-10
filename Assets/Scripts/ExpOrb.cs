@@ -47,6 +47,7 @@ public class ExpOrb : MonoBehaviour
         if (!other.CompareTag("Player")) return;
 
         if (GameManager.Instance != null) GameManager.Instance.AddExp(expValue);
+        Sfx.Play(SfxId.ExpPickup);
         Destroy(gameObject);
     }
 }
